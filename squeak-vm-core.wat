@@ -42,18 +42,18 @@
 				   (field $slots (ref null 0))  ;; References $ObjectArray
 				   (field $keys (ref null 0))   ;; References $ObjectArray
 				   (field $values (ref null 0)) ;; References $ObjectArray
-				   (field $count i32)
+				   (field $count (mut i32))
 				   )))
 	 
 	 ;; Type 5: Class objects
 	 (type $Class (sub 3 (struct
-			      (field $class (ref null 5))  ;; Self-reference to $Class
+			      (field $class (mut (ref null 5)))  ;; Self-reference to $Class
 			      (field $identityHash i32)
 			      (field $format i32)
 			      (field $size i32)
 			      (field $slots (ref null 0))  ;; References $ObjectArray
 			      (field $superclass (ref null 5))  ;; References $Class
-			      (field $methodDict (ref null 4))  ;; References $Dictionary
+			      (field $methodDict (mut (ref null 4)))  ;; References $Dictionary
 			      (field $instVarNames (ref null eq))
 			      (field $name (ref null eq))
 			      (field $instSize i32)
@@ -79,11 +79,11 @@
 				(field $format i32)
 				(field $size i32)
 				(field $slots (ref null 0))  ;; Stack and temps - references $ObjectArray
-				(field $sender (ref null 7))  ;; Self-reference to $Context
-				(field $pc i32)
-				(field $stackp i32)
-				(field $method (ref null 6))  ;; References $CompiledMethod
-				(field $receiver (ref null eq))
+				(field $sender (mut (ref null 7)))  ;; Self-reference to $Context
+				(field $pc (mut i32))
+				(field $stackp (mut i32))
+				(field $method (mut (ref null 6)))  ;; References $CompiledMethod
+				(field $receiver (mut (ref null eq)))
 				)))
 	 
 	 ;; Type 8: Process objects
