@@ -204,6 +204,13 @@
 	      (array.new_default $ObjectArray)
 	      struct.new $Array
 	      )
+
+	;; Create a new object array of given size
+	(func $createObjectArray (param $size i32) (result (ref 0))
+	      local.get $size
+	      ref.null any
+	      array.new $ObjectArray
+	      )
 	
 	(func $newDictionary (param $class (ref null $Class)) (param $size i32) (result (ref $Dictionary))
 	      local.get $class
@@ -997,9 +1004,11 @@
 	;; === Bootstrap Functions ===
 	
 	(func $createBasicClasses
+	      (local $newClass (ref 5))  ;; Local variable to hold created classes
+	      
 	      ;; Create Object class first (with null class initially)
 	      struct.new_default $Class
-	      local.tee $objectClass
+	      local.tee $newClass
 	      ;; Set Object class fields
 	      call $nextIdentityHash
 	      struct.set $Class $identityHash
@@ -1021,7 +1030,7 @@
 	      
 	      ;; Create Class class
 	      struct.new_default $Class
-	      local.tee $classClass
+	      local.tee $newClass
 	      ;; Set Class class fields
 	      global.get $objectClass  ;; class field - will be set to itself later
 	      struct.set $Class $class
@@ -1051,7 +1060,7 @@
 	      
 	      ;; Create SmallInteger class
 	      struct.new_default $Class
-	      local.tee $smallIntClass
+	      local.tee $newClass
 	      global.get $classClass
 	      struct.set $Class $class
 	      call $nextIdentityHash
@@ -1065,20 +1074,40 @@
 	      struct.set $Class $slots
 	      global.get $objectClass
 	      struct.set $Class $superclass
-	      ;; Create and set method dictionary
-	      global.get $dictionaryClass
-	      i32.const 10
-	      call $newDictionary
-	      struct.set $Class $methodDict
+	      ;; Create and set method dictionary (but dictionaryClass doesn't exist yet!)
+	      ;; Skip methodDict for now
 	      ;; instVarNames stays null
 	      ;; name stays null
 	      i32.const 0
 	      struct.set $Class $instSize
 	      global.set $smallIntegerClass
 	      
+	      ;; Create Dictionary class first
+	      struct.new_default $Class
+	      local.tee $newClass
+	      global.get $classClass
+	      struct.set $Class $class
+	      call $nextIdentityHash
+	      struct.set $Class $identityHash
+	      i32.const 1
+	      struct.set $Class $format
+	      i32.const 6
+	      struct.set $Class $size
+	      i32.const 6
+	      call $createObjectArray
+	      struct.set $Class $slots
+	      global.get $objectClass
+	      struct.set $Class $superclass
+	      ;; methodDict stays null
+	      ;; instVarNames stays null
+	      ;; name stays null
+	      i32.const 0
+	      struct.set $Class $instSize
+	      global.set $dictionaryClass
+	      
 	      ;; Create CompiledMethod class
 	      struct.new_default $Class
-	      local.tee $methodClass
+	      local.tee $newClass
 	      global.get $classClass
 	      struct.set $Class $class
 	      call $nextIdentityHash
@@ -1101,7 +1130,7 @@
 	      
 	      ;; Create Context class
 	      struct.new_default $Class
-	      local.tee $contextClass
+	      local.tee $newClass
 	      global.get $classClass
 	      struct.set $Class $class
 	      call $nextIdentityHash
@@ -1122,29 +1151,6 @@
 	      struct.set $Class $instSize
 	      global.set $contextClass
 	      
-	      ;; Create Dictionary class
-	      struct.new_default $Class
-	      local.tee $dictClass
-	      global.get $classClass
-	      struct.set $Class $class
-	      call $nextIdentityHash
-	      struct.set $Class $identityHash
-	      i32.const 1
-	      struct.set $Class $format
-	      i32.const 6
-	      struct.set $Class $size
-	      i32.const 6
-	      call $createObjectArray
-	      struct.set $Class $slots
-	      global.get $objectClass
-	      struct.set $Class $superclass
-	      ;; methodDict stays null
-	      ;; instVarNames stays null
-	      ;; name stays null
-	      i32.const 0
-	      struct.set $Class $instSize
-	      global.set $dictionaryClass
-	      
 	      ;; Create special objects
 	      i32.const 0
 	      ref.i31
@@ -1158,7 +1164,7 @@
 	      ref.i31
 	      global.set $falseObject
 	      )
-	
+
 	(func $createSpecialSelectors
 	      ;; Create selector strings for common operations
 	      ;; For now, use simple i31ref values as selectors
