@@ -222,7 +222,7 @@
 	
 	;; === Dictionary Operations for Method Lookup ===
 
-	(func $dictionary_at (param $dict (ref $Dictionary)) (param $key (ref null eq)) (result (ref null any))
+	(func $dictionary_at (param $dict (ref $Dictionary)) (param $key (ref null eq)) (result (ref null eq))
 	      (local $i i32)
 	      (local $keys (ref null $ObjectArray))
 	      (local $values (ref null $ObjectArray))
@@ -272,7 +272,7 @@
 	      ref.null any
 	      )
 
-	(func $dictionary_at_put (param $dict (ref $Dictionary)) (param $key (ref null eq)) (param $value (ref null any))
+	(func $dictionary_at_put (param $dict (ref $Dictionary)) (param $key (ref null eq)) (param $value (ref null eq))
 	      (local $count i32)
 	      
 	      local.get $dict
