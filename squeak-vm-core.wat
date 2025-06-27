@@ -11,10 +11,10 @@
 	
 	(rec
 	 ;; Type 0: ObjectArray - needs to be first so others can reference it
-	 (type $ObjectArray (array (ref null eq)))  ;; Instead of (ref null any)
+	 (type $ObjectArray (array (mut (ref null eq))))
 	 
 	 ;; Type 1: ByteArray 
-	 (type $ByteArray (array i8))
+	 (type $ByteArray (array (mut i8)))
 	 
 	 ;; Type 2: Base Squeak object
 	 (type $SqueakObject (sub (struct 
