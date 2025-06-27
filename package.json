@@ -1,0 +1,38 @@
+{
+  "name": "squeakjs-wasm-vm",
+  "version": "0.1.0",
+  "description": "SqueakJS virtual machine converted to WebAssembly with WASM GC",
+  "main": "squeak-vm.js",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test.js",
+    "serve": "python -m http.server 8000",
+    "clean": "rm -rf dist/"
+  },
+  "keywords": [
+    "smalltalk",
+    "squeak",
+    "webassembly",
+    "wasm",
+    "vm",
+    "interpreter"
+  ],
+  "author": "SqueakJS WASM Project",
+  "license": "MIT",
+  "devDependencies": {
+    "wabt": "^1.0.24"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/squeakjs-wasm-vm.git"
+  },
+  "files": [
+    "squeak-vm.js",
+    "squeak-vm-core.wat",
+    "build.js",
+    "README.md"
+  ]
+}
