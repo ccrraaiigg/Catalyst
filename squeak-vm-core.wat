@@ -7,7 +7,7 @@
 	(import "system" "currentTimeMillis" (func $currentTimeMillis (result i64)))
 	(import "system" "consoleLog" (func $consoleLog (param i32)))
 	
-	;; === WASM GC Type Hierarchy - All in one rec group ===
+	;; === WASM GC Type Hierarchy - Fixed subtyping relationships ===
 	
 	(rec
 	 ;; Type 0: ObjectArray - needs to be first so others can reference it
@@ -16,42 +16,48 @@
 	 ;; Type 1: ByteArray 
 	 (type $ByteArray (array (mut i8)))
 	 
-	 ;; Type 2: Base Squeak object
+	 ;; Type 2: Base Squeak object - must define a proper base
 	 (type $SqueakObject (sub (struct 
-			      (field $class (ref null 5))  ;; References $Class (index 5)
-			      (field $identityHash i32)
-			      (field $format i32)
-			      (field $size i32)
-			      )))
+				   (field $class (ref null 5))  ;; References $Class (index 5)
+				   (field $identityHash i32)
+				   (field $format i32)
+				   (field $size i32)
+				   )))
 	 
-	 ;; Type 3: Variable objects (most Squeak objects)
+	 ;; Type 3: Variable objects (most Squeak objects) - MUST match parent exactly + additional fields
 	 (type $VariableObject (sub 2 (struct 
+				       ;; First 4 fields MUST match SqueakObject exactly
 				       (field $class (ref null 5))  ;; References $Class
 				       (field $identityHash i32)
 				       (field $format i32)
 				       (field $size i32)
+				       ;; Additional fields for this subtype
 				       (field $slots (ref null 0))  ;; References $ObjectArray
 				       )))
 	 
-	 ;; Type 4: Dictionary for method lookup
+	 ;; Type 4: Dictionary for method lookup - extends VariableObject
 	 (type $Dictionary (sub 3 (struct
+				   ;; First 5 fields MUST match VariableObject exactly
 				   (field $class (ref null 5))  ;; References $Class
 				   (field $identityHash i32)
 				   (field $format i32)
 				   (field $size i32)
 				   (field $slots (ref null 0))  ;; References $ObjectArray
+				   ;; Additional fields for Dictionary
 				   (field $keys (ref null 0))   ;; References $ObjectArray
 				   (field $values (ref null 0)) ;; References $ObjectArray
 				   (field $count (mut i32))
 				   )))
 	 
-	 ;; Type 5: Class objects
+	 ;; Type 5: Class objects - extends VariableObject
 	 (type $Class (sub 3 (struct
+			      ;; First 5 fields MUST match VariableObject exactly
 			      (field $class (mut (ref null 5)))  ;; Self-reference to $Class
 			      (field $identityHash i32)
 			      (field $format i32)
 			      (field $size i32)
 			      (field $slots (ref null 0))  ;; References $ObjectArray
+			      ;; Additional fields for Class
 			      (field $superclass (ref null 5))  ;; References $Class
 			      (field $methodDict (mut (ref null 4)))  ;; References $Dictionary
 			      (field $instVarNames (ref null eq))
@@ -59,26 +65,30 @@
 			      (field $instSize i32)
 			      )))
 	 
-	 ;; Type 6: CompiledMethod objects
+	 ;; Type 6: CompiledMethod objects - extends VariableObject
 	 (type $CompiledMethod (sub 3 (struct
+				       ;; First 5 fields MUST match VariableObject exactly
 				       (field $class (ref null 5))  ;; References $Class
 				       (field $identityHash i32)
 				       (field $format i32)
 				       (field $size i32)
 				       (field $slots (ref null 0))  ;; Literals - references $ObjectArray
+				       ;; Additional fields for CompiledMethod
 				       (field $header i32)
 				       (field $bytecodes (ref null 1))  ;; References $ByteArray
 				       (field $invocationCount i32)
 				       (field $compiledWasm (ref null func))
 				       )))
 	 
-	 ;; Type 7: Context objects
+	 ;; Type 7: Context objects - extends VariableObject
 	 (type $Context (sub 3 (struct
+				;; First 5 fields MUST match VariableObject exactly
 				(field $class (ref null 5))  ;; References $Class
 				(field $identityHash i32)
 				(field $format i32)
 				(field $size i32)
 				(field $slots (ref null 0))  ;; Stack and temps - references $ObjectArray
+				;; Additional fields for Context
 				(field $sender (mut (ref null 7)))  ;; Self-reference to $Context
 				(field $pc (mut i32))
 				(field $stackp (mut i32))
@@ -86,30 +96,35 @@
 				(field $receiver (mut (ref null eq)))
 				)))
 	 
-	 ;; Type 8: Process objects
+	 ;; Type 8: Process objects - extends VariableObject
 	 (type $Process (sub 3 (struct
+				;; First 5 fields MUST match VariableObject exactly
 				(field $class (ref null 5))  ;; References $Class
 				(field $identityHash i32)
 				(field $format i32)
 				(field $size i32)
 				(field $slots (ref null 0))  ;; References $ObjectArray
+				;; Additional fields for Process
 				(field $nextLink (ref null 8))  ;; Self-reference to $Process
 				(field $suspendedContext (ref null 7))  ;; References $Context
 				(field $priority i32)
 				(field $myList (ref null eq))
 				)))
 	 
-	 ;; Type 9: String objects
+	 ;; Type 9: String objects - extends SqueakObject (not VariableObject)
 	 (type $String (sub 2 (struct
+			       ;; First 4 fields MUST match SqueakObject exactly
 			       (field $class (ref null 5))  ;; References $Class
 			       (field $identityHash i32)
 			       (field $format i32)
 			       (field $size i32)
+			       ;; Additional field for String
 			       (field $bytes (ref null 1))  ;; References $ByteArray
 			       )))
 	 
-	 ;; Type 10: Array objects
+	 ;; Type 10: Array objects - extends VariableObject
 	 (type $Array (sub 3 (struct
+			      ;; First 5 fields MUST match VariableObject exactly
 			      (field $class (ref null 5))  ;; References $Class
 			      (field $identityHash i32)
 			      (field $format i32)
