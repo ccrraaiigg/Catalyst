@@ -7,115 +7,116 @@
 	(import "system" "currentTimeMillis" (func $currentTimeMillis (result i64)))
 	(import "system" "consoleLog" (func $consoleLog (param i32)))
 	
-	;; === WASM GC Type Hierarchy using rec for mutually recursive types ===
+	;; === WASM GC Type Hierarchy - All in one rec group ===
 	
-	;; Recursive type group for mutually referencing Squeak objects
 	(rec
-	 ;; Type 0: Base Squeak object
-	 (type $SqueakObject (struct 
-			      (field $class (ref null 3))  ;; References $Class (index 3 in rec group)
+	 ;; Type 0: ObjectArray - needs to be first so others can reference it
+	 (type $ObjectArray (array (ref null any)))
+	 
+	 ;; Type 1: ByteArray 
+	 (type $ByteArray (array i8))
+	 
+	 ;; Type 2: Base Squeak object
+	 (type $SqueakObject (sub (struct 
+			      (field $class (ref null 5))  ;; References $Class (index 5)
 			      (field $identityHash i32)
 			      (field $format i32)
 			      (field $size i32)
-			      ))
+			      )))
 	 
-	 ;; Type 1: Variable objects (most Squeak objects)
-	 (type $VariableObject (sub 0 (struct 
-				       (field $class (ref null 3))  ;; References $Class
+	 ;; Type 3: Variable objects (most Squeak objects)
+	 (type $VariableObject (sub 2 (struct 
+				       (field $class (ref null 5))  ;; References $Class
 				       (field $identityHash i32)
 				       (field $format i32)
 				       (field $size i32)
-				       (field $slots (ref null 9))  ;; References $ObjectArray (defined after rec)
+				       (field $slots (ref null 0))  ;; References $ObjectArray
 				       )))
 	 
-	 ;; Type 2: Dictionary for method lookup
-	 (type $Dictionary (sub 1 (struct
-				   (field $class (ref null 3))  ;; References $Class
+	 ;; Type 4: Dictionary for method lookup
+	 (type $Dictionary (sub 3 (struct
+				   (field $class (ref null 5))  ;; References $Class
 				   (field $identityHash i32)
 				   (field $format i32)
 				   (field $size i32)
-				   (field $slots (ref null 9))  ;; References $ObjectArray
-				   (field $keys (ref null 9))   ;; References $ObjectArray
-				   (field $values (ref null 9)) ;; References $ObjectArray
+				   (field $slots (ref null 0))  ;; References $ObjectArray
+				   (field $keys (ref null 0))   ;; References $ObjectArray
+				   (field $values (ref null 0)) ;; References $ObjectArray
 				   (field $count i32)
 				   )))
 	 
-	 ;; Type 3: Class objects
-	 (type $Class (sub 1 (struct
-			      (field $class (ref null 3))  ;; Self-reference to $Class
+	 ;; Type 5: Class objects
+	 (type $Class (sub 3 (struct
+			      (field $class (ref null 5))  ;; Self-reference to $Class
 			      (field $identityHash i32)
 			      (field $format i32)
 			      (field $size i32)
-			      (field $slots (ref null 9))  ;; References $ObjectArray
-			      (field $superclass (ref null 3))  ;; References $Class
-			      (field $methodDict (ref null 2))  ;; References $Dictionary
+			      (field $slots (ref null 0))  ;; References $ObjectArray
+			      (field $superclass (ref null 5))  ;; References $Class
+			      (field $methodDict (ref null 4))  ;; References $Dictionary
 			      (field $instVarNames (ref null any))
 			      (field $name (ref null any))
 			      (field $instSize i32)
 			      )))
 	 
-	 ;; Type 4: CompiledMethod objects
-	 (type $CompiledMethod (sub 1 (struct
-				       (field $class (ref null 3))  ;; References $Class
+	 ;; Type 6: CompiledMethod objects
+	 (type $CompiledMethod (sub 3 (struct
+				       (field $class (ref null 5))  ;; References $Class
 				       (field $identityHash i32)
 				       (field $format i32)
 				       (field $size i32)
-				       (field $slots (ref null 9))  ;; Literals - references $ObjectArray
+				       (field $slots (ref null 0))  ;; Literals - references $ObjectArray
 				       (field $header i32)
-				       (field $bytecodes (ref null 10))  ;; References $ByteArray (defined after rec)
+				       (field $bytecodes (ref null 1))  ;; References $ByteArray
 				       (field $invocationCount i32)
 				       (field $compiledWasm (ref null func))
 				       )))
 	 
-	 ;; Type 5: Context objects
-	 (type $Context (sub 1 (struct
-				(field $class (ref null 3))  ;; References $Class
+	 ;; Type 7: Context objects
+	 (type $Context (sub 3 (struct
+				(field $class (ref null 5))  ;; References $Class
 				(field $identityHash i32)
 				(field $format i32)
 				(field $size i32)
-				(field $slots (ref null 9))  ;; Stack and temps - references $ObjectArray
-				(field $sender (ref null 5))  ;; Self-reference to $Context
+				(field $slots (ref null 0))  ;; Stack and temps - references $ObjectArray
+				(field $sender (ref null 7))  ;; Self-reference to $Context
 				(field $pc i32)
 				(field $stackp i32)
-				(field $method (ref null 4))  ;; References $CompiledMethod
+				(field $method (ref null 6))  ;; References $CompiledMethod
 				(field $receiver (ref null any))
 				)))
 	 
-	 ;; Type 6: Process objects
-	 (type $Process (sub 1 (struct
-				(field $class (ref null 3))  ;; References $Class
+	 ;; Type 8: Process objects
+	 (type $Process (sub 3 (struct
+				(field $class (ref null 5))  ;; References $Class
 				(field $identityHash i32)
 				(field $format i32)
 				(field $size i32)
-				(field $slots (ref null 9))  ;; References $ObjectArray
-				(field $nextLink (ref null 6))  ;; Self-reference to $Process
-				(field $suspendedContext (ref null 5))  ;; References $Context
+				(field $slots (ref null 0))  ;; References $ObjectArray
+				(field $nextLink (ref null 8))  ;; Self-reference to $Process
+				(field $suspendedContext (ref null 7))  ;; References $Context
 				(field $priority i32)
 				(field $myList (ref null any))
 				)))
 	 
-	 ;; Type 7: String objects
-	 (type $String (sub 0 (struct
-			       (field $class (ref null 3))  ;; References $Class
+	 ;; Type 9: String objects
+	 (type $String (sub 2 (struct
+			       (field $class (ref null 5))  ;; References $Class
 			       (field $identityHash i32)
 			       (field $format i32)
 			       (field $size i32)
-			       (field $bytes (ref null 10))  ;; References $ByteArray
+			       (field $bytes (ref null 1))  ;; References $ByteArray
 			       )))
 	 
-	 ;; Type 8: Array objects
-	 (type $Array (sub 1 (struct
-			      (field $class (ref null 3))  ;; References $Class
+	 ;; Type 10: Array objects
+	 (type $Array (sub 3 (struct
+			      (field $class (ref null 5))  ;; References $Class
 			      (field $identityHash i32)
 			      (field $format i32)
 			      (field $size i32)
-			      (field $slots (ref null 9))  ;; References $ObjectArray
+			      (field $slots (ref null 0))  ;; References $ObjectArray
 			      )))
 	 )
-	
-	;; Array types (defined after rec group)
-	(type $ObjectArray (array (ref null any)))  ;; Type index 9
-	(type $ByteArray (array i8))                ;; Type index 10
 
 	;; === WASM Exception Types for VM Control Flow ===
 	(tag $Return (param (ref null any)))
