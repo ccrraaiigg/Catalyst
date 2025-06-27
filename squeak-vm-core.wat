@@ -11,7 +11,7 @@
 	
 	(rec
 	 ;; Type 0: ObjectArray - needs to be first so others can reference it
-	 (type $ObjectArray (array (ref null any)))
+	 (type $ObjectArray (array (ref null eq)))  ;; Instead of (ref null any)
 	 
 	 ;; Type 1: ByteArray 
 	 (type $ByteArray (array i8))
@@ -221,8 +221,8 @@
 	      )
 	
 	;; === Dictionary Operations for Method Lookup ===
-	
-	(func $dictionary_at (param $dict (ref $Dictionary)) (param $key (ref null any)) (result (ref null any))
+
+	(func $dictionary_at (param $dict (ref $Dictionary)) (param $key (ref null eq)) (result (ref null any))
 	      (local $i i32)
 	      (local $keys (ref null $ObjectArray))
 	      (local $values (ref null $ObjectArray))
@@ -271,8 +271,8 @@
 	      
 	      ref.null any
 	      )
-	
-	(func $dictionary_at_put (param $dict (ref $Dictionary)) (param $key (ref null any)) (param $value (ref null any))
+
+	(func $dictionary_at_put (param $dict (ref $Dictionary)) (param $key (ref null eq)) (param $value (ref null any))
 	      (local $count i32)
 	      
 	      local.get $dict
@@ -300,8 +300,8 @@
 	      )
 	
 	;; === Method Lookup ===
-	
-	(func $lookupMethod (param $class (ref null $Class)) (param $selector (ref null any)) (result (ref null $CompiledMethod))
+
+	(func $lookupMethod (param $class (ref null $Class)) (param $selector (ref null eq)) (result (ref null $CompiledMethod))
 	      (local $currentClass (ref null $Class))
 	      (local $methodDict (ref null $Dictionary))
 	      (local $method (ref null any))
