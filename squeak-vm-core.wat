@@ -997,34 +997,51 @@
 	;; === Bootstrap Functions ===
 	
 	(func $createBasicClasses
-	      ;; Create Object class (simplified)
-	      ref.null $Class
+	      ;; Create Object class first (with null class initially)
+	      struct.new_default $Class
+	      local.tee $objectClass
+	      ;; Set Object class fields
 	      call $nextIdentityHash
-	      i32.const 1  ;; format
-	      i32.const 6  ;; size
+	      struct.set $Class $identityHash
+	      i32.const 1
+	      struct.set $Class $format
 	      i32.const 6
-	      (array.new_default $ObjectArray)
-	      ref.null $Class  ;; superclass
-	      ref.null $Dictionary  ;; methodDict
-	      ref.null any  ;; instVarNames
-	      ref.null any  ;; name
-	      i32.const 0   ;; instSize
-	      struct.new $Class
+	      struct.set $Class $size
+	      i32.const 6
+	      call $createObjectArray
+	      struct.set $Class $slots
+	      ;; superclass stays null for Object
+	      ;; methodDict stays null for now
+	      ;; instVarNames stays null
+	      ;; name stays null
+	      i32.const 0
+	      struct.set $Class $instSize
+	      ;; Store in global
 	      global.set $objectClass
 	      
 	      ;; Create Class class
-	      global.get $objectClass
+	      struct.new_default $Class
+	      local.tee $classClass
+	      ;; Set Class class fields
+	      global.get $objectClass  ;; class field - will be set to itself later
+	      struct.set $Class $class
 	      call $nextIdentityHash
-	      i32.const 1  ;; format
-	      i32.const 6  ;; size
+	      struct.set $Class $identityHash
+	      i32.const 1
+	      struct.set $Class $format
 	      i32.const 6
-	      (array.new_default $ObjectArray)
-	      global.get $objectClass  ;; superclass
-	      ref.null $Dictionary     ;; methodDict
-	      ref.null any  ;; instVarNames
-	      ref.null any  ;; name
-	      i32.const 0   ;; instSize
-	      struct.new $Class
+	      struct.set $Class $size
+	      i32.const 6
+	      call $createObjectArray
+	      struct.set $Class $slots
+	      global.get $objectClass
+	      struct.set $Class $superclass
+	      ;; methodDict stays null for now
+	      ;; instVarNames stays null
+	      ;; name stays null
+	      i32.const 0
+	      struct.set $Class $instSize
+	      ;; Store in global
 	      global.set $classClass
 	      
 	      ;; Fix Object class to be instance of Class class
@@ -1033,66 +1050,99 @@
 	      struct.set $Class $class
 	      
 	      ;; Create SmallInteger class
+	      struct.new_default $Class
+	      local.tee $smallIntClass
 	      global.get $classClass
+	      struct.set $Class $class
 	      call $nextIdentityHash
-	      i32.const 1  ;; format
-	      i32.const 6  ;; size
+	      struct.set $Class $identityHash
+	      i32.const 1
+	      struct.set $Class $format
 	      i32.const 6
-	      (array.new_default $ObjectArray)
-	      global.get $objectClass  ;; superclass
+	      struct.set $Class $size
+	      i32.const 6
+	      call $createObjectArray
+	      struct.set $Class $slots
+	      global.get $objectClass
+	      struct.set $Class $superclass
+	      ;; Create and set method dictionary
 	      global.get $dictionaryClass
-	      i32.const 10  ;; Small dict size
-	      call $newDictionary       ;; methodDict
+	      i32.const 10
+	      call $newDictionary
 	      struct.set $Class $methodDict
-	      ref.null any  ;; instVarNames
-	      ref.null any  ;; name
-	      i32.const 0   ;; instSize
-	      struct.new $Class
+	      ;; instVarNames stays null
+	      ;; name stays null
+	      i32.const 0
+	      struct.set $Class $instSize
 	      global.set $smallIntegerClass
 	      
 	      ;; Create CompiledMethod class
+	      struct.new_default $Class
+	      local.tee $methodClass
 	      global.get $classClass
+	      struct.set $Class $class
 	      call $nextIdentityHash
-	      i32.const 1  ;; format
-	      i32.const 6  ;; size
+	      struct.set $Class $identityHash
+	      i32.const 1
+	      struct.set $Class $format
 	      i32.const 6
-	      (array.new_default $ObjectArray)
-	      global.get $objectClass  ;; superclass
-	      ref.null $Dictionary     ;; methodDict
-	      ref.null any  ;; instVarNames
-	      ref.null any  ;; name
-	      i32.const 0   ;; instSize
-	      struct.new $Class
+	      struct.set $Class $size
+	      i32.const 6
+	      call $createObjectArray
+	      struct.set $Class $slots
+	      global.get $objectClass
+	      struct.set $Class $superclass
+	      ;; methodDict stays null
+	      ;; instVarNames stays null
+	      ;; name stays null
+	      i32.const 0
+	      struct.set $Class $instSize
 	      global.set $methodClass
 	      
 	      ;; Create Context class
+	      struct.new_default $Class
+	      local.tee $contextClass
 	      global.get $classClass
+	      struct.set $Class $class
 	      call $nextIdentityHash
-	      i32.const 1  ;; format
-	      i32.const 6  ;; size
+	      struct.set $Class $identityHash
+	      i32.const 1
+	      struct.set $Class $format
 	      i32.const 6
-	      (array.new_default $ObjectArray)
-	      global.get $objectClass  ;; superclass
-	      ref.null $Dictionary     ;; methodDict
-	      ref.null any  ;; instVarNames
-	      ref.null any  ;; name
-	      i32.const 0   ;; instSize
-	      struct.new $Class
+	      struct.set $Class $size
+	      i32.const 6
+	      call $createObjectArray
+	      struct.set $Class $slots
+	      global.get $objectClass
+	      struct.set $Class $superclass
+	      ;; methodDict stays null
+	      ;; instVarNames stays null
+	      ;; name stays null
+	      i32.const 0
+	      struct.set $Class $instSize
 	      global.set $contextClass
 	      
 	      ;; Create Dictionary class
+	      struct.new_default $Class
+	      local.tee $dictClass
 	      global.get $classClass
+	      struct.set $Class $class
 	      call $nextIdentityHash
-	      i32.const 1  ;; format
-	      i32.const 6  ;; size
+	      struct.set $Class $identityHash
+	      i32.const 1
+	      struct.set $Class $format
 	      i32.const 6
-	      (array.new_default $ObjectArray)
-	      global.get $objectClass  ;; superclass
-	      ref.null $Dictionary     ;; methodDict
-	      ref.null any  ;; instVarNames
-	      ref.null any  ;; name
-	      i32.const 0   ;; instSize
-	      struct.new $Class
+	      struct.set $Class $size
+	      i32.const 6
+	      call $createObjectArray
+	      struct.set $Class $slots
+	      global.get $objectClass
+	      struct.set $Class $superclass
+	      ;; methodDict stays null
+	      ;; instVarNames stays null
+	      ;; name stays null
+	      i32.const 0
+	      struct.set $Class $instSize
 	      global.set $dictionaryClass
 	      
 	      ;; Create special objects
