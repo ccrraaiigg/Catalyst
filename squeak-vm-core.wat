@@ -7,12 +7,6 @@
   (import "system" "currentTimeMillis" (func $currentTimeMillis (result i64)))
   (import "system" "consoleLog" (func $consoleLog (param i32)))
   
-  ;; === WASM Exception Types for VM Control Flow ===
-  (tag $Return (param (ref null any)))
-  (tag $PrimitiveFailed)
-  (tag $DoesNotUnderstand (param (ref null any)) (param (ref null any)) (param (ref null any)))
-  (tag $ProcessSwitch (param (ref null $Process)))
-  
   ;; === WASM GC Type Hierarchy ===
   
   ;; Array types (must be defined before use)
@@ -119,7 +113,13 @@
     (field $size i32)
     (field $slots (ref null $ObjectArray))
   )))
-  
+
+  ;; === WASM Exception Types for VM Control Flow ===
+  (tag $Return (param (ref null any)))
+  (tag $PrimitiveFailed)
+  (tag $DoesNotUnderstand (param (ref null any)) (param (ref null any)) (param (ref null any)))
+  (tag $ProcessSwitch (param (ref null $Process)))
+
   ;; === Global VM State ===
   
   (global $activeContext (mut (ref null $Context)) (ref.null $Context))
