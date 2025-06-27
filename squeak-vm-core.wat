@@ -18,7 +18,7 @@
 	 
 	 ;; Type 2: Base Squeak object - must define a proper base
 	 (type $SqueakObject (sub (struct 
-				   (field $class (ref null 5))  ;; References $Class (index 5)
+				   (field $class (mut (ref null 5)))  ;; References $Class (index 5)
 				   (field $identityHash i32)
 				   (field $format i32)
 				   (field $size i32)
@@ -27,7 +27,7 @@
 	 ;; Type 3: Variable objects (most Squeak objects) - MUST match parent exactly + additional fields
 	 (type $VariableObject (sub 2 (struct 
 				       ;; First 4 fields MUST match SqueakObject exactly
-				       (field $class (ref null 5))  ;; References $Class
+				       (field $class (mut (ref null 5)))  ;; References $Class
 				       (field $identityHash i32)
 				       (field $format i32)
 				       (field $size i32)
@@ -38,7 +38,7 @@
 	 ;; Type 4: Dictionary for method lookup - extends VariableObject
 	 (type $Dictionary (sub 3 (struct
 				   ;; First 5 fields MUST match VariableObject exactly
-				   (field $class (ref null 5))  ;; References $Class
+				   (field $class (mut (ref null 5)))  ;; References $Class
 				   (field $identityHash i32)
 				   (field $format i32)
 				   (field $size i32)
@@ -68,7 +68,7 @@
 	 ;; Type 6: CompiledMethod objects - extends VariableObject
 	 (type $CompiledMethod (sub 3 (struct
 				       ;; First 5 fields MUST match VariableObject exactly
-				       (field $class (ref null 5))  ;; References $Class
+				       (field $class (mut (ref null 5)))  ;; References $Class
 				       (field $identityHash i32)
 				       (field $format i32)
 				       (field $size i32)
@@ -83,7 +83,7 @@
 	 ;; Type 7: Context objects - extends VariableObject
 	 (type $Context (sub 3 (struct
 				;; First 5 fields MUST match VariableObject exactly
-				(field $class (ref null 5))  ;; References $Class
+				(field $class (mut (ref null 5)))  ;; References $Class
 				(field $identityHash i32)
 				(field $format i32)
 				(field $size i32)
@@ -99,7 +99,7 @@
 	 ;; Type 8: Process objects - extends VariableObject
 	 (type $Process (sub 3 (struct
 				;; First 5 fields MUST match VariableObject exactly
-				(field $class (ref null 5))  ;; References $Class
+				(field $class (mut (ref null 5)))  ;; References $Class
 				(field $identityHash i32)
 				(field $format i32)
 				(field $size i32)
@@ -114,7 +114,7 @@
 	 ;; Type 9: String objects - extends SqueakObject (not VariableObject)
 	 (type $String (sub 2 (struct
 			       ;; First 4 fields MUST match SqueakObject exactly
-			       (field $class (ref null 5))  ;; References $Class
+			       (field $class (mut (ref null 5)))  ;; References $Class
 			       (field $identityHash i32)
 			       (field $format i32)
 			       (field $size i32)
@@ -125,7 +125,7 @@
 	 ;; Type 10: Array objects - extends VariableObject
 	 (type $Array (sub 3 (struct
 			      ;; First 5 fields MUST match VariableObject exactly
-			      (field $class (ref null 5))  ;; References $Class
+			      (field $class (mut (ref null 5)))  ;; References $Class
 			      (field $identityHash i32)
 			      (field $format i32)
 			      (field $size i32)
