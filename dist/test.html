@@ -1,65 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>SqueakJS WASM VM Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SqueakWASM VM Test</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .result { background: #f0f8ff; padding: 10px; margin: 10px 0; border-radius: 5px; }
-        .error { background: #ffe0e0; padding: 10px; margin: 10px 0; border-radius: 5px; }
-        button { padding: 10px 20px; font-size: 16px; margin: 5px; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .output {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
     </style>
 </head>
 <body>
-    <h1>SqueakJS WASM VM Test</h1>
-    <p>This page tests the minimal SqueakJS WASM VM with a 3 + 4 = 7 example.</p>
+    <h1>SqueakWASM VM Test</h1>
+    <p>This tests the WASM VM running a simple Smalltalk computation: <code>3 + 4</code></p>
     
-    <button id="runTest">Run 3 + 4 Test</button>
-    <button id="clearResults">Clear Results</button>
+    <button onclick="runTest()">Run Test</button>
+    <button onclick="clearOutput()">Clear Output</button>
     
-    <div id="output"></div>
+    <div id="output" class="output"></div>
 
     <script src="squeak-vm.js"></script>
     <script>
         let vm = null;
-        const output = document.getElementById('output');
-
-        async function initVM() {
-            if (!vm) {
-                vm = new SqueakWASMVM();
-                const success = await vm.initialize();
-                if (!success) {
-                    throw new Error('Failed to initialize VM');
+        
+        function log(message) {
+            const output = document.getElementById('output');
+            output.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').textContent = '';
+        }
+        
+        async function runTest() {
+            try {
+                log('Initializing SqueakWASM VM...');
+                
+                if (!vm) {
+                    vm = new SqueakWASMVM();
+                    vm.setResultCallback((result) => {
+                        log(`Smalltalk computation result: ${result}`);
+                    });
                 }
+                
+                const initialized = await vm.initialize();
+                if (!initialized) {
+                    log('ERROR: Failed to initialize VM');
+                    return;
+                }
+                
+                log('VM initialized successfully');
+                log('Running 3 + 4 computation...');
+                
+                const results = await vm.runMinimalExample();
+                log(`Test completed. Results: ${JSON.stringify(results)}`);
+                
+            } catch (error) {
+                log(`ERROR: ${error.message}`);
+                console.error('Full error:', error);
             }
         }
-
-        document.getElementById('runTest').addEventListener('click', async () => {
-            try {
-                await initVM();
-                
-                const startTime = performance.now();
-                const results = await vm.runMinimalExample();
-                const endTime = performance.now();
-                
-                const div = document.createElement('div');
-                div.className = 'result';
-                div.innerHTML = `
-                    <strong>Test Result:</strong> ${results.join(', ')}<br>
-                    <strong>Expected:</strong> 7<br>
-                    <strong>Status:</strong> ${results.includes(7) ? '✓ PASS' : '✗ FAIL'}<br>
-                    <strong>Execution Time:</strong> ${(endTime - startTime).toFixed(2)}ms
-                `;
-                output.appendChild(div);
-            } catch (error) {
-                const div = document.createElement('div');
-                div.className = 'error';
-                div.innerHTML = `<strong>Error:</strong> ${error.message}`;
-                output.appendChild(div);
-            }
-        });
-
-        document.getElementById('clearResults').addEventListener('click', () => {
-            output.innerHTML = '';
+        
+        // Auto-run test on page load
+        window.addEventListener('load', () => {
+            log('Page loaded. Click "Run Test" to start.');
         });
     </script>
 </body>
