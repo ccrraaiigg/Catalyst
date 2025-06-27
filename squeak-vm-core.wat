@@ -54,8 +54,8 @@
 			      (field $slots (ref null 0))  ;; References $ObjectArray
 			      (field $superclass (ref null 5))  ;; References $Class
 			      (field $methodDict (ref null 4))  ;; References $Dictionary
-			      (field $instVarNames (ref null any))
-			      (field $name (ref null any))
+			      (field $instVarNames (ref null eq))
+			      (field $name (ref null eq))
 			      (field $instSize i32)
 			      )))
 	 
@@ -83,7 +83,7 @@
 				(field $pc i32)
 				(field $stackp i32)
 				(field $method (ref null 6))  ;; References $CompiledMethod
-				(field $receiver (ref null any))
+				(field $receiver (ref null eq))
 				)))
 	 
 	 ;; Type 8: Process objects
@@ -96,7 +96,7 @@
 				(field $nextLink (ref null 8))  ;; Self-reference to $Process
 				(field $suspendedContext (ref null 7))  ;; References $Context
 				(field $priority i32)
-				(field $myList (ref null any))
+				(field $myList (ref null eq))
 				)))
 	 
 	 ;; Type 9: String objects
@@ -119,9 +119,9 @@
 	 )
 
 	;; === WASM Exception Types for VM Control Flow ===
-	(tag $Return (param (ref null any)))
+	(tag $Return (param (ref null eq)))
 	(tag $PrimitiveFailed)
-	(tag $DoesNotUnderstand (param (ref null any)) (param (ref null any)) (param (ref null any)))
+	(tag $DoesNotUnderstand (param (ref null eq)) (param (ref null eq)) (param (ref null eq)))
 	(tag $ProcessSwitch (param (ref null $Process)))
 
 	;; === Global VM State ===
@@ -134,9 +134,9 @@
 	(global $nextIdentityHash (mut i32) (i32.const 1))
 	
 	;; Special objects
-	(global $nilObject (mut (ref null any)) (ref.null any))
-	(global $trueObject (mut (ref null any)) (ref.null any))
-	(global $falseObject (mut (ref null any)) (ref.null any))
+	(global $nilObject (mut (ref null eq)) (ref.null eq))
+	(global $trueObject (mut (ref null eq)) (ref.null eq))
+	(global $falseObject (mut (ref null eq)) (ref.null eq))
 	
 	;; Special classes
 	(global $objectClass (mut (ref null $Class)) (ref.null $Class))
@@ -148,14 +148,14 @@
 	(global $dictionaryClass (mut (ref null $Class)) (ref.null $Class))
 	
 	;; Special selectors for message sending
-	(global $plusSelector (mut (ref null any)) (ref.null any))
-	(global $minusSelector (mut (ref null any)) (ref.null any))
-	(global $timesSelector (mut (ref null any)) (ref.null any))
-	(global $divideSelector (mut (ref null any)) (ref.null any))
-	(global $equalsSelector (mut (ref null any)) (ref.null any))
-	(global $doesNotUnderstandSelector (mut (ref null any)) (ref.null any))
-	(global $squaredSelector (mut (ref null any)) (ref.null any))
-	(global $reportToJSSelector (mut (ref null any)) (ref.null any))
+	(global $plusSelector (mut (ref null eq)) (ref.null eq))
+	(global $minusSelector (mut (ref null eq)) (ref.null eq))
+	(global $timesSelector (mut (ref null eq)) (ref.null eq))
+	(global $divideSelector (mut (ref null eq)) (ref.null eq))
+	(global $equalsSelector (mut (ref null eq)) (ref.null eq))
+	(global $doesNotUnderstandSelector (mut (ref null eq)) (ref.null eq))
+	(global $squaredSelector (mut (ref null eq)) (ref.null eq))
+	(global $reportToJSSelector (mut (ref null eq)) (ref.null eq))
 	
 	;; SmallInteger class for proper method lookup
 	(global $smallIntegerClass (mut (ref null $Class)) (ref.null $Class))
@@ -304,7 +304,7 @@
 	(func $lookupMethod (param $class (ref null $Class)) (param $selector (ref null eq)) (result (ref null $CompiledMethod))
 	      (local $currentClass (ref null $Class))
 	      (local $methodDict (ref null $Dictionary))
-	      (local $method (ref null any))
+	      (local $method (ref null $CompiledMethod))
 	      
 	      local.get $class
 	      local.set $currentClass
@@ -358,7 +358,7 @@
 	
 	;; === Message Sending ===
 	
-	(func $sendMessage (param $receiver (ref null any)) (param $selector (ref null any)) (param $argCount i32)
+	(func $sendMessage (param $receiver (ref null eq)) (param $selector (ref null eq)) (param $argCount i32)
 	      (local $receiverClass (ref null $Class))
 	      (local $method (ref null $CompiledMethod))
 	      (local $newContext (ref $Context))
@@ -469,7 +469,7 @@
 	
 	;; === Object Class Detection ===
 	
-	(func $getObjectClass (param $obj (ref null any)) (result (ref null $Class))
+	(func $getObjectClass (param $obj (ref null eq)) (result (ref null $Class))
 	      local.get $obj
 	      ref.test (ref i31)
 	      if (result (ref null $Class))
@@ -484,7 +484,7 @@
 	
 	;; === Context Stack Operations ===
 	
-	(func $push (param $value (ref null any))
+	(func $push (param $value (ref null eq))
 	      global.get $activeContext
 	      struct.get $Context $slots
 	      global.get $sp
@@ -497,7 +497,7 @@
 	      global.set $sp
 	      )
 	
-	(func $pop (result (ref null any))
+	(func $pop (result (ref null eq))
 	      global.get $sp
 	      i32.const 1
 	      i32.sub
@@ -509,7 +509,7 @@
 	      array.get $ObjectArray
 	      )
 	
-	(func $stackValue (param $offset i32) (result (ref null any))
+	(func $stackValue (param $offset i32) (result (ref null eq))
 	      global.get $activeContext
 	      struct.get $Context $slots
 	      global.get $sp
@@ -845,7 +845,7 @@
 	
 	;; === Context Returns ===
 	
-	(func $doReturn (param $value (ref null any))
+	(func $doReturn (param $value (ref null eq))
 	      (local $sender (ref null $Context))
 	      
 	      global.get $activeContext
@@ -874,7 +874,7 @@
 	
 	;; === Helper Functions ===
 	
-	(func $getInstanceVariable (param $object (ref null any)) (param $index i32) (result (ref null any))
+	(func $getInstanceVariable (param $object (ref null eq)) (param $index i32) (result (ref null eq))
 	      local.get $object
 	      ref.cast (ref $VariableObject)
 	      struct.get $VariableObject $slots
@@ -882,7 +882,7 @@
 	      array.get $ObjectArray
 	      )
 	
-	(func $setInstanceVariable (param $object (ref null any)) (param $index i32) (param $value (ref null any))
+	(func $setInstanceVariable (param $object (ref null eq)) (param $index i32) (param $value (ref null eq))
 	      local.get $object
 	      ref.cast (ref $VariableObject)
 	      struct.get $VariableObject $slots
@@ -891,14 +891,14 @@
 	      array.set $ObjectArray
 	      )
 	
-	(func $getMethodLiteral (param $method (ref null $CompiledMethod)) (param $index i32) (result (ref null any))
+	(func $getMethodLiteral (param $method (ref null $CompiledMethod)) (param $index i32) (result (ref null eq))
 	      local.get $method
 	      struct.get $CompiledMethod $slots
 	      local.get $index
 	      array.get $ObjectArray
 	      )
 	
-	(func $setTemporary (param $index i32) (param $value (ref null any))
+	(func $setTemporary (param $index i32) (param $value (ref null eq))
 	      global.get $activeContext
 	      struct.get $Context $slots
 	      local.get $index
@@ -908,8 +908,8 @@
 	      array.set $ObjectArray
 	      )
 	
-	(func $sendLiteralSelector (param $selector (ref null any)) (param $argCount i32)
-	      (local $receiver (ref null any))
+	(func $sendLiteralSelector (param $selector (ref null eq)) (param $argCount i32)
+	      (local $receiver (ref null eq))
 	      
 	      ;; Get receiver from stack (it's at stackValue(argCount))
 	      local.get $argCount
