@@ -216,7 +216,7 @@
 	      i32.const 0        ;; pc
 	      i32.const 0        ;; stackp
 	      ref.null $CompiledMethod  ;; method
-	      ref.null any       ;; receiver
+	      ref.null eq       ;; receiver
 	      struct.new $Context
 	      )
 	
@@ -246,7 +246,7 @@
 	      local.get $count
 	      i32.ge_u
 	      if
-              ref.null any
+              ref.null eq
               return
 	      end
 	      
@@ -269,7 +269,7 @@
 	      br $search_loop
 	      end
 	      
-	      ref.null any
+	      ref.null eq
 	      )
 
 	(func $dictionary_at_put (param $dict (ref $Dictionary)) (param $key (ref null eq)) (param $value (ref null eq))
