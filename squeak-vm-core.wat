@@ -20,12 +20,12 @@
   (type $ByteArray (array i8))
   
   ;; Base Squeak object
-  (type $SqueakObject (struct 
+  (type $SqueakObject (sub (struct 
     (field $class (ref null $Class))
     (field $identityHash i32)
     (field $format i32)
     (field $size i32)
-  ))
+  )))
   
   ;; Variable objects (most Squeak objects)
   (type $VariableObject (sub $SqueakObject (struct 
