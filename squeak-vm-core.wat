@@ -651,11 +651,11 @@
 	      else
               ;; It's a real object - no cast needed
               local.get $receiver
+	      ref.cast (ref null $SqueakObject)
               local.get $bytecode
               i32.const 0x07
               i32.and
               local.get $value
-	      ref.cast (ref null $SqueakObject)
               call $setInstanceVariable
 	      end
 	      return
