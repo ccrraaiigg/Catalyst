@@ -535,7 +535,9 @@
 	      (local $value (ref null eq))
 	      (local $context (ref $Context))
 	      (local $receiver (ref null eq))
-		     
+	      (local $operand1 i32)
+	      (local $operand2 i32)
+	      
 	      ;; Get context with proper null handling
 	      global.get $activeContext
 	      ref.as_non_null
@@ -805,18 +807,20 @@
 	      return
 	      end
 	      
-	      ;; Arithmetic sends
 	      local.get $bytecode
-	      i32.const 0xB0
+	      i32.const 176
 	      i32.eq
-	      if  ;; send + (addition)
+	      if ;; label = @1
 	      call $pop
-	      call $pop
-	      ;; For now, assume SmallIntegers
 	      ref.cast (ref i31)
 	      i31.get_s
+	      local.set $operand2
+	      call $pop
 	      ref.cast (ref i31)
 	      i31.get_s
+	      local.set $operand1
+	      local.get $operand1
+	      local.get $operand2
 	      i32.add
 	      ref.i31
 	      call $push
@@ -871,6 +875,7 @@
 	      i32.const 0x0F
 	      i32.and
 	      call $getMethodLiteral
+	      ref.cast (ref null $SqueakObject)
 	      i32.const 0  ;; 0 arguments
 	      call $sendLiteralSelector
 	      return
