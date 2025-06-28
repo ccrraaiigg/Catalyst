@@ -224,7 +224,7 @@
 	      i32.const 0        ;; pc
 	      i32.const 0        ;; stackp
 	      ref.null $CompiledMethod  ;; method
-	      ref.null $SqueakObject       ;; receiver
+	      ref.null eq       ;; receiver
 	      struct.new $Context
 	      )
 	
@@ -472,7 +472,7 @@
 	      global.set $activeContext
 	      
 	      ;; Reset PC for new method
-	      i32.const 0
+	      i32.const -1
 	      global.set $pc
 	      )
 	
@@ -875,7 +875,6 @@
 	      i32.const 0x0F
 	      i32.and
 	      call $getMethodLiteral
-	      ref.cast (ref null $SqueakObject)
 	      i32.const 0  ;; 0 arguments
 	      call $sendLiteralSelector
 	      return
@@ -1309,65 +1308,25 @@
 	      struct.new $CompiledMethod
 	      )
 	
-	(func $createSquaredMethodForSmallInteger (result (ref $CompiledMethod))
-	      (local $bytecodes (ref $ByteArray))
-	      (local $literals (ref $ObjectArray))
-	      
-	      ;; Create bytecode for SmallInteger>>squared: self * self
-	      ;; Bytecodes: [0x70, 0x70, 0xB1, 0x7C]
-	      ;; 0x70 = push receiver (self)
-	      ;; 0x70 = push receiver (self) again
-	      ;; 0xB1 = send * (multiply)
-	      ;; 0x7C = return top
-	      (array.new_fixed $ByteArray 4
-			       (i32.const 0x70)  ;; push self
-			       (i32.const 0x70)  ;; push self again
-			       (i32.const 0xB1)  ;; send *
-			       (i32.const 0x7C)  ;; return top
-			       )
-	      local.set $bytecodes
-	      
-	      ;; Create empty literals array
-	      i32.const 1
-	      (array.new_default $ObjectArray)
-	      local.set $literals
-	      
-	      ;; Create CompiledMethod object
-	      global.get $methodClass
-	      call $nextIdentityHash
-	      i32.const 1    ;; format
-	      i32.const 1    ;; size (literals)
-	      local.get $literals
-	      i32.const 0    ;; header
-	      local.get $bytecodes
-	      i32.const 0    ;; invocationCount
-	      ref.null func  ;; compiledWasm
-	      struct.new $CompiledMethod
-	      )
-	
 	(func (export "createMinimalBootstrap") (result i32)
 	      (local $method (ref $CompiledMethod))
-	      (local $squaredMethod (ref $CompiledMethod))
 	      (local $context (ref $Context))
 	      
 	      ;; Create basic classes and special objects
 	      call $createBasicClasses
 	      call $createSpecialSelectors
 	      
-	      ;; Create the SmallInteger>>squared method
-	      call $createSquaredMethodForSmallInteger
-	      local.set $squaredMethod
+	      ;; Create the main method that does "3 squared"
+	      call $createSquaredMethod
+	      local.set $method
 	      
 	      ;; Install the squared method in SmallInteger's method dictionary
 	      global.get $smallIntegerClass
 	      struct.get $Class $methodDict
+	      ref.as_non_null
 	      global.get $squaredSelector
-	      local.get $squaredMethod
+	      local.get $method
 	      call $dictionary_at_put
-	      
-	      ;; Create the main method that does "3 squared"
-	      call $createSquaredMethod
-	      local.set $method
 	      
 	      ;; Create initial context to execute the method
 	      global.get $contextClass
