@@ -54,7 +54,7 @@ class SqueakWASMVM {
                 throw new Error('Failed to create minimal bootstrap');
             }
 
-            console.log('Running 3 + 4 example...');
+            console.log('Running example...');
             
             // Clear results
             this.results = [];

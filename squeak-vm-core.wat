@@ -533,6 +533,13 @@
 	
 	(func $executeBytecode (param $bytecode i32)
 	      (local $value (ref null eq))
+	      (local $context (ref $Context))
+	      (local $receiver (ref null eq))
+		     
+	      ;; Get context with proper null handling
+	      global.get $activeContext
+	      ref.as_non_null
+	      local.set $context
 	      
 	      ;; Load receiver
 	      local.get $bytecode
@@ -541,13 +548,13 @@
 	      i32.and
 	      i32.eq
 	      if
-	      global.get $activeContext
+	      local.get $context
 	      struct.get $Context $receiver
 	      call $push
 	      return
 	      end
 	      
-	      ;; Load instance variable
+	      ;; Load instance variable - NEED TO CHECK FOR SMALLINTEGER
 	      local.get $bytecode
 	      i32.const 0x10
 	      i32.ge_u
@@ -556,13 +563,27 @@
 	      i32.le_u
 	      i32.and
 	      if
-	      global.get $activeContext
+	      local.get $context
 	      struct.get $Context $receiver
-	      local.get $bytecode
-	      i32.const 0x0F
-	      i32.and
-	      call $getInstanceVariable
-	      call $push
+	      local.set $receiver
+	      
+	      ;; Check if receiver is SmallInteger (i31ref) or actual object
+	      local.get $receiver
+	      ref.test (ref i31)
+	      if
+              ;; SmallIntegers don't have instance variables - this should error
+              ;; Push nil or trap - SmallIntegers accessing inst vars is invalid
+              global.get $nilObject
+              call $push
+	      else
+              ;; It's a real object - no cast needed, WASM knows it's SqueakObject
+              local.get $receiver
+              local.get $bytecode
+              i32.const 0x0F
+              i32.and
+              call $getInstanceVariable
+              call $push
+	      end
 	      return
 	      end
 	      
@@ -605,7 +626,7 @@
 	      return
 	      end
 	      
-	      ;; Store and pop receiver variable
+	      ;; Store and pop receiver variable - ALSO NEED TO CHECK FOR SMALLINTEGER
 	      local.get $bytecode
 	      i32.const 0x60
 	      i32.ge_u
@@ -616,13 +637,25 @@
 	      if
 	      call $pop
 	      local.set $value
-	      global.get $activeContext
+	      local.get $context
 	      struct.get $Context $receiver
-	      local.get $bytecode
-	      i32.const 0x07
-	      i32.and
-	      local.get $value
-	      call $setInstanceVariable
+	      local.set $receiver
+	      
+	      ;; Check if receiver is SmallInteger
+	      local.get $receiver
+	      ref.test (ref i31)
+	      if
+              ;; SmallIntegers are immutable - this should error or be ignored
+              ;; For now, just ignore the store
+	      else
+              ;; It's a real object - no cast needed
+              local.get $receiver
+              local.get $bytecode
+              i32.const 0x07
+              i32.and
+              local.get $value
+              call $setInstanceVariable
+	      end
 	      return
 	      end
 	      
