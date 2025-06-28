@@ -81,7 +81,7 @@
 					      (field $pc (mut i32))
 					      (field $stackp (mut i32))
 					      (field $method (mut (ref null $CompiledMethod)))
-					      (field $receiver (mut (ref null $SqueakObject)))
+					      (field $receiver (mut (ref null eq)))
 					      )))
 	 
 	 ;; Type 8: Process objects
@@ -117,9 +117,13 @@
 	 )
 
 	;; === WASM Exception Types for VM Control Flow ===
-	(tag $Return (param (ref null $SqueakObject)))
+	(tag $Return (param (ref null eq)))
 	(tag $PrimitiveFailed)
-	(tag $DoesNotUnderstand (param (ref null $SqueakObject)) (param (ref null $SqueakObject)) (param (ref null $SqueakObject)))
+	(tag $DoesNotUnderstand
+	     (param (ref null eq)) ;; receiver
+	     (param (ref null $SqueakObject)) ;; selector
+	     (param (ref null $SqueakObject)) ;; arguments
+	     )
 	(tag $ProcessSwitch (param (ref null $Process)))
 
 	;; === Global VM State ===
@@ -363,7 +367,7 @@
 
 	;; === Message Sending ===
 	
-	(func $sendMessage (param $receiver (ref null $SqueakObject)) (param $selector (ref null $SqueakObject)) (param $argCount i32)
+	(func $sendMessage (param $receiver (ref null eq)) (param $selector (ref null $SqueakObject)) (param $argCount i32)
 	      (local $receiverClass (ref null $Class))
 	      (local $method (ref null $CompiledMethod))
 	      (local $newContext (ref $Context))
@@ -474,7 +478,7 @@
 	
 	;; === Object Class Detection ===
 	
-	(func $getObjectClass (param $obj (ref null $SqueakObject)) (result (ref null $Class))
+	(func $getObjectClass (param $obj (ref null eq)) (result (ref null $Class))
 	      local.get $obj
 	      ref.test (ref i31)
 	      if (result (ref null $Class))
@@ -856,7 +860,7 @@
 	
 	;; === Context Returns ===
 	
-	(func $doReturn (param $value (ref null $SqueakObject))
+	(func $doReturn (param $value (ref null eq))
 	      (local $sender (ref null $Context))
 	      
 	      global.get $activeContext
@@ -885,7 +889,7 @@
 	
 	;; === Helper Functions ===
 	
-	(func $getInstanceVariable (param $object (ref null $SqueakObject)) (param $index i32) (result (ref null $SqueakObject))
+	(func $getInstanceVariable (param $object (ref null $SqueakObject)) (param $index i32) (result (ref null eq))
 	      local.get $object
 	      ref.cast (ref $VariableObject)
 	      struct.get $VariableObject $slots
@@ -893,7 +897,7 @@
 	      array.get $ObjectArray
 	      )
 	
-	(func $setInstanceVariable (param $object (ref null $SqueakObject)) (param $index i32) (param $value (ref null $SqueakObject))
+	(func $setInstanceVariable (param $object (ref null $SqueakObject)) (param $index i32) (param $value (ref null eq))
 	      local.get $object
 	      ref.cast (ref $VariableObject)
 	      struct.get $VariableObject $slots
@@ -902,14 +906,14 @@
 	      array.set $ObjectArray
 	      )
 	
-	(func $getMethodLiteral (param $method (ref null $CompiledMethod)) (param $index i32) (result (ref null $SqueakObject))
+	(func $getMethodLiteral (param $method (ref null $CompiledMethod)) (param $index i32) (result (ref null eq))
 	      local.get $method
 	      struct.get $CompiledMethod $slots
 	      local.get $index
 	      array.get $ObjectArray
 	      )
 	
-	(func $setTemporary (param $index i32) (param $value (ref null $SqueakObject))
+	(func $setTemporary (param $index i32) (param $value (ref null eq))
 	      global.get $activeContext
 	      struct.get $Context $slots
 	      local.get $index
@@ -920,7 +924,7 @@
 	      )
 	
 	(func $sendLiteralSelector (param $selector (ref null $SqueakObject)) (param $argCount i32)
-	      (local $receiver (ref null $SqueakObject))
+	      (local $receiver (ref null eq))
 	      
 	      ;; Get receiver from stack (it's at stackValue(argCount))
 	      local.get $argCount
