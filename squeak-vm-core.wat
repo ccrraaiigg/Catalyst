@@ -9,7 +9,7 @@
 	
 	(rec
 	 ;; Type 0: ObjectArray
-	 (type $ObjectArray (array (mut (ref null $SqueakObject))))
+	 (type $ObjectArray (array (mut (ref null eq))))
 	 
 	 ;; Type 1: ByteArray 
 	 (type $ByteArray (array (mut i8)))
@@ -226,7 +226,7 @@
 	
 	;; === Dictionary Operations for Method Lookup ===
 
-	(func $dictionary_at (param $dict (ref null $Dictionary)) (param $key (ref null $SqueakObject)) (result (ref null $SqueakObject))
+	(func $dictionary_at (param $dict (ref null $Dictionary)) (param $key (ref null eq)) (result (ref null eq))
 	      (local $i i32)
 	      (local $keys (ref null $ObjectArray))
 	      (local $values (ref null $ObjectArray))
@@ -276,7 +276,7 @@
 	      ref.null $SqueakObject
 	      )
 
-	(func $dictionary_at_put (param $dict (ref $Dictionary)) (param $key (ref null $SqueakObject)) (param $value (ref null $SqueakObject))
+	(func $dictionary_at_put (param $dict (ref $Dictionary)) (param $key (ref null eq)) (param $value (ref null eq))
 	      (local $count i32)
 	      
 	      local.get $dict
@@ -340,15 +340,6 @@
 	      local.get $methodDict
 	      local.get $selector
 	      call $dictionary_at
-	      local.set $maybeMethod
-	      local.get $maybeMethod
-	      ref.test (ref null $CompiledMethod)  ;; returns i32
-	      if (result (ref null $CompiledMethod))
-	      local.get $maybeMethod
-	      ref.cast (ref null $CompiledMethod)
-	      else
-	      ref.null $CompiledMethod
-	      end
 	      local.set $method
 	      
 	      local.get $method
@@ -497,7 +488,7 @@
 	
 	;; === Context Stack Operations ===
 	
-	(func $push (param $value (ref null $SqueakObject))
+	(func $push (param $value (ref null eq))
 	      global.get $activeContext
 	      struct.get $Context $slots
 	      global.get $sp
@@ -510,7 +501,7 @@
 	      global.set $sp
 	      )
 	
-	(func $pop (result (ref null $SqueakObject))
+	(func $pop (result (ref null eq))
 	      global.get $sp
 	      i32.const 1
 	      i32.sub
@@ -522,7 +513,7 @@
 	      array.get $ObjectArray
 	      )
 	
-	(func $stackValue (param $offset i32) (result (ref null $SqueakObject))
+	(func $stackValue (param $offset i32) (result (ref null eq))
 	      global.get $activeContext
 	      struct.get $Context $slots
 	      global.get $sp
