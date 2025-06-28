@@ -7,136 +7,119 @@
 	(import "system" "currentTimeMillis" (func $currentTimeMillis (result i64)))
 	(import "system" "consoleLog" (func $consoleLog (param i32)))
 	
-	;; === WASM GC Type Hierarchy - Fixed subtyping relationships ===
-	
 	(rec
-	 ;; Type 0: ObjectArray - needs to be first so others can reference it
-	 (type $ObjectArray (array (mut (ref null eq))))
+	 ;; Type 0: ObjectArray
+	 (type $ObjectArray (array (mut (ref null $SqueakObject))))
 	 
 	 ;; Type 1: ByteArray 
 	 (type $ByteArray (array (mut i8)))
 	 
-	 ;; Type 2: Base Squeak object - must define a proper base
+	 ;; Type 2: Base Squeak object
 	 (type $SqueakObject (sub (struct 
-				   (field $class (mut (ref null 5)))  ;; References $Class (index 5)
+				   (field $class (mut (ref null $Class)))
 				   (field $identityHash i32)
 				   (field $format i32)
 				   (field $size i32)
 				   )))
 	 
-	 ;; Type 3: Variable objects (most Squeak objects) - MUST match parent exactly + additional fields
-	 (type $VariableObject (sub 2 (struct 
-				       ;; First 4 fields MUST match SqueakObject exactly
-				       (field $class (mut (ref null 5)))  ;; References $Class
-				       (field $identityHash i32)
-				       (field $format i32)
-				       (field $size i32)
-				       ;; Additional fields for this subtype
-				       (field $slots (ref null 0))  ;; References $ObjectArray
-				       )))
+	 ;; Type 3: Variable objects
+	 (type $VariableObject (sub $SqueakObject (struct 
+						   (field $class (mut (ref null $Class)))
+						   (field $identityHash i32)
+						   (field $format i32)
+						   (field $size i32)
+						   (field $slots (ref null $ObjectArray))
+						   )))
 	 
-	 ;; Type 4: Dictionary for method lookup - extends VariableObject
-	 (type $Dictionary (sub 3 (struct
-				   ;; First 5 fields MUST match VariableObject exactly
-				   (field $class (mut (ref null 5)))  ;; References $Class
-				   (field $identityHash i32)
-				   (field $format i32)
-				   (field $size i32)
-				   (field $slots (ref null 0))  ;; References $ObjectArray
-				   ;; Additional fields for Dictionary
-				   (field $keys (ref null 0))   ;; References $ObjectArray
-				   (field $values (ref null 0)) ;; References $ObjectArray
-				   (field $count (mut i32))
-				   )))
+	 ;; Type 4: Dictionary
+	 (type $Dictionary (sub $VariableObject (struct
+						 (field $class (mut (ref null $Class)))
+						 (field $identityHash i32)
+						 (field $format i32)
+						 (field $size i32)
+						 (field $slots (ref null $ObjectArray))
+						 (field $keys (ref null $ObjectArray))
+						 (field $values (ref null $ObjectArray))
+						 (field $count (mut i32))
+						 )))
 	 
-	 ;; Type 5: Class objects - extends VariableObject
-	 (type $Class (sub 3 (struct
-			      ;; First 5 fields MUST match VariableObject exactly
-			      (field $class (mut (ref null 5)))  ;; Self-reference to $Class
-			      (field $identityHash i32)
-			      (field $format i32)
-			      (field $size i32)
-			      (field $slots (ref null 0))  ;; References $ObjectArray
-			      ;; Additional fields for Class
-			      (field $superclass (ref null 5))  ;; References $Class
-			      (field $methodDict (mut (ref null 4)))  ;; References $Dictionary
-			      (field $instVarNames (ref null eq))
-			      (field $name (ref null eq))
-			      (field $instSize i32)
-			      )))
+	 ;; Type 5: Class objects
+	 (type $Class (sub $VariableObject (struct
+					    (field $class (mut (ref null $Class)))
+					    (field $identityHash i32)
+					    (field $format i32)
+					    (field $size i32)
+					    (field $slots (ref null $ObjectArray))
+					    (field $superclass (ref null $Class))
+					    (field $methodDict (mut (ref null $Dictionary)))
+					    (field $instVarNames (ref null $SqueakObject))
+					    (field $name (ref null $SqueakObject))
+					    (field $instSize i32)
+					    )))
 	 
-	 ;; Type 6: CompiledMethod objects - extends VariableObject
-	 (type $CompiledMethod (sub 3 (struct
-				       ;; First 5 fields MUST match VariableObject exactly
-				       (field $class (mut (ref null 5)))  ;; References $Class
-				       (field $identityHash i32)
-				       (field $format i32)
-				       (field $size i32)
-				       (field $slots (ref null 0))  ;; Literals - references $ObjectArray
-				       ;; Additional fields for CompiledMethod
-				       (field $header i32)
-				       (field $bytecodes (ref null 1))  ;; References $ByteArray
-				       (field $invocationCount i32)
-				       (field $compiledWasm (ref null func))
-				       )))
+	 ;; Type 6: CompiledMethod objects
+	 (type $CompiledMethod (sub $VariableObject (struct
+						     (field $class (mut (ref null $Class)))
+						     (field $identityHash i32)
+						     (field $format i32)
+						     (field $size i32)
+						     (field $slots (ref null $ObjectArray))
+						     (field $header i32)
+						     (field $bytecodes (ref null $ByteArray))
+						     (field $invocationCount i32)
+						     (field $compiledWasm (ref null func))
+						     )))
 	 
-	 ;; Type 7: Context objects - extends VariableObject
-	 (type $Context (sub 3 (struct
-				;; First 5 fields MUST match VariableObject exactly
-				(field $class (mut (ref null 5)))  ;; References $Class
-				(field $identityHash i32)
-				(field $format i32)
-				(field $size i32)
-				(field $slots (ref null 0))  ;; Stack and temps - references $ObjectArray
-				;; Additional fields for Context
-				(field $sender (mut (ref null 7)))  ;; Self-reference to $Context
-				(field $pc (mut i32))
-				(field $stackp (mut i32))
-				(field $method (mut (ref null 6)))  ;; References $CompiledMethod
-				(field $receiver (mut (ref null eq)))
-				)))
+	 ;; Type 7: Context objects
+	 (type $Context (sub $VariableObject (struct
+					      (field $class (mut (ref null $Class)))
+					      (field $identityHash i32)
+					      (field $format i32)
+					      (field $size i32)
+					      (field $slots (ref null $ObjectArray))
+					      (field $sender (mut (ref null $Context)))
+					      (field $pc (mut i32))
+					      (field $stackp (mut i32))
+					      (field $method (mut (ref null $CompiledMethod)))
+					      (field $receiver (mut (ref null $SqueakObject)))
+					      )))
 	 
-	 ;; Type 8: Process objects - extends VariableObject
-	 (type $Process (sub 3 (struct
-				;; First 5 fields MUST match VariableObject exactly
-				(field $class (mut (ref null 5)))  ;; References $Class
-				(field $identityHash i32)
-				(field $format i32)
-				(field $size i32)
-				(field $slots (ref null 0))  ;; References $ObjectArray
-				;; Additional fields for Process
-				(field $nextLink (ref null 8))  ;; Self-reference to $Process
-				(field $suspendedContext (ref null 7))  ;; References $Context
-				(field $priority i32)
-				(field $myList (ref null eq))
-				)))
+	 ;; Type 8: Process objects
+	 (type $Process (sub $VariableObject (struct
+					      (field $class (mut (ref null $Class)))
+					      (field $identityHash i32)
+					      (field $format i32)
+					      (field $size i32)
+					      (field $slots (ref null $ObjectArray))
+					      (field $nextLink (ref null $Process))
+					      (field $suspendedContext (ref null $Context))
+					      (field $priority i32)
+					      (field $myList (ref null $SqueakObject))
+					      )))
 	 
-	 ;; Type 9: String objects - extends SqueakObject (not VariableObject)
-	 (type $String (sub 2 (struct
-			       ;; First 4 fields MUST match SqueakObject exactly
-			       (field $class (mut (ref null 5)))  ;; References $Class
-			       (field $identityHash i32)
-			       (field $format i32)
-			       (field $size i32)
-			       ;; Additional field for String
-			       (field $bytes (ref null 1))  ;; References $ByteArray
-			       )))
+	 ;; Type 9: String objects
+	 (type $String (sub $SqueakObject (struct
+					   (field $class (mut (ref null $Class)))
+					   (field $identityHash i32)
+					   (field $format i32)
+					   (field $size i32)
+					   (field $bytes (ref null $ByteArray))
+					   )))
 	 
-	 ;; Type 10: Array objects - extends VariableObject
-	 (type $Array (sub 3 (struct
-			      ;; First 5 fields MUST match VariableObject exactly
-			      (field $class (mut (ref null 5)))  ;; References $Class
-			      (field $identityHash i32)
-			      (field $format i32)
-			      (field $size i32)
-			      (field $slots (ref null 0))  ;; References $ObjectArray
-			      )))
+	 ;; Type 10: Array objects
+	 (type $Array (sub $VariableObject (struct
+					    (field $class (mut (ref null $Class)))
+					    (field $identityHash i32)
+					    (field $format i32)
+					    (field $size i32)
+					    (field $slots (ref null $ObjectArray))
+					    )))
 	 )
 
 	;; === WASM Exception Types for VM Control Flow ===
-	(tag $Return (param (ref null eq)))
+	(tag $Return (param (ref null $SqueakObject)))
 	(tag $PrimitiveFailed)
-	(tag $DoesNotUnderstand (param (ref null eq)) (param (ref null eq)) (param (ref null eq)))
+	(tag $DoesNotUnderstand (param (ref null $SqueakObject)) (param (ref null $SqueakObject)) (param (ref null $SqueakObject)))
 	(tag $ProcessSwitch (param (ref null $Process)))
 
 	;; === Global VM State ===
@@ -149,9 +132,9 @@
 	(global $nextIdentityHash (mut i32) (i32.const 1))
 	
 	;; Special objects
-	(global $nilObject (mut (ref null eq)) (ref.null eq))
-	(global $trueObject (mut (ref null eq)) (ref.null eq))
-	(global $falseObject (mut (ref null eq)) (ref.null eq))
+	(global $nilObject (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+	(global $trueObject (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+	(global $falseObject (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
 	
 	;; Special classes
 	(global $objectClass (mut (ref null $Class)) (ref.null $Class))
@@ -163,14 +146,14 @@
 	(global $dictionaryClass (mut (ref null $Class)) (ref.null $Class))
 	
 	;; Special selectors for message sending
-	(global $plusSelector (mut (ref null eq)) (ref.null eq))
-	(global $minusSelector (mut (ref null eq)) (ref.null eq))
-	(global $timesSelector (mut (ref null eq)) (ref.null eq))
-	(global $divideSelector (mut (ref null eq)) (ref.null eq))
-	(global $equalsSelector (mut (ref null eq)) (ref.null eq))
-	(global $doesNotUnderstandSelector (mut (ref null eq)) (ref.null eq))
-	(global $squaredSelector (mut (ref null eq)) (ref.null eq))
-	(global $reportToJSSelector (mut (ref null eq)) (ref.null eq))
+	(global $plusSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+	(global $minusSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+	(global $timesSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+	(global $divideSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+	(global $equalsSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+	(global $doesNotUnderstandSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+	(global $squaredSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+	(global $reportToJSSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
 	
 	;; SmallInteger class for proper method lookup
 	(global $smallIntegerClass (mut (ref null $Class)) (ref.null $Class))
@@ -206,10 +189,9 @@
 	      )
 
 	;; Create a new object array of given size
-	(func $createObjectArray (param $size i32) (result (ref 0))
+	(func $createObjectArray (param $size i32) (result (ref $ObjectArray))
 	      local.get $size
-	      ref.null any
-	      array.new $ObjectArray
+	      array.new_default $ObjectArray
 	      )
 	
 	(func $newDictionary (param $class (ref null $Class)) (param $size i32) (result (ref $Dictionary))
@@ -238,13 +220,13 @@
 	      i32.const 0        ;; pc
 	      i32.const 0        ;; stackp
 	      ref.null $CompiledMethod  ;; method
-	      ref.null eq       ;; receiver
+	      ref.null $SqueakObject       ;; receiver
 	      struct.new $Context
 	      )
 	
 	;; === Dictionary Operations for Method Lookup ===
 
-	(func $dictionary_at (param $dict (ref $Dictionary)) (param $key (ref null eq)) (result (ref null eq))
+	(func $dictionary_at (param $dict (ref null $Dictionary)) (param $key (ref null $SqueakObject)) (result (ref null $SqueakObject))
 	      (local $i i32)
 	      (local $keys (ref null $ObjectArray))
 	      (local $values (ref null $ObjectArray))
@@ -268,7 +250,7 @@
 	      local.get $count
 	      i32.ge_u
 	      if
-              ref.null eq
+              ref.null $SqueakObject
               return
 	      end
 	      
@@ -291,10 +273,10 @@
 	      br $search_loop
 	      end
 	      
-	      ref.null eq
+	      ref.null $SqueakObject
 	      )
 
-	(func $dictionary_at_put (param $dict (ref $Dictionary)) (param $key (ref null eq)) (param $value (ref null eq))
+	(func $dictionary_at_put (param $dict (ref $Dictionary)) (param $key (ref null $SqueakObject)) (param $value (ref null $SqueakObject))
 	      (local $count i32)
 	      
 	      local.get $dict
@@ -323,10 +305,11 @@
 	
 	;; === Method Lookup ===
 
-	(func $lookupMethod (param $class (ref null $Class)) (param $selector (ref null eq)) (result (ref null $CompiledMethod))
+	(func $lookupMethod (param $class (ref null $Class)) (param $selector (ref null $SqueakObject)) (result (ref null $CompiledMethod))
 	      (local $currentClass (ref null $Class))
 	      (local $methodDict (ref null $Dictionary))
 	      (local $method (ref null $CompiledMethod))
+	      (local $maybeMethod (ref null $SqueakObject))
 	      
 	      local.get $class
 	      local.set $currentClass
@@ -357,6 +340,15 @@
 	      local.get $methodDict
 	      local.get $selector
 	      call $dictionary_at
+	      local.set $maybeMethod
+	      local.get $maybeMethod
+	      ref.test (ref null $CompiledMethod)  ;; returns i32
+	      if (result (ref null $CompiledMethod))
+	      local.get $maybeMethod
+	      ref.cast (ref null $CompiledMethod)
+	      else
+	      ref.null $CompiledMethod
+	      end
 	      local.set $method
 	      
 	      local.get $method
@@ -371,7 +363,6 @@
 	      
 	      ;; Found method
 	      local.get $method
-	      ref.cast (ref $CompiledMethod)
 	      return
 	      end
 	      
@@ -380,7 +371,7 @@
 	
 	;; === Message Sending ===
 	
-	(func $sendMessage (param $receiver (ref null eq)) (param $selector (ref null eq)) (param $argCount i32)
+	(func $sendMessage (param $receiver (ref null $SqueakObject)) (param $selector (ref null $SqueakObject)) (param $argCount i32)
 	      (local $receiverClass (ref null $Class))
 	      (local $method (ref null $CompiledMethod))
 	      (local $newContext (ref $Context))
@@ -491,7 +482,7 @@
 	
 	;; === Object Class Detection ===
 	
-	(func $getObjectClass (param $obj (ref null eq)) (result (ref null $Class))
+	(func $getObjectClass (param $obj (ref null $SqueakObject)) (result (ref null $Class))
 	      local.get $obj
 	      ref.test (ref i31)
 	      if (result (ref null $Class))
@@ -506,7 +497,7 @@
 	
 	;; === Context Stack Operations ===
 	
-	(func $push (param $value (ref null eq))
+	(func $push (param $value (ref null $SqueakObject))
 	      global.get $activeContext
 	      struct.get $Context $slots
 	      global.get $sp
@@ -519,7 +510,7 @@
 	      global.set $sp
 	      )
 	
-	(func $pop (result (ref null eq))
+	(func $pop (result (ref null $SqueakObject))
 	      global.get $sp
 	      i32.const 1
 	      i32.sub
@@ -531,7 +522,7 @@
 	      array.get $ObjectArray
 	      )
 	
-	(func $stackValue (param $offset i32) (result (ref null eq))
+	(func $stackValue (param $offset i32) (result (ref null $SqueakObject))
 	      global.get $activeContext
 	      struct.get $Context $slots
 	      global.get $sp
@@ -842,8 +833,8 @@
 	      local.get $bytecode
 	      i32.const 0x0F
 	      i32.and
-	      call $getMethodLiteral
 	      i32.const 0  ;; 0 arguments
+	      call $getMethodLiteral
 	      call $sendLiteralSelector
 	      return
 	      end
@@ -867,7 +858,7 @@
 	
 	;; === Context Returns ===
 	
-	(func $doReturn (param $value (ref null eq))
+	(func $doReturn (param $value (ref null $SqueakObject))
 	      (local $sender (ref null $Context))
 	      
 	      global.get $activeContext
@@ -896,7 +887,7 @@
 	
 	;; === Helper Functions ===
 	
-	(func $getInstanceVariable (param $object (ref null eq)) (param $index i32) (result (ref null eq))
+	(func $getInstanceVariable (param $object (ref null $SqueakObject)) (param $index i32) (result (ref null $SqueakObject))
 	      local.get $object
 	      ref.cast (ref $VariableObject)
 	      struct.get $VariableObject $slots
@@ -904,7 +895,7 @@
 	      array.get $ObjectArray
 	      )
 	
-	(func $setInstanceVariable (param $object (ref null eq)) (param $index i32) (param $value (ref null eq))
+	(func $setInstanceVariable (param $object (ref null $SqueakObject)) (param $index i32) (param $value (ref null $SqueakObject))
 	      local.get $object
 	      ref.cast (ref $VariableObject)
 	      struct.get $VariableObject $slots
@@ -913,14 +904,14 @@
 	      array.set $ObjectArray
 	      )
 	
-	(func $getMethodLiteral (param $method (ref null $CompiledMethod)) (param $index i32) (result (ref null eq))
+	(func $getMethodLiteral (param $method (ref null $CompiledMethod)) (param $index i32) (result (ref null $SqueakObject))
 	      local.get $method
 	      struct.get $CompiledMethod $slots
 	      local.get $index
 	      array.get $ObjectArray
 	      )
 	
-	(func $setTemporary (param $index i32) (param $value (ref null eq))
+	(func $setTemporary (param $index i32) (param $value (ref null $SqueakObject))
 	      global.get $activeContext
 	      struct.get $Context $slots
 	      local.get $index
@@ -930,8 +921,8 @@
 	      array.set $ObjectArray
 	      )
 	
-	(func $sendLiteralSelector (param $selector (ref null eq)) (param $argCount i32)
-	      (local $receiver (ref null eq))
+	(func $sendLiteralSelector (param $selector (ref null $SqueakObject)) (param $argCount i32)
+	      (local $receiver (ref null $SqueakObject))
 	      
 	      ;; Get receiver from stack (it's at stackValue(argCount))
 	      local.get $argCount
