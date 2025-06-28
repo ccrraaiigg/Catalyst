@@ -536,6 +536,8 @@
 	;; === Complete Classic Bytecode Interpreter ===
 	
 	(func $executeBytecode (param $bytecode i32)
+	      (local $value (ref null $SqueakObject))
+	      
 	      ;; Load receiver
 	      local.get $bytecode
 	      i32.const 0x00
@@ -617,11 +619,13 @@
 	      i32.and
 	      if
 	      call $pop
+	      local.set $value
 	      global.get $activeContext
 	      struct.get $Context $receiver
 	      local.get $bytecode
 	      i32.const 0x07
 	      i32.and
+	      local.get $value
 	      call $setInstanceVariable
 	      return
 	      end
@@ -833,8 +837,8 @@
 	      local.get $bytecode
 	      i32.const 0x0F
 	      i32.and
-	      i32.const 0  ;; 0 arguments
 	      call $getMethodLiteral
+	      i32.const 0  ;; 0 arguments
 	      call $sendLiteralSelector
 	      return
 	      end
