@@ -17,27 +17,27 @@
 	 ;; Type 2: Base Squeak object
 	 (type $SqueakObject (sub (struct 
 				   (field $class (mut (ref null $Class)))
-				   (field $identityHash i32)
-				   (field $format i32)
-				   (field $size i32)
+				   (field $identityHash (mut i32))
+				   (field $format (mut i32))
+				   (field $size (mut i32))
 				   )))
 	 
 	 ;; Type 3: Variable objects
 	 (type $VariableObject (sub $SqueakObject (struct 
 						   (field $class (mut (ref null $Class)))
-						   (field $identityHash i32)
-						   (field $format i32)
-						   (field $size i32)
-						   (field $slots (ref null $ObjectArray))
+						   (field $identityHash (mut i32))
+						   (field $format (mut i32))
+						   (field $size (mut i32))
+						   (field $slots (mut (ref null $ObjectArray)))
 						   )))
 	 
 	 ;; Type 4: Dictionary
 	 (type $Dictionary (sub $VariableObject (struct
 						 (field $class (mut (ref null $Class)))
-						 (field $identityHash i32)
-						 (field $format i32)
-						 (field $size i32)
-						 (field $slots (ref null $ObjectArray))
+						 (field $identityHash (mut i32))
+						 (field $format (mut i32))
+						 (field $size (mut i32))
+						 (field $slots (mut (ref null $ObjectArray)))
 						 (field $keys (ref null $ObjectArray))
 						 (field $values (ref null $ObjectArray))
 						 (field $count (mut i32))
@@ -46,24 +46,24 @@
 	 ;; Type 5: Class objects
 	 (type $Class (sub $VariableObject (struct
 					    (field $class (mut (ref null $Class)))
-					    (field $identityHash i32)
-					    (field $format i32)
-					    (field $size i32)
-					    (field $slots (ref null $ObjectArray))
-					    (field $superclass (ref null $Class))
+					    (field $identityHash (mut i32))
+					    (field $format (mut i32))
+					    (field $size (mut i32))
+					    (field $slots (mut (ref null $ObjectArray)))
+					    (field $superclass (mut (ref null $Class)))
 					    (field $methodDict (mut (ref null $Dictionary)))
-					    (field $instVarNames (ref null $SqueakObject))
-					    (field $name (ref null $SqueakObject))
-					    (field $instSize i32)
+					    (field $instVarNames (mut (ref null $SqueakObject)))
+					    (field $name (mut (ref null $SqueakObject)))
+					    (field $instSize (mut i32))
 					    )))
 	 
 	 ;; Type 6: CompiledMethod objects
 	 (type $CompiledMethod (sub $VariableObject (struct
 						     (field $class (mut (ref null $Class)))
-						     (field $identityHash i32)
-						     (field $format i32)
-						     (field $size i32)
-						     (field $slots (ref null $ObjectArray))
+						     (field $identityHash (mut i32))
+						     (field $format (mut i32))
+						     (field $size (mut i32))
+						     (field $slots (mut (ref null $ObjectArray)))
 						     (field $header i32)
 						     (field $bytecodes (ref null $ByteArray))
 						     (field $invocationCount i32)
@@ -73,10 +73,10 @@
 	 ;; Type 7: Context objects
 	 (type $Context (sub $VariableObject (struct
 					      (field $class (mut (ref null $Class)))
-					      (field $identityHash i32)
-					      (field $format i32)
-					      (field $size i32)
-					      (field $slots (ref null $ObjectArray))
+					      (field $identityHash (mut i32))
+					      (field $format (mut i32))
+					      (field $size (mut i32))
+					      (field $slots (mut (ref null $ObjectArray)))
 					      (field $sender (mut (ref null $Context)))
 					      (field $pc (mut i32))
 					      (field $stackp (mut i32))
@@ -87,10 +87,10 @@
 	 ;; Type 8: Process objects
 	 (type $Process (sub $VariableObject (struct
 					      (field $class (mut (ref null $Class)))
-					      (field $identityHash i32)
-					      (field $format i32)
-					      (field $size i32)
-					      (field $slots (ref null $ObjectArray))
+					      (field $identityHash (mut i32))
+					      (field $format (mut i32))
+					      (field $size (mut i32))
+					      (field $slots (mut (ref null $ObjectArray)))
 					      (field $nextLink (ref null $Process))
 					      (field $suspendedContext (ref null $Context))
 					      (field $priority i32)
@@ -100,19 +100,19 @@
 	 ;; Type 9: String objects
 	 (type $String (sub $SqueakObject (struct
 					   (field $class (mut (ref null $Class)))
-					   (field $identityHash i32)
-					   (field $format i32)
-					   (field $size i32)
+					   (field $identityHash (mut i32))
+					   (field $format (mut i32))
+					   (field $size (mut i32))
 					   (field $bytes (ref null $ByteArray))
 					   )))
 	 
 	 ;; Type 10: Array objects
 	 (type $Array (sub $VariableObject (struct
 					    (field $class (mut (ref null $Class)))
-					    (field $identityHash i32)
-					    (field $format i32)
-					    (field $size i32)
-					    (field $slots (ref null $ObjectArray))
+					    (field $identityHash (mut i32))
+					    (field $format (mut i32))
+					    (field $size (mut i32))
+					    (field $slots (mut (ref null $ObjectArray)))
 					    )))
 	 )
 
