@@ -309,7 +309,7 @@
 	      (local $currentClass (ref null $Class))
 	      (local $methodDict (ref null $Dictionary))
 	      (local $method (ref null $CompiledMethod))
-	      (local $maybeMethod (ref null $SqueakObject))
+	      (local $maybeMethod (ref null eq))  ;; Changed to handle the return from $dictionary_at
 	      
 	      local.get $class
 	      local.set $currentClass
@@ -340,9 +340,9 @@
 	      local.get $methodDict
 	      local.get $selector
 	      call $dictionary_at
-	      local.set $method
+	      local.set $maybeMethod  ;; Store in the eq-typed variable first
 	      
-	      local.get $method
+	      local.get $maybeMethod
 	      ref.is_null
 	      if
               ;; Try superclass
@@ -352,14 +352,15 @@
               br $lookup_loop
 	      end
 	      
-	      ;; Found method
-	      local.get $method
+	      ;; Found method - cast from (ref null eq) to (ref null $CompiledMethod)
+	      local.get $maybeMethod
+	      ref.cast (ref null $CompiledMethod)
 	      return
 	      end
 	      
 	      ref.null $CompiledMethod
 	      )
-	
+
 	;; === Message Sending ===
 	
 	(func $sendMessage (param $receiver (ref null $SqueakObject)) (param $selector (ref null $SqueakObject)) (param $argCount i32)
