@@ -309,7 +309,7 @@
 	
 	;; === Method Lookup ===
 
-	(func $lookupMethod (param $class (ref null $Class)) (param $selector (ref null $SqueakObject)) (result (ref null $CompiledMethod))
+	(func $lookupMethod (param $class (ref null $Class)) (param $selector (ref null eq)) (result (ref null $CompiledMethod))
 	      (local $currentClass (ref null $Class))
 	      (local $methodDict (ref null $Dictionary))
 	      (local $method (ref null $CompiledMethod))
@@ -963,7 +963,7 @@
 	      array.set $ObjectArray
 	      )
 	
-	(func $sendLiteralSelector (param $selector (ref null $SqueakObject)) (param $argCount i32)
+	(func $sendLiteralSelector (param $selector (ref null eq)) (param $argCount i32)
 	      (local $receiver (ref null eq))
 	      
 	      ;; Get receiver from stack (it's at stackValue(argCount))
@@ -1287,6 +1287,7 @@
 	      array.set $ObjectArray
 	      
 	      ;; Set literal 1 to be 'reportToJS' selector
+	      local.get $literals
 	      i32.const 1
 	      global.get $reportToJSSelector
 	      array.set $ObjectArray
