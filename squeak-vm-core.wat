@@ -1103,37 +1103,6 @@
 	      global.get $classClass
 	      struct.set $Class $class
 	      
-	      ;; Create SmallInteger class
-	      struct.new_default $Class
-	      local.tee $newClass
-	      global.get $classClass
-	      struct.set $Class $class
-	      local.get $newClass
-	      call $nextIdentityHash
-	      struct.set $Class $identityHash
-	      local.get $newClass
-	      i32.const 1
-	      struct.set $Class $format
-	      local.get $newClass
-	      i32.const 6
-	      struct.set $Class $size
-	      local.get $newClass
-	      i32.const 6
-	      call $createObjectArray
-	      struct.set $Class $slots
-	      local.get $newClass
-	      global.get $objectClass
-	      struct.set $Class $superclass
-	      ;; Create and set method dictionary (but dictionaryClass doesn't exist yet!)
-	      ;; Skip methodDict for now
-	      ;; instVarNames stays null
-	      ;; name stays null
-	      local.get $newClass
-	      i32.const 0
-	      struct.set $Class $instSize
-	      local.get $newClass
-	      global.set $smallIntegerClass
-	      
 	      ;; Create Dictionary class first
 	      struct.new_default $Class
 	      local.tee $newClass
@@ -1163,6 +1132,41 @@
 	      struct.set $Class $instSize
 	      local.get $newClass
 	      global.set $dictionaryClass
+
+	      ;; Create SmallInteger class
+	      struct.new_default $Class
+	      local.tee $newClass
+	      global.get $classClass
+	      struct.set $Class $class
+	      local.get $newClass
+	      call $nextIdentityHash
+	      struct.set $Class $identityHash
+	      local.get $newClass
+	      i32.const 1
+	      struct.set $Class $format
+	      local.get $newClass
+	      i32.const 6
+	      struct.set $Class $size
+	      local.get $newClass
+	      i32.const 6
+	      call $createObjectArray
+	      struct.set $Class $slots
+	      local.get $newClass
+	      global.get $objectClass
+	      struct.set $Class $superclass
+	      ;; Create and set method dictionary
+	      local.get $newClass
+	      global.get $dictionaryClass
+	      i32.const 8 ;; initial size
+	      call $newDictionary
+	      struct.set $Class $methodDict ;; set methodDict field
+	      ;; instVarNames stays null
+	      ;; name stays null
+	      local.get $newClass
+	      i32.const 0
+	      struct.set $Class $instSize
+	      local.get $newClass
+	      global.set $smallIntegerClass
 	      
 	      ;; Create CompiledMethod class
 	      struct.new_default $Class
