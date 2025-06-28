@@ -1045,10 +1045,13 @@
 	      ;; Set Object class fields
 	      call $nextIdentityHash
 	      struct.set $Class $identityHash
+	      local.get $newClass
 	      i32.const 1
 	      struct.set $Class $format
+	      local.get $newClass
 	      i32.const 6
 	      struct.set $Class $size
+	      local.get $newClass
 	      i32.const 6
 	      call $createObjectArray
 	      struct.set $Class $slots
@@ -1056,9 +1059,11 @@
 	      ;; methodDict stays null for now
 	      ;; instVarNames stays null
 	      ;; name stays null
+	      local.get $newClass
 	      i32.const 0
 	      struct.set $Class $instSize
 	      ;; Store in global
+	      local.get $newClass
 	      global.set $objectClass
 	      
 	      ;; Create Class class
@@ -1067,23 +1072,30 @@
 	      ;; Set Class class fields
 	      global.get $objectClass  ;; class field - will be set to itself later
 	      struct.set $Class $class
+	      local.get $newClass
 	      call $nextIdentityHash
 	      struct.set $Class $identityHash
+	      local.get $newClass
 	      i32.const 1
 	      struct.set $Class $format
+	      local.get $newClass
 	      i32.const 6
 	      struct.set $Class $size
+	      local.get $newClass
 	      i32.const 6
 	      call $createObjectArray
 	      struct.set $Class $slots
+	      local.get $newClass
 	      global.get $objectClass
 	      struct.set $Class $superclass
 	      ;; methodDict stays null for now
 	      ;; instVarNames stays null
 	      ;; name stays null
+	      local.get $newClass
 	      i32.const 0
 	      struct.set $Class $instSize
 	      ;; Store in global
+	      local.get $newClass
 	      global.set $classClass
 	      
 	      ;; Fix Object class to be instance of Class class
@@ -1096,23 +1108,30 @@
 	      local.tee $newClass
 	      global.get $classClass
 	      struct.set $Class $class
+	      local.get $newClass
 	      call $nextIdentityHash
 	      struct.set $Class $identityHash
+	      local.get $newClass
 	      i32.const 1
 	      struct.set $Class $format
+	      local.get $newClass
 	      i32.const 6
 	      struct.set $Class $size
+	      local.get $newClass
 	      i32.const 6
 	      call $createObjectArray
 	      struct.set $Class $slots
+	      local.get $newClass
 	      global.get $objectClass
 	      struct.set $Class $superclass
 	      ;; Create and set method dictionary (but dictionaryClass doesn't exist yet!)
 	      ;; Skip methodDict for now
 	      ;; instVarNames stays null
 	      ;; name stays null
+	      local.get $newClass
 	      i32.const 0
 	      struct.set $Class $instSize
+	      local.get $newClass
 	      global.set $smallIntegerClass
 	      
 	      ;; Create Dictionary class first
@@ -1120,22 +1139,29 @@
 	      local.tee $newClass
 	      global.get $classClass
 	      struct.set $Class $class
+	      local.get $newClass
 	      call $nextIdentityHash
 	      struct.set $Class $identityHash
+	      local.get $newClass
 	      i32.const 1
 	      struct.set $Class $format
+	      local.get $newClass
 	      i32.const 6
 	      struct.set $Class $size
+	      local.get $newClass
 	      i32.const 6
 	      call $createObjectArray
 	      struct.set $Class $slots
+	      local.get $newClass
 	      global.get $objectClass
 	      struct.set $Class $superclass
 	      ;; methodDict stays null
 	      ;; instVarNames stays null
 	      ;; name stays null
+	      local.get $newClass
 	      i32.const 0
 	      struct.set $Class $instSize
+	      local.get $newClass
 	      global.set $dictionaryClass
 	      
 	      ;; Create CompiledMethod class
@@ -1143,22 +1169,29 @@
 	      local.tee $newClass
 	      global.get $classClass
 	      struct.set $Class $class
+	      local.get $newClass
 	      call $nextIdentityHash
 	      struct.set $Class $identityHash
+	      local.get $newClass
 	      i32.const 1
 	      struct.set $Class $format
+	      local.get $newClass
 	      i32.const 6
 	      struct.set $Class $size
+	      local.get $newClass
 	      i32.const 6
 	      call $createObjectArray
 	      struct.set $Class $slots
+	      local.get $newClass
 	      global.get $objectClass
 	      struct.set $Class $superclass
 	      ;; methodDict stays null
 	      ;; instVarNames stays null
 	      ;; name stays null
+	      local.get $newClass
 	      i32.const 0
 	      struct.set $Class $instSize
+	      local.get $newClass
 	      global.set $methodClass
 	      
 	      ;; Create Context class
@@ -1166,26 +1199,33 @@
 	      local.tee $newClass
 	      global.get $classClass
 	      struct.set $Class $class
+	      local.get $newClass
 	      call $nextIdentityHash
 	      struct.set $Class $identityHash
+	      local.get $newClass
 	      i32.const 1
 	      struct.set $Class $format
+	      local.get $newClass
 	      i32.const 6
 	      struct.set $Class $size
+	      local.get $newClass
 	      i32.const 6
 	      call $createObjectArray
 	      struct.set $Class $slots
+	      local.get $newClass
 	      global.get $objectClass
 	      struct.set $Class $superclass
 	      ;; methodDict stays null
 	      ;; instVarNames stays null
 	      ;; name stays null
+	      local.get $newClass
 	      i32.const 0
 	      struct.set $Class $instSize
+	      local.get $newClass
 	      global.set $contextClass
 	      
 	      ;; Create special objects
-	      i32.const 0
+	      i32.const 99
 	      ref.i31
 	      global.set $nilObject
 	      
