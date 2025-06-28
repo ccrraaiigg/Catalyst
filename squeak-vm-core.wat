@@ -528,7 +528,7 @@
 	;; === Complete Classic Bytecode Interpreter ===
 	
 	(func $executeBytecode (param $bytecode i32)
-	      (local $value (ref null $SqueakObject))
+	      (local $value (ref null eq))
 	      
 	      ;; Load receiver
 	      local.get $bytecode
