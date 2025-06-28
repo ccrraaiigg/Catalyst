@@ -1018,7 +1018,7 @@
               
               local.get $bytecodes
               global.get $pc
-              array.get $ByteArray
+              array.get_u $ByteArray
               local.set $bytecode
               
               local.get $bytecode
@@ -1037,7 +1037,7 @@
 	;; === Bootstrap Functions ===
 	
 	(func $createBasicClasses
-	      (local $newClass (ref 5))  ;; Local variable to hold created classes
+	      (local $newClass (ref $Class))  ;; Local variable to hold created classes
 	      
 	      ;; Create Object class first (with null class initially)
 	      struct.new_default $Class
