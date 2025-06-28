@@ -640,9 +640,11 @@
 	      i32.and
 	      if
 	      call $pop
+	      local.set $value
 	      local.get $bytecode
 	      i32.const 0x07
 	      i32.and
+	      local.get $value
 	      call $setTemporary
 	      return
 	      end
