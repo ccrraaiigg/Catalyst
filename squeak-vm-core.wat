@@ -136,9 +136,9 @@
 	(global $nextIdentityHash (mut i32) (i32.const 1))
 	
 	;; Special objects
-	(global $nilObject (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
-	(global $trueObject (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
-	(global $falseObject (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+	(global $nilObject (mut (ref null eq)) (ref.null eq))
+	(global $trueObject (mut (ref null eq)) (ref.null eq))
+	(global $falseObject (mut (ref null eq)) (ref.null eq))
 	
 	;; Special classes
 	(global $objectClass (mut (ref null $Class)) (ref.null $Class))
@@ -150,14 +150,14 @@
 	(global $dictionaryClass (mut (ref null $Class)) (ref.null $Class))
 	
 	;; Special selectors for message sending
-	(global $plusSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
-	(global $minusSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
-	(global $timesSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
-	(global $divideSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
-	(global $equalsSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
-	(global $doesNotUnderstandSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
-	(global $squaredSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
-	(global $reportToJSSelector (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+	(global $plusSelector (mut (ref null eq)) (ref.null eq))
+	(global $minusSelector (mut (ref null eq)) (ref.null eq))
+	(global $timesSelector (mut (ref null eq)) (ref.null eq))
+	(global $divideSelector (mut (ref null eq)) (ref.null eq))
+	(global $equalsSelector (mut (ref null eq)) (ref.null eq))
+	(global $doesNotUnderstandSelector (mut (ref null eq)) (ref.null eq))
+	(global $squaredSelector (mut (ref null eq)) (ref.null eq))
+	(global $reportToJSSelector (mut (ref null eq)) (ref.null eq))
 	
 	;; SmallInteger class for proper method lookup
 	(global $smallIntegerClass (mut (ref null $Class)) (ref.null $Class))
@@ -367,7 +367,7 @@
 
 	;; === Message Sending ===
 	
-	(func $sendMessage (param $receiver (ref null eq)) (param $selector (ref null $SqueakObject)) (param $argCount i32)
+	(func $sendMessage (param $receiver (ref null eq)) (param $selector (ref null eq)) (param $argCount i32)
 	      (local $receiverClass (ref null $Class))
 	      (local $method (ref null $CompiledMethod))
 	      (local $newContext (ref $Context))
