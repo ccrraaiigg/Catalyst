@@ -1089,14 +1089,24 @@ async function main() {
 - Performance optimization for arithmetic and control flow
 - **Critical for performance**: JIT enables the VM to run efficiently before handling complex snapshots
 
-### Phase 4: Snapshot Loading (2-3 weeks)
+### Phase 4: Slang for WASM
+- Like Squeak and SqueakJS before it, SqueakWASM should generate all
+  of its virtual machine sources from Smalltalk. This will make
+  maintenance and modification easier, through the use of familiar
+  Smalltalk tools. In this phase, we want to develop facilities for
+  generating all the WAT files of the virtual machine from a working
+  Smalltalk version of the same logic. After this phase, we shouldn't
+  need to write WAT by hand. This subsystem is traditionally called
+  "Slang".
+
+### Phase 5: Snapshot Loading (2-3 weeks)
 - Squeak image format parser
 - Object memory reconstruction with JIT-compiled methods
 - Reference fixing and finalization
 - Multi-process resume capability
 - **Benefits from JIT**: Loading large snapshots runs much faster with compiled methods
 
-### Phase 5: Sista Bytecode Support (1-2 weeks)
+### Phase 6: Sista Bytecode Support (1-2 weeks)
 - Extended Sista instruction set
 - Full closure support with JIT compilation
 - Advanced control flow optimizations
