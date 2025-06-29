@@ -130,8 +130,6 @@
 	
 	(global $activeContext (mut (ref null $Context)) (ref.null $Context))
 	(global $activeProcess (mut (ref null $Process)) (ref.null $Process))
-	(global $pc (mut i32) (i32.const 0))
-	(global $sp (mut i32) (i32.const 0))
 	(global $methodReturned (mut i32) (i32.const 0))
 	(global $nextIdentityHash (mut i32) (i32.const 1))
 	
@@ -313,7 +311,7 @@
 	      (local $currentClass (ref null $Class))
 	      (local $methodDict (ref null $Dictionary))
 	      (local $method (ref null $CompiledMethod))
-	      (local $maybeMethod (ref null eq))  ;; Changed to handle the return from $dictionary_at
+	      (local $maybeMethod (ref null eq))
 	      
 	      local.get $class
 	      local.set $currentClass
@@ -408,7 +406,7 @@
 	      struct.set $Context $sender
 	      
 	      local.get $newContext
-	      i32.const -1
+	      i32.const 0
 	      struct.set $Context $pc
 	      
 	      local.get $newContext
@@ -461,25 +459,17 @@
 	      end
 	      
 	      ;; Pop arguments from current stack
-	      global.get $sp
+	      global.get $activeContext
+	      global.get $activeContext
+	      struct.get $Context $sp
 	      local.get $argCount
 	      i32.sub
-	      global.set $sp
+	      struct.set $Context $sp
 	      end
-
-	      ;; save PC to old context
-	      global.get $activeContext
-	      global.get $pc
-	      struct.set $Context $pc
 
 	      ;; Switch to new context
 	      local.get $newContext
 	      global.set $activeContext
-
-	      ;; Reset PC for new method
-      	      local.get $newContext
-	      struct.get $Context $pc
-	      global.set $pc
 	      )
 	
 	;; === Object Class Detection ===
@@ -502,32 +492,39 @@
 	(func $push (param $value (ref null eq))
 	      global.get $activeContext
 	      struct.get $Context $slots
-	      global.get $sp
+	      global.get $activeContext
+	      struct.get $Context $sp
 	      local.get $value
 	      array.set $ObjectArray
-	      
-	      global.get $sp
+
+	      global.get $activeContext
+	      global.get $activeContext
+	      struct.get $Context $sp
 	      i32.const 1
 	      i32.add
-	      global.set $sp
+	      struct.set $Context $sp
 	      )
 	
 	(func $pop (result (ref null eq))
-	      global.get $sp
+	      global.get $activeContext
+	      global.get $activeContext
+	      struct.get $Context $sp
 	      i32.const 1
 	      i32.sub
-	      global.set $sp
+	      struct.set $Context $sp
 	      
 	      global.get $activeContext
 	      struct.get $Context $slots
-	      global.get $sp
+	      global.get $activeContext
+	      struct.get $Context $sp
 	      array.get $ObjectArray
 	      )
 	
 	(func $stackValue (param $offset i32) (result (ref null eq))
 	      global.get $activeContext
 	      struct.get $Context $slots
-	      global.get $sp
+	      global.get $activeContext
+	      struct.get $Context $sp
 	      i32.const 1
 	      i32.sub
 	      local.get $offset
@@ -885,22 +882,6 @@
 	      call $sendLiteralSelector
 	      return
 	      end
-	      
-	      ;; Report result to JavaScript
-	      local.get $bytecode
-	      i32.const 0xD0
-	      i32.eq
-	      if  ;; send reportToJS
-	      call $pop
-	      ref.cast (ref i31)
-	      i31.get_s
-	      call $system_report_result
-	      
-	      ;; Push nil as result
-	      global.get $nilObject
-	      call $push
-	      return
-	      end
 	      )
 	
 	;; === Context Returns ===
@@ -983,63 +964,65 @@
 	      call $sendMessage
 	      )
 	
-	(func $handleSendBytecode (param $bytecode i32)
-	      ;; Simplified send handling - just send plus for now
-	      global.get $plusSelector
-	      i32.const 1
-	      call $sendLiteralSelector
-	      )
-	
 	;; === Main Interpreter Loop ===
 	
 	(func $interpret
 	      (local $bytecode i32)
+	      (local $pc i32)
 	      (local $method (ref null $CompiledMethod))
 	      (local $bytecodes (ref null $ByteArray))
-	      
+	      (local $context (ref null $Context))
+
 	      global.get $activeContext
+	      local.set $context
+	      
+	      block $exit_loop
+	      loop $interpreter_loop
+	      global.get $methodReturned
+	      i32.const 1
+	      i32.eq
+	      br_if $exit_loop
+	      
+	      ;; Get current method and bytecodes from active context
+	      local.get $context
 	      struct.get $Context $method
 	      local.set $method
 
-	      global.get $activeContext
-	      struct.get $Context $sp
-	      global.set $sp
-	      
-	      global.get $activeContext
+	      local.get $context
 	      struct.get $Context $pc
-	      global.set $pc
+	      local.set $pc
 	      
 	      local.get $method
 	      struct.get $CompiledMethod $bytecodes
 	      local.set $bytecodes
 	      
-	      block $exit_loop
-	      loop $interpreter_loop
-              global.get $methodReturned
-              i32.const 1
-              i32.eq
-              br_if $exit_loop
-              
-              global.get $pc
-              local.get $bytecodes
-              array.len
-              i32.ge_u
-              br_if $exit_loop
-              
-              local.get $bytecodes
-              global.get $pc
-              array.get_u $ByteArray
-              local.set $bytecode
-              
-              local.get $bytecode
-              call $executeBytecode
-              
-              global.get $pc
-              i32.const 1
-              i32.add
-              global.set $pc
-              
-              br $interpreter_loop
+	      ;; Check PC bounds
+	      local.get $pc
+	      local.get $bytecodes
+	      array.len
+	      i32.ge_u
+	      br_if $exit_loop
+	      
+	      ;; Fetch and execute bytecode
+	      local.get $bytecodes
+	      local.get $pc
+	      array.get_u $ByteArray
+	      local.set $bytecode
+	      
+	      local.get $bytecode
+	      call $executeBytecode
+	      
+	      ;; Increment PC
+	      local.get $context
+	      local.get $pc
+	      i32.const 1
+	      i32.add
+	      struct.set $Context $pc
+
+	      global.get $activeContext
+	      local.set $context
+	      
+	      br $interpreter_loop
 	      end
 	      end
 	      )
@@ -1364,7 +1347,7 @@
 	      call $createBasicClasses
 	      call $createSpecialSelectors
 
-	      ;; Create the SmallInteger>>squared methodMore actions
+	      ;; Create the SmallInteger>>squared method
 	      call $createSquaredMethodForSmallInteger
 	      local.set $squaredMethod
 	      
@@ -1421,11 +1404,5 @@
 	
 	(func (export "interpret")
 	      call $interpret
-	      )
-	
-	(func (export "getResult") (result i32)
-	      call $pop
-	      ref.cast (ref i31)
-	      i31.get_s
 	      )
 	)

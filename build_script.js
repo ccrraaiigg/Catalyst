@@ -169,8 +169,8 @@ function main() {
                 div.className = 'result';
                 div.innerHTML = \`
                     <strong>Test Result:</strong> \${results.join(', ')}<br>
-                    <strong>Expected:</strong> 7<br>
-                    <strong>Status:</strong> \${results.includes(7) ? '✓ PASS' : '✗ FAIL'}<br>
+                    <strong>Expected: </strong>9<br>
+                    <strong>Status:</strong> \${results.includes(9) ? 'PASS' : 'FAIL'}<br>
                     <strong>Execution Time:</strong> \${(endTime - startTime).toFixed(2)}ms
                 \`;
                 output.appendChild(div);
