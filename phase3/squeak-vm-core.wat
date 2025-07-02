@@ -1,5 +1,5 @@
 ;; SqueakJS to WASM VM Core Module - Phase 3: JIT Compilation Support
-;; Integrates bytecode-to-WASM translation and compiled method execution
+;; FIXED VERSION - Corrected recursive type definitions
 
 (module $SqueakVMCore
   ;; Import JavaScript interface functions
@@ -9,9 +9,10 @@
   
   ;; Import JIT compilation interface
   (import "jit" "compileMethod" (func $jit_compile_method_js 
-    (param i32 i32 i32 i32) (result i32)))  ;; methodRef, classRef, selectorRef, enableSingleStep -> functionRef
+    (param i32 i32 i32 i32) (result i32)))
   (import "jit" "reportError" (func $js_report_error (param i32)))
   
+  ;; FIXED: Use proper recursive type group to handle circular dependencies
   (rec
    ;; Type 0: ObjectArray - can hold both objects and i31ref SmallIntegers
    (type $ObjectArray (array (mut (ref null eq))))
@@ -19,95 +20,95 @@
    ;; Type 1: ByteArray 
    (type $ByteArray (array (mut i8)))
    
-   ;; Type 2: Base Squeak object
+   ;; Type 2: Base Squeak object - now properly recursive
    (type $SqueakObject (sub (struct 
-             (field $class (mut (ref null $Class)))
+             (field $class (mut (ref null 5)))    ;; Forward reference to $Class
              (field $identityHash (mut i32))
              (field $format (mut i32))
              (field $size (mut i32))
-             (field $nextObject (mut (ref null $SqueakObject)))  ;; For object enumeration
+             (field $nextObject (mut (ref null 2)))  ;; Self-reference
              )))
    
    ;; Type 3: Variable objects
-   (type $VariableObject (sub $SqueakObject (struct 
-                     (field $class (mut (ref null $Class)))
+   (type $VariableObject (sub 2 (struct    ;; Inherits from $SqueakObject
+                     (field $class (mut (ref null 5)))
                      (field $identityHash (mut i32))
                      (field $format (mut i32))
                      (field $size (mut i32))
-                     (field $nextObject (mut (ref null $SqueakObject)))
-                     (field $slots (mut (ref null $ObjectArray)))
+                     (field $nextObject (mut (ref null 2)))
+                     (field $slots (mut (ref null 0)))    ;; Reference to $ObjectArray
                      )))
    
    ;; Type 4: Symbol objects for method selectors
-   (type $Symbol (sub $VariableObject (struct
-                   (field $class (mut (ref null $Class)))
+   (type $Symbol (sub 3 (struct     ;; Inherits from $VariableObject
+                   (field $class (mut (ref null 5)))
                    (field $identityHash (mut i32))
                    (field $format (mut i32))
                    (field $size (mut i32))
-                   (field $nextObject (mut (ref null $SqueakObject)))
-                   (field $slots (mut (ref null $ObjectArray)))
-                   (field $bytes (ref null $ByteArray))
+                   (field $nextObject (mut (ref null 2)))
+                   (field $slots (mut (ref null 0)))
+                   (field $bytes (ref null 1))     ;; Reference to $ByteArray
                    )))
    
-   ;; Type 5: Dictionary for method lookup
-   (type $Dictionary (sub $VariableObject (struct
-                       (field $class (mut (ref null $Class)))
-                       (field $identityHash (mut i32))
-                       (field $format (mut i32))
-                       (field $size (mut i32))
-                       (field $nextObject (mut (ref null $SqueakObject)))
-                       (field $slots (mut (ref null $ObjectArray)))
-                       (field $keys (ref null $ObjectArray))
-                       (field $values (ref null $ObjectArray))
-                       (field $count (mut i32))
-                       )))
-   
-   ;; Type 6: Class objects
-   (type $Class (sub $VariableObject (struct
-                      (field $class (mut (ref null $Class)))
+   ;; Type 5: Class objects - now properly positioned after base types
+   (type $Class (sub 3 (struct      ;; Inherits from $VariableObject
+                      (field $class (mut (ref null 5)))    ;; Self-reference to $Class
                       (field $identityHash (mut i32))
                       (field $format (mut i32))
                       (field $size (mut i32))
-                      (field $nextObject (mut (ref null $SqueakObject)))
-                      (field $slots (mut (ref null $ObjectArray)))
-                      (field $superclass (mut (ref null $Class)))
-                      (field $methodDict (mut (ref null $Dictionary)))
-                      (field $instVarNames (mut (ref null $SqueakObject)))
-                      (field $name (mut (ref null $Symbol)))
+                      (field $nextObject (mut (ref null 2)))
+                      (field $slots (mut (ref null 0)))
+                      (field $superclass (mut (ref null 5)))
+                      (field $methodDict (mut (ref null 6)))    ;; Forward reference to $Dictionary
+                      (field $instVarNames (mut (ref null 2)))
+                      (field $name (mut (ref null 4)))     ;; Reference to $Symbol
                       (field $instSize (mut i32))
                       )))
    
+   ;; Type 6: Dictionary for method lookup
+   (type $Dictionary (sub 3 (struct  ;; Inherits from $VariableObject
+                       (field $class (mut (ref null 5)))
+                       (field $identityHash (mut i32))
+                       (field $format (mut i32))
+                       (field $size (mut i32))
+                       (field $nextObject (mut (ref null 2)))
+                       (field $slots (mut (ref null 0)))
+                       (field $keys (ref null 0))
+                       (field $values (ref null 0))
+                       (field $count (mut i32))
+                       )))
+   
    ;; Type 7: CompiledMethod with JIT compilation support
-   (type $CompiledMethod (sub $VariableObject (struct
-                           (field $class (mut (ref null $Class)))
+   (type $CompiledMethod (sub 3 (struct   ;; Inherits from $VariableObject
+                           (field $class (mut (ref null 5)))
                            (field $identityHash (mut i32))
                            (field $format (mut i32))
                            (field $size (mut i32))
-                           (field $nextObject (mut (ref null $SqueakObject)))
-                           (field $slots (mut (ref null $ObjectArray)))
+                           (field $nextObject (mut (ref null 2)))
+                           (field $slots (mut (ref null 0)))
                            (field $header i32)
-                           (field $bytecodes (ref null $ByteArray))
+                           (field $bytecodes (ref null 1))     ;; Reference to $ByteArray
                            (field $invocationCount (mut i32))  ;; For JIT heuristics
                            (field $compiledWasm (mut (ref null func)))  ;; JIT compiled version
                            (field $jitThreshold i32)  ;; Compilation threshold
                            )))
    
    ;; Type 8: Context objects for execution state
-   (type $Context (sub $VariableObject (struct
-                        (field $class (mut (ref null $Class)))
+   (type $Context (sub 3 (struct    ;; Inherits from $VariableObject
+                        (field $class (mut (ref null 5)))
                         (field $identityHash (mut i32))
                         (field $format (mut i32))
                         (field $size (mut i32))
-                        (field $nextObject (mut (ref null $SqueakObject)))
-                        (field $slots (mut (ref null $ObjectArray)))
-                        (field $sender (mut (ref null $Context)))
+                        (field $nextObject (mut (ref null 2)))
+                        (field $slots (mut (ref null 0)))
+                        (field $sender (mut (ref null 8)))     ;; Self-reference to $Context
                         (field $pc (mut i32))
                         (field $sp (mut i32))
-                        (field $method (mut (ref null $CompiledMethod)))
+                        (field $method (mut (ref null 7)))     ;; Reference to $CompiledMethod
                         (field $receiver (mut (ref null eq)))  ;; Can be object or i31ref
-                        (field $args (mut (ref null $ObjectArray)))
-                        (field $temps (mut (ref null $ObjectArray)))
-                        (field $stack (mut (ref null $ObjectArray)))
+                        (field $args (mut (ref null 0)))
+                        (field $temps (mut (ref null 0)))
+                        (field $stack (mut (ref null 0)))
                         )))
    )
 
@@ -159,35 +160,35 @@
     (param $method (ref $CompiledMethod)) 
     (result (ref null $ByteArray))
     local.get $method
-    struct.get $CompiledMethod $bytecodes
+    struct.get $CompiledMethod 7  ;; bytecodes field (index 7)
   )
   
   (func $get_compiled_method_literals
     (param $method (ref $CompiledMethod))
     (result (ref null $ObjectArray))
     local.get $method
-    struct.get $CompiledMethod $slots  ;; literals are stored in slots
+    struct.get $CompiledMethod 5  ;; slots field (literals stored in slots)
   )
   
   (func $get_compiled_method_header
     (param $method (ref $CompiledMethod))
     (result i32)
     local.get $method
-    struct.get $CompiledMethod $header
+    struct.get $CompiledMethod 6  ;; header field
   )
   
   (func $get_class_name
     (param $class (ref $Class))
     (result (ref null $Symbol))
     local.get $class
-    struct.get $Class $name
+    struct.get $Class 9  ;; name field
   )
   
   (func $get_symbol_bytes
     (param $symbol (ref $Symbol))
     (result (ref null $ByteArray))
     local.get $symbol
-    struct.get $Symbol $bytes
+    struct.get $Symbol 6  ;; bytes field
   )
   
   ;; Array access functions for JavaScript bridge
@@ -262,7 +263,7 @@
       ;; Link to previous last object
       global.get $lastObject
       local.get $object
-      struct.set $SqueakObject $nextObject
+      struct.set $SqueakObject 4  ;; nextObject field
     end
     
     ;; Update last object pointer
