@@ -371,7 +371,6 @@
     i32.const 0
     global.set $jitCompilationCount
   )
-  )
   
   ;; Main entry point for Phase 3 demo
   (func $runMinimalExample (export "runMinimalExample") (result i32)
