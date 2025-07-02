@@ -33,6 +33,21 @@ function compileWatToWasm(watFile, wasmFile) {
     }
 }
 
+function dumpWasm(wasmFile) {
+    try {
+        console.log(`Dumping ${wasmFile}...`);
+        
+        const command = `wasm-tools dump "${wasmFile}" > dump`;
+        execSync(command, { stdio: 'inherit' });
+        
+        console.log(`✓ Successfully dumped ${wasmFile}`);
+        return true;
+    } catch (error) {
+        console.error(`✗ Failed to dump ${watFile}:`, error.message);
+        return false;
+    }
+}
+
 function validateWasmFile(wasmFile) {
     try {
         console.log(`Validating ${wasmFile}...`);
@@ -444,6 +459,11 @@ function main() {
             continue;
         }
 
+        if (!dumpWasm(wasmFile)) {
+            allSuccess = false;
+            continue;
+        }
+
         if (!validateWasmFile(wasmFile)) {
             allSuccess = false;
             continue;
@@ -522,6 +542,7 @@ if (require.main === module) {
 
 module.exports = {
     compileWatToWasm,
+    dumpWasm,
     validateWasmFile,
     createTestHtml
 };
