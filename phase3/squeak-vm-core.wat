@@ -227,14 +227,14 @@
     (param $obj (ref null eq))
     (result i32)
     local.get $obj
-    ref.test i31
+    ref.test (ref i31)
   )
   
   (func $get_small_integer_value
     (param $obj (ref null eq))
     (result i32)
     local.get $obj
-    ref.cast i31
+    ref.cast (ref i31)
     i31.get_s
   )
   
@@ -281,7 +281,7 @@
     (param $value i32)
     ;; Convert to i31ref and push on stack
     local.get $value
-    i31.new
+    ref.i31
     ;; TODO: Push onto execution stack
   )
   
@@ -324,24 +324,13 @@
            )
     local.set $bytecodes
     
-    ;; Create literals array with 'squared' selector
+    ;; Create literals array with null entries (will be filled later)
     i32.const 2
     ref.null eq
     array.new $ObjectArray
-    local.tee $literals
+    local.set $literals
     
-    ;; Set literal 0 to be 'squared' selector
-    i32.const 0
-    global.get $squaredSelector
-    array.set $ObjectArray
-    
-    ;; Set literal 1 to be 'reportToJS' selector
-    local.get $literals
-    i32.const 1
-    global.get $reportToJSSelector
-    array.set $ObjectArray
-    
-    ;; Create CompiledMethod object with JIT support and proper field ordering
+    ;; Create CompiledMethod object with JIT support
     global.get $methodClass
     call $nextIdentityHash
     i32.const 12    ;; format for method
