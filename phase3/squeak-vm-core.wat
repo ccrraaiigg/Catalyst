@@ -282,13 +282,14 @@
     ;; Convert to i31ref and push on stack
     local.get $value
     ref.i31
-    ;; TODO: Push onto execution stack
+    drop  ;; For now, just drop the value since we don't have a real stack yet
   )
   
   (func $sendMessage
     (param $selector (ref null eq))
     (param $argCount i32)
     ;; TODO: Implement message send with method lookup
+    ;; For now, this is a stub function
   )
   
   ;; Basic arithmetic operations for JIT compilation
@@ -331,8 +332,9 @@
     local.set $literals
     
     ;; Create CompiledMethod object with JIT support
-    global.get $methodClass
-    call $nextIdentityHash
+    ;; Use null for class temporarily since methodClass might not be initialized
+    ref.null $Class    ;; class field
+    call $nextIdentityHash ;; identityHash
     i32.const 12    ;; format for method
     i32.const 2     ;; size (literals)
     ref.null $SqueakObject  ;; nextObject (will be set by register_object)
@@ -368,6 +370,7 @@
     ;; Initialize JIT compilation state
     i32.const 0
     global.set $jitCompilationCount
+  )
   )
   
   ;; Main entry point for Phase 3 demo
