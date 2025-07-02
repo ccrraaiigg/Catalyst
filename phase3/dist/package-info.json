@@ -1,0 +1,24 @@
+{
+  "name": "squeakwasm-phase3",
+  "version": "3.0.0",
+  "description": "SqueakWASM VM Phase 3: JIT Compilation Support",
+  "phase": 3,
+  "features": [
+    "Bytecode-to-WASM JIT compilation",
+    "Hot method detection and compilation",
+    "JIT compilation statistics",
+    "Performance monitoring",
+    "Debug mode support",
+    "Enhanced 3 squared example with translated methods"
+  ],
+  "buildDate": "2025-07-02T21:00:15.870Z",
+  "files": {
+    "wasm": [
+      "squeak-vm-core.wasm"
+    ],
+    "javascript": [
+      "squeak-vm.js"
+    ],
+    "test": "test.html"
+  }
+}
