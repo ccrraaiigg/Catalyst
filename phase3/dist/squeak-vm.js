@@ -655,7 +655,7 @@ class SqueakWASMVM {
         };
 
         try {
-            const response = await fetch('dist/squeak-vm-core.wasm');
+            const response = await fetch('squeak-vm-core.wasm');
             const bytes = await response.arrayBuffer();
             const module = await WebAssembly.compile(bytes);
             this.vmModule = await WebAssembly.instantiate(module, imports);

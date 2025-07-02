@@ -320,7 +320,7 @@
   ;; Simplified bytecode interpreter without exceptions for now
   (func $interpret (export "interpret")
     (local $context (ref null $Context))
-    (local $method (ref null $CompiledMethod))
+    (local $method (ref $CompiledMethod))
     (local $pc i32)
     (local $bytecode i32)
     (local $bytecodes (ref $ByteArray))

@@ -389,7 +389,7 @@
  0x33f | 66          | size of function
  0x340 | 04          | 4 local blocks
  0x341 | 01 63 08    | 1 locals of type Ref((ref null (module 8)))
- 0x344 | 01 63 07    | 1 locals of type Ref((ref null (module 7)))
+ 0x344 | 01 64 07    | 1 locals of type Ref((ref (module 7)))
  0x347 | 02 7f       | 2 locals of type I32
  0x349 | 01 64 01    | 1 locals of type Ref((ref (module 1)))
  0x34c | 03 40       | loop blockty:Empty
