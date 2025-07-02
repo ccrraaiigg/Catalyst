@@ -391,7 +391,7 @@
  0x341 | 01 63 08    | 1 locals of type Ref((ref null (module 8)))
  0x344 | 01 63 07    | 1 locals of type Ref((ref null (module 7)))
  0x347 | 02 7f       | 2 locals of type I32
- 0x349 | 01 63 01    | 1 locals of type Ref((ref null (module 1)))
+ 0x349 | 01 64 01    | 1 locals of type Ref((ref (module 1)))
  0x34c | 03 40       | loop blockty:Empty
  0x34e | 23 0d       | global_get global_index:13
  0x350 | d1          | ref_is_null

@@ -323,7 +323,7 @@
     (local $method (ref null $CompiledMethod))
     (local $pc i32)
     (local $bytecode i32)
-    (local $bytecodes (ref null $ByteArray))
+    (local $bytecodes (ref $ByteArray))
     
     ;; Simple interpreter loop
     loop $interpreter_loop
