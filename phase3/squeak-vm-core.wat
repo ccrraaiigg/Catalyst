@@ -1,5 +1,5 @@
 ;; SqueakJS to WASM VM Core Module - Phase 3: JIT Compilation Support
-;; FIXED VERSION - Using named field access for WASM GC types
+;; FIXED VERSION - Fixed struct.set calls in register_object function
 
 (module $SqueakVMCore
   ;; Import JavaScript interface functions
@@ -113,41 +113,39 @@
    )
 
   ;; Global VM state
-  (global $objectClass (mut (ref null $Class)))
-  (global $classClass (mut (ref null $Class)))
-  (global $methodClass (mut (ref null $Class)))
-  (global $contextClass (mut (ref null $Class)))
-  (global $symbolClass (mut (ref null $Class)))
-  (global $smallIntegerClass (mut (ref null $Class)))
+  (global $objectClass (mut (ref null $Class)) (ref.null $Class))
+  (global $classClass (mut (ref null $Class)) (ref.null $Class))
+  (global $methodClass (mut (ref null $Class)) (ref.null $Class))
+  (global $contextClass (mut (ref null $Class)) (ref.null $Class))
+  (global $symbolClass (mut (ref null $Class)) (ref.null $Class))
+  (global $smallIntegerClass (mut (ref null $Class)) (ref.null $Class))
   
   ;; Essential objects
-  (global $nilObject (mut (ref null eq)))
-  (global $trueObject (mut (ref null eq)))
-  (global $falseObject (mut (ref null eq)))
+  (global $nilObject (mut (ref null eq)) (ref.null eq))
+  (global $trueObject (mut (ref null eq)) (ref.null eq))
+  (global $falseObject (mut (ref null eq)) (ref.null eq))
   
   ;; Special selectors for quick sends
-  (global $plusSelector (mut (ref null eq)))
-  (global $timesSelector (mut (ref null eq)))
-  (global $squaredSelector (mut (ref null eq)))
-  (global $reportToJSSelector (mut (ref null eq)))
+  (global $plusSelector (mut (ref null eq)) (ref.null eq))
+  (global $timesSelector (mut (ref null eq)) (ref.null eq))
+  (global $squaredSelector (mut (ref null eq)) (ref.null eq))
+  (global $reportToJSSelector (mut (ref null eq)) (ref.null eq))
   
   ;; VM execution state
-  (global $activeContext (mut (ref null $Context)))
-  (global $currentMethod (mut (ref null $CompiledMethod)))
-  (global $currentReceiver (mut (ref null eq)))
+  (global $activeContext (mut (ref null $Context)) (ref.null $Context))
+  (global $currentMethod (mut (ref null $CompiledMethod)) (ref.null $CompiledMethod))
+  (global $currentReceiver (mut (ref null eq)) (ref.null eq))
   
   ;; Object memory management
-  (global $nextIdentityHash (mut i32))
-  (global $firstObject (mut (ref null $SqueakObject)))
-  (global $lastObject (mut (ref null $SqueakObject)))
-  (global $objectCount (mut i32))
+  (global $nextIdentityHash (mut i32) (i32.const 1000))
+  (global $firstObject (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+  (global $lastObject (mut (ref null $SqueakObject)) (ref.null $SqueakObject))
+  (global $objectCount (mut i32) (i32.const 0))
   
   ;; WASM exception types for VM control flow
   (tag $Return (param (ref null eq)))
   (tag $PrimitiveFailed)
   (tag $DoesNotUnderstand (param (ref null eq)) (param (ref null $ObjectArray)))
-  
-  ;; FIXED: All struct operations now use named field access
   
   ;; Array operations with proper typing
   (func $array_len_byte
@@ -206,20 +204,23 @@
     global.get $nextIdentityHash
   )
   
-  ;; Object enumeration for #become: support - FIXED: using named fields
+  ;; FIXED: Object enumeration for #become: support - proper struct.set handling
   (func $register_object
     (param $object (ref $SqueakObject))
+    (local $lastObj (ref null $SqueakObject))
     
     ;; Link object into enumeration chain
     global.get $lastObject
+    local.tee $lastObj
     ref.is_null
     if
       ;; First object
       local.get $object
       global.set $firstObject
     else
-      ;; Link to previous last object - FIXED: use named field access
-      global.get $lastObject
+      ;; Link to previous last object - FIXED: handle nullable reference
+      local.get $lastObj
+      ref.as_non_null
       local.get $object
       struct.set $SqueakObject $nextObject
     end
@@ -251,7 +252,7 @@
     ;; For now, this is a stub function
   )
   
-  ;; FIXED: Context operations using named field access
+  ;; Context operations using named field access
   (func $get_context_pc
     (param $context (ref $Context))
     (result i32)
@@ -274,7 +275,7 @@
     struct.get $Context $method
   )
   
-  ;; FIXED: Method operations using named field access
+  ;; Method operations using named field access
   (func $get_method_bytecodes
     (param $method (ref $CompiledMethod))
     (result (ref null $ByteArray))
@@ -286,12 +287,12 @@
     (param $method (ref $CompiledMethod))
     (local $current i32)
     
-    ;; Get current count - FIXED: use named field access
+    ;; Get current count
     local.get $method
     struct.get $CompiledMethod $invocationCount
     local.set $current
     
-    ;; Increment and store - FIXED: use named field access
+    ;; Increment and store
     local.get $method
     local.get $current
     i32.const 1
@@ -316,7 +317,7 @@
     i32.mul
   )
   
-  ;; FIXED: Bytecode interpreter with named field access
+  ;; Bytecode interpreter with named field access
   (func $interpret (export "interpret")
     (local $context (ref null $Context))
     (local $method (ref null $CompiledMethod))
@@ -326,33 +327,34 @@
     
     loop $interpreter_loop
       try $execution_block
-        ;; Get current context and fetch bytecode - FIXED: named field access
+        ;; Get current context and fetch bytecode
         global.get $activeContext
         ref.as_non_null
         local.tee $context
         
-        ;; Get current method - FIXED: named field access
+        ;; Get current method
         struct.get $Context $method
         ref.as_non_null
         local.tee $method
         
-        ;; Get and increment PC - FIXED: named field access
+        ;; Get and increment PC
         local.get $context
         struct.get $Context $pc
         local.tee $pc
         
-        ;; Get bytecodes array - FIXED: named field access
+        ;; Get bytecodes array
         local.get $method
         struct.get $CompiledMethod $bytecodes
         ref.as_non_null
         local.tee $bytecodes
         
-        ;; Fetch bytecode
+        ;; Fetch bytecode - need both array and index parameters
+        local.get $bytecodes
         local.get $pc
         call $array_get_byte
         local.set $bytecode
         
-        ;; Increment PC - FIXED: named field access
+        ;; Increment PC
         local.get $context
         local.get $pc
         i32.const 1
@@ -385,18 +387,18 @@
     end
   )
   
-  ;; FIXED: JIT compilation check using named field access
+  ;; JIT compilation check using named field access
   (func $check_jit_compilation
     (param $method (ref $CompiledMethod))
     (local $count i32)
     (local $threshold i32)
     
-    ;; Get invocation count - FIXED: named field access
+    ;; Get invocation count
     local.get $method
     struct.get $CompiledMethod $invocationCount
     local.set $count
     
-    ;; Get threshold - FIXED: named field access
+    ;; Get threshold
     local.get $method
     struct.get $CompiledMethod $jitThreshold
     local.set $threshold
@@ -406,7 +408,7 @@
     local.get $threshold
     i32.ge_u
     if
-      ;; Check if not already compiled - FIXED: named field access
+      ;; Check if not already compiled
       local.get $method
       struct.get $CompiledMethod $compiledWasm
       ref.is_null
@@ -429,7 +431,7 @@
     (local $length i32)
     (local $header i32)
     
-    ;; Get method details - FIXED: named field access
+    ;; Get method details
     local.get $method
     struct.get $CompiledMethod $bytecodes
     local.set $bytecodes
