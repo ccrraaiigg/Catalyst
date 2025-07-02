@@ -161,7 +161,7 @@
     (result i32)
     local.get $array
     local.get $index
-    array.get $ByteArray
+    array.get_u $ByteArray
   )
   
   (func $array_len_object

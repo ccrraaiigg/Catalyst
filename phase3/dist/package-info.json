@@ -11,7 +11,7 @@
     "Debug mode support",
     "Enhanced 3 squared example with translated methods"
   ],
-  "buildDate": "2025-07-02T23:10:25.430Z",
+  "buildDate": "2025-07-02T23:12:14.203Z",
   "files": {
     "wasm": [
       "squeak-vm-core.wasm"

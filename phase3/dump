@@ -262,7 +262,7 @@
  0x287 | 00          | 0 local blocks
  0x288 | 20 00       | local_get local_index:0
  0x28a | 20 01       | local_get local_index:1
- 0x28c | fb 0b 01    | array_get array_type_index:1
+ 0x28c | fb 0d 01    | array_get_u array_type_index:1
  0x28f | 0b          | end
 ============== func 7 ====================
  0x290 | 06          | size of function
