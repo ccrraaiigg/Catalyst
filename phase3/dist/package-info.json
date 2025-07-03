@@ -12,7 +12,7 @@
     "Enhanced 3 squared example with translated methods",
     "Proper UTF-8 character encoding for emoji and symbols"
   ],
-  "buildDate": "2025-07-03T00:05:59.494Z",
+  "buildDate": "2025-07-03T18:43:52.390Z",
   "files": {
     "wasm": [
       "squeak-vm-core.wasm"
