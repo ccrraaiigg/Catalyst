@@ -257,15 +257,10 @@ class SqueakWASMJITCompiler {
                 }
             }
             
-            // If WABT unavailable, create a simplified implementation
-            console.warn('⚠️ WABT CDN unavailable, using simplified WASM compilation');
-            this.wasmTools = {
-                wat2wasm: this.createSimpleWatParser(),
-                available: false
-            };
+            console.warn('⚠️ WABT CDN unavailable');
             
         } catch (error) {
-            console.warn('⚠️ WASM tools initialization failed, using JavaScript fallback');
+            console.warn('⚠️ WASM tools initialization failed');
             this.wasmTools = null;
         }
     }
@@ -320,9 +315,7 @@ class SqueakWASMJITCompiler {
 
     async compileWATToFunction(watCode, className, selector) {
         if (!this.wasmTools) {
-            // Fallback: create a simple JavaScript function that returns the result
-            console.warn(`⚠️ Using JavaScript fallback for ${className}>>${selector}`);
-            return this.createJavaScriptFallback(className, selector);
+            console.warn(`⚠️ Compilation of ${className}>>${selector} failed`);
         }
 
         try {
@@ -337,9 +330,6 @@ class SqueakWASMJITCompiler {
             let wasmBytes;
             if (this.wasmTools.wat2wasm) {
                 wasmBytes = this.wasmTools.wat2wasm(moduleWAT);
-            } else {
-                // Use simplified parser as last resort
-                wasmBytes = await this.parseWatSimple(moduleWAT);
             }
             
             if (!wasmBytes) {
@@ -372,135 +362,6 @@ class SqueakWASMJITCompiler {
         }
     }
 
-    // Simple WAT parser for basic cases when CDN tools aren't available
-    createSimpleWatParser() {
-        return (watText) => {
-            // For Phase 3, create a functional WASM module that implements multiplication
-            try {
-                if (this.debugMode) {
-                    console.log('🔧 Using simplified WASM module for multiplication');
-                }
-                
-                // Create a minimal WASM module with multiplication function
-                // This is a hand-crafted WASM binary for: (i32.const 3) (i32.const 3) (i32.mul)
-                const wasmCode = new Uint8Array([
-                    0x00, 0x61, 0x73, 0x6d,  // WASM magic number
-                    0x01, 0x00, 0x00, 0x00,  // WASM version
-                    
-                    // Type section: function signature (no params, returns i32)
-                    0x01,                     // section id
-                    0x05,                     // section size
-                    0x01,                     // number of types
-                    0x60,                     // function type
-                    0x00,                     // no parameters
-                    0x01, 0x7f,              // returns i32
-                    
-                    // Function section: declare 1 function of type 0
-                    0x03,                     // section id
-                    0x02,                     // section size
-                    0x01,                     // number of functions
-                    0x00,                     // function 0 has type 0
-                    
-                    // Export section: export function as "SmallInteger_squared"
-                    0x07,                     // section id
-                    0x19,                     // section size
-                    0x01,                     // number of exports
-                    0x15,                     // name length (21 chars)
-                    0x53, 0x6d, 0x61, 0x6c, 0x6c, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x65, 0x72, 0x5f, 0x73, 0x71, 0x75, 0x61, 0x72, 0x65, 0x64, // "SmallInteger_squared"
-                    0x00,                     // export type: function
-                    0x00,                     // function index 0
-                    
-                    // Code section: function implementation
-                    0x0a,                     // section id
-                    0x07,                     // section size
-                    0x01,                     // number of function bodies
-                    0x05,                     // function body size
-                    0x00,                     // no local variables
-                    0x41, 0x03,              // i32.const 3
-                    0x41, 0x03,              // i32.const 3
-                    0x6c,                     // i32.mul
-                    0x0b                      // end
-                ]);
-                
-                return wasmCode.buffer;
-            } catch (error) {
-                console.error('❌ Simple WAT parser failed:', error);
-                return null;
-            }
-        };
-    }74, 0x65, 0x67, 0x65, 0x72, 0x5f, 0x73, 0x71, 0x75, 0x61, 0x72, 0x65, 0x64, 0x00, 0x00,
-                    // Code section
-                    0x0a, 0x09, 0x01, 0x07, 0x00, 0x20, 0x00, 0x20, 0x00, 0x6c, 0x0b
-                ]);
-                
-                return wasmCode.buffer;
-            } catch (error) {
-                console.error('Simple WAT parser failed:', error);
-                return null;
-            }
-        };
-    }
-
-    async parseWatSimple(watText) {
-        // Simplified parser that creates a basic multiplication function
-        // This is a fallback when no CDN tools are available
-        if (watText.includes('i32.mul')) {
-            return this.wasmTools.wat2wasm(watText);
-        }
-        return null;
-    }
-
-    createCompleteWASMModule(methodWAT) {
-        // Simplified WASM module that works without complex imports
-        return `(module
-  ;; Simple function that multiplies two i32 values
-  (func $SmallInteger_squared (export "SmallInteger_squared")
-    (param $a i32) (param $b i32) 
-    (result i32)
-    
-    ;; For >>squared method: multiply param by itself
-    local.get $a
-    local.get $a
-    i32.mul
-  )
-  
-  ;; Alternative export name for compatibility
-  (func $multiply (export "multiply")
-    (param $a i32) (param $b i32)
-    (result i32)
-    
-    local.get $a
-    local.get $b
-    i32.mul
-  )
-)`;
-    }
-
-    createVMImports() {
-        // Simplified imports that don't require the main WASM module
-        return {};
-    }
-
-    createJavaScriptFallback(className, selector) {
-        // Only create fallback when explicitly requested and WAT compilation genuinely failed
-        console.warn(`⚠️ Creating JavaScript fallback for ${className}>>${selector} - WAT compilation failed`);
-        
-        if (selector === 'squared') {
-            return (receiver, args) => {
-                // Implement 3 squared = 9 in JavaScript as last resort fallback
-                const value = this.extractSmallIntegerValue(receiver);
-                const result = value * value;
-                return this.createSmallInteger(result);
-            };
-        }
-        
-        // Default fallback for unknown methods
-        return (receiver, args) => {
-            console.warn(`⚠️ No implementation available for ${className}>>${selector}`);
-            return receiver;
-        };
-    }
-
     extractCompiledMethod(methodRef) {
         // For Phase 3, we'll create a simple method representation for >>squared
         return {
@@ -526,11 +387,6 @@ class SqueakWASMJITCompiler {
         if (typeof obj === 'number') return obj;
         if (obj && typeof obj === 'object' && obj.value !== undefined) return obj.value;
         return 3; // Default for testing
-    }
-
-    createSmallInteger(value) {
-        // Create SmallInteger object
-        return { type: 'SmallInteger', value: value };
     }
 
     addFunctionToTable(wasmFunction) {
@@ -593,7 +449,7 @@ class SqueakVM {
                         console.log('WASM result:', value);
                         this.lastResult = value;
                     },
-                    jit_compile_method_js: this.jitCompileMethodJS.bind(this)
+                    jit_compile_method_js: this.jitCompileMethodJS
                 }
             });
             
@@ -602,11 +458,7 @@ class SqueakVM {
             this.jitCompiler.setDebugMode(this.debugMode);
             
             // Initialize the VM
-            if (this.wasmInstance.exports.init_vm) {
-                this.wasmInstance.exports.init_vm();
-            } else if (this.wasmInstance.exports.createMinimalObjectMemory) {
-                this.wasmInstance.exports.createMinimalObjectMemory();
-            }
+            this.wasmInstance.exports.createMinimalObjectMemory();
             
             if (this.debugMode) {
                 console.log('✅ SqueakVM initialized with real JIT compilation');
@@ -622,140 +474,12 @@ class SqueakVM {
         }
     }
 
-    async runMinimalExample() {
-        const startTime = performance.now();
-        
-        try {
-            // Execute the real >>squared method through WASM
-            const result = await this.executeSquaredMethod();
-            
-            const endTime = performance.now();
-            const executionTime = endTime - startTime;
-            
-            // Update statistics
-            this.stats.totalInvocations++;
-            
-            // Check if JIT compilation should be triggered
-            const methodKey = 'SmallInteger_squared';
-            const invocationCount = this.methodInvocations.get(methodKey) || 0;
-            this.methodInvocations.set(methodKey, invocationCount + 1);
-            
-            let jitCompilations = 0;
-            if (this.jitEnabled && invocationCount + 1 >= this.stats.jitThreshold) {
-                // Trigger real JIT compilation
-                jitCompilations = await this.compileMethod(methodKey);
-                if (jitCompilations > 0) {
-                    this.stats.jitCompilations += jitCompilations;
-                    this.stats.cachedMethods = this.jitCompiler.getCacheSize();
-                }
-            }
-            
-            return {
-                success: true,
-                results: [result],
-                executionTime: executionTime,
-                jitCompilations: jitCompilations,
-                invocationCount: invocationCount + 1
-            };
-            
-        } catch (error) {
-            console.error('❌ Execution failed:', error);
-            return {
-                success: false,
-                error: error.message,
-                results: [],
-                executionTime: 0,
-                jitCompilations: 0
-            };
-        }
-    }
-
-    async executeSquaredMethod() {
-        // Use the real WASM module that exists
-        if (this.wasmInstance && this.wasmInstance.exports.runMinimalExample) {
-            // Execute the real WASM implementation
-            if (this.debugMode) {
-                console.log('🚀 Executing >>squared method via real WASM module');
-            }
-            
-            try {
-                this.wasmInstance.exports.runMinimalExample();
-                // Return the result that was reported via report_result callback
-                return this.lastResult || 9; // Use reported result or fallback
-            } catch (error) {
-                console.error('❌ WASM execution failed:', error);
-                // Fall back to direct calculation only if WASM fails
-                return 3 * 3;
-            }
-        } else {
-            // Only use fallback when WASM is genuinely unavailable
-            if (this.debugMode) {
-                console.log('🔄 WASM module not available, computing 3*3 directly');
-            }
-            
-            return 3 * 3;
-        }
-    }
-
-    async compileMethod(methodKey) {
-        if (!this.jitCompiler) {
-            console.warn('❌ JIT compiler not available');
-            return 0;
-        }
-        
-        // Check if WAT parsing tools are available
-        if (!this.jitCompiler.wasmTools) {
-            console.warn('❌ JIT compilation disabled: No WAT parser available from CDN');
-            return 0; // Don't fake compilation
-        }
-
-        const compilationStartTime = performance.now();
-        
-        try {
-            // Create mock method references for Phase 3
-            const methodRef = 1; // Mock reference
-            const classRef = 2;  // Mock reference  
-            const selectorRef = 3; // Mock reference
-            
-            if (this.debugMode) {
-                console.log(`🔧 Compiling ${methodKey} with real WAT parser`);
-            }
-            
-            const functionRef = await this.jitCompiler.compileMethod(methodRef, classRef, selectorRef, 0);
-            
-            if (functionRef === 0) {
-                console.warn(`❌ JIT compilation failed for ${methodKey}`);
-                return 0;
-            }
-            
-            const compilationTime = performance.now() - compilationStartTime;
-            
-            // Update average compilation time
-            const totalTime = this.stats.avgCompilationTime * (this.stats.jitCompilations) + compilationTime;
-            this.stats.avgCompilationTime = totalTime / (this.stats.jitCompilations + 1);
-            
-            if (this.debugMode) {
-                console.log(`✅ Method compiled in ${compilationTime.toFixed(2)}ms, function ref: ${functionRef}`);
-            }
-            
-            return 1; // Success
-            
-        } catch (error) {
-            console.error('❌ Method compilation failed:', error);
-            return 0; // Failure - no faking
-        }
-    }
-
     jitCompileMethodJS(methodRef, classRef, selectorRef, enableSingleStep) {
         // This method is called from WASM
         if (this.jitCompiler) {
             return this.jitCompiler.compileMethod(methodRef, classRef, selectorRef, enableSingleStep);
         }
         return 0;
-    }
-
-    createSmallInteger(value) {
-        return { type: 'SmallInteger', value: value };
     }
 
     extractSmallIntegerValue(obj) {

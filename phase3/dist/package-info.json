@@ -13,7 +13,7 @@
     "Proper UTF-8 character encoding for emoji and symbols",
     "No build step required - loads tools from CDN"
   ],
-  "buildDate": "2025-07-03T19:10:46.234Z",
+  "buildDate": "2025-07-03T19:44:56.493Z",
   "files": {
     "wasm": [
       "squeak-vm-core.wasm"
