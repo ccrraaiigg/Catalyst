@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SqueakWASM VM - Phase 3: JIT Compilation Test</title>
     <style>
         body { 
@@ -10,245 +12,357 @@
             color: white;
             min-height: 100vh;
         }
+        
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 20px;
         }
-        h1 { 
-            text-align: center; 
-            margin-bottom: 10px;
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
             font-size: 2.5em;
+            font-weight: 300;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
-        .subtitle {
-            text-align: center;
+        
+        .header .subtitle {
             font-size: 1.2em;
-            margin-bottom: 30px;
             opacity: 0.9;
+            margin-bottom: 20px;
         }
-        .controls {
-            display: flex;
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            justify-content: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
+            margin: 20px 0;
         }
-        button { 
-            padding: 12px 24px; 
-            font-size: 16px; 
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .control-group {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .control-group h3 {
+            margin: 0 0 20px 0;
+            color: #fff;
+            font-size: 1.3em;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             border: none;
+            padding: 12px 20px;
+            margin: 8px;
             border-radius: 8px;
             cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
             transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 100%;
+            min-height: 45px;
         }
+        
         button:hover {
-            background: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #5a6fd8 0%, #6b4190 100%);
         }
+        
         button:active {
             transform: translateY(0);
         }
-        .result { 
-            background: rgba(0, 255, 0, 0.1); 
-            padding: 15px; 
-            margin: 15px 0; 
-            border-radius: 8px; 
-            border-left: 4px solid #00ff00;
-            backdrop-filter: blur(5px);
+        
+        button.primary {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            font-size: 16px;
+            font-weight: 600;
         }
-        .error { 
-            background: rgba(255, 0, 0, 0.1); 
-            padding: 15px; 
-            margin: 15px 0; 
-            border-radius: 8px; 
-            border-left: 4px solid #ff0000;
-            backdrop-filter: blur(5px);
+        
+        button.secondary {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
         }
+        
+        button.toggle {
+            background: linear-gradient(135deg, #FF9800 0%, #F57000 100%);
+        }
+        
+        button.toggle.active {
+            background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+        }
+        
+        .output {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+        
+        .result {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        
         .info {
-            background: rgba(0, 150, 255, 0.1);
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 8px;
-            border-left: 4px solid #0096ff;
-            backdrop-filter: blur(5px);
+            color: #2196F3;
         }
+        
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin: 20px 0;
         }
-        .stat-card {
+        
+        .stat {
             background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 8px;
+            padding: 20px;
+            border-radius: 10px;
             text-align: center;
-            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
+        
         .stat-value {
             font-size: 2em;
             font-weight: bold;
-            color: #00ff88;
+            color: #4CAF50;
+            margin-bottom: 5px;
         }
+        
         .stat-label {
-            font-size: 0.9em;
             opacity: 0.8;
-            margin-top: 5px;
+            font-size: 0.9em;
         }
-        #output {
-            max-height: 400px;
-            overflow-y: auto;
+        
+        .status {
             background: rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
         }
-        .toggle {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 14px;
+        
+        .status.ready {
+            border-left-color: #4CAF50;
         }
-        .toggle.active {
-            background: rgba(0, 255, 0, 0.3);
-            border-color: #00ff00;
+        
+        .status.error {
+            border-left-color: #f44336;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🚀 SqueakWASM VM</h1>
-        <div class="subtitle">Phase 3: JIT Compilation Support</div>
-        
-        <div class="info">
-            <strong>Phase 3 Features:</strong>
-            <ul>
-                <li>✨ Bytecode-to-WASM JIT compilation</li>
-                <li>⚡ Hot method detection and compilation</li>
-                <li>📊 JIT compilation statistics</li>
-                <li>🔄 Same "3 squared" example with translated methods</li>
-                <li>🎯 Performance monitoring and debug modes</li>
-            </ul>
+        <div class="header">
+            <h1>🚀 SqueakWASM VM</h1>
+            <div class="subtitle">Phase 3: JIT Compilation Support</div>
+            
+            <div class="features">
+                <div class="feature">⚡ Bytecode-to-WASM JIT compilation</div>
+                <div class="feature">🔥 Hot method detection and compilation</div>
+                <div class="feature">📊 JIT compilation statistics</div>
+                <div class="feature">🎛️ Same "3 squared" example with translated methods</div>
+                <div class="feature">🔧 Performance monitoring and debug modes</div>
+            </div>
+            
+            <div class="status ready" id="status">
+                <strong>🎯 SqueakWASM VM Phase 3 Ready</strong><br>
+                Click "Run (3 squared) with JIT" to start!
+            </div>
         </div>
-        
+
         <div class="controls">
-            <button id="runTest">🚀 Run (3 squared) with JIT</button>
-            <button id="runMultiple">🔄 Run Multiple Times</button>
-            <button id="toggleJIT" class="toggle">🔧 Toggle JIT</button>
-            <button id="toggleDebug" class="toggle">🐛 Toggle Debug</button>
-            <button id="clearResults">🗑️ Clear Results</button>
-            <button id="showStats">📊 Show Statistics</button>
+            <div class="control-group">
+                <h3>🧪 Test Execution</h3>
+                <button id="runExample" class="primary">🚀 Run (3 squared) with JIT</button>
+                <button id="runMultiple" class="secondary">🔄 Run Multiple Times</button>
+            </div>
+            
+            <div class="control-group">
+                <h3>⚙️ JIT Controls</h3>
+                <button id="toggleJIT" class="toggle active">🔧 JIT: ON</button>
+                <button id="toggleDebug" class="toggle">🐛 Debug: OFF</button>
+            </div>
+            
+            <div class="control-group">
+                <h3>📊 Analysis</h3>
+                <button id="showStats">📈 Show Statistics</button>
+                <button id="clearResults">🗑️ Clear Results</button>
+            </div>
         </div>
         
-        <div class="stats" id="statsPanel" style="display: none;">
-            <div class="stat-card">
-                <div class="stat-value" id="executionTime">--</div>
+        <div class="stats" id="statsContainer">
+            <div class="stat">
+                <div class="stat-value" id="execTime">-</div>
                 <div class="stat-label">Execution Time (ms)</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value" id="jitCompilations">--</div>
+            <div class="stat">
+                <div class="stat-value" id="jitCount">-</div>
                 <div class="stat-label">JIT Compilations</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value" id="cachedMethods">--</div>
+            <div class="stat">
+                <div class="stat-value" id="cacheHits">-</div>
                 <div class="stat-label">Cached Methods</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value" id="jitStatus">--</div>
+            <div class="stat">
+                <div class="stat-value" id="jitStatus">ON</div>
                 <div class="stat-label">JIT Status</div>
             </div>
         </div>
-        
-        <div id="output"></div>
+
+        <div class="output" id="output">
+<strong>🎉 SqueakWASM VM Phase 3 - JIT Compilation Test Interface</strong>
+
+This page demonstrates bytecode-to-WASM Just-In-Time compilation in the SqueakWASM virtual machine.
+
+<strong>🎯 Test Features:</strong>
+• Runtime bytecode translation to WebAssembly
+• Hot method detection and automatic compilation
+• Performance monitoring and statistics
+• Debug mode with detailed compilation logs
+
+<strong>🚀 Getting Started:</strong>
+1. Click "Run (3 squared) with JIT" to execute the basic example
+2. Use "Run Multiple Times" to trigger JIT compilation (threshold: 10 invocations)
+3. Toggle JIT compilation and debug modes to see different behaviors
+4. View statistics to monitor performance improvements
+
+Ready to test JIT compilation!
+        </div>
     </div>
 
     <script src="squeak-vm.js"></script>
     <script>
         let vm = null;
         let jitEnabled = true;
-        let debugEnabled = false;
-        const output = document.getElementById('output');
+        let debugMode = false;
+        
+        const stats = {
+            executionTime: 0,
+            jitCompilations: 0,
+            cachedMethods: 0,
+            jitEnabled: true
+        };
 
         async function initVM() {
             if (!vm) {
-                vm = new SqueakWASMVM();
-                vm.enableJIT(jitEnabled);
-                vm.setDebugMode(debugEnabled);
-                
-                const success = await vm.initialize();
-                if (!success) {
-                    throw new Error('Failed to initialize VM');
+                try {
+                    addOutput('<strong>🔧 Initializing SqueakWASM VM...</strong>');
+                    vm = new SqueakVM();
+                    await vm.initialize();
+                    addOutput('<strong>✅ VM initialized successfully!</strong>\n');
+                } catch (error) {
+                    addOutput(`<strong>❌ VM initialization failed:</strong> ${error.message}`, 'error');
+                    throw error;
                 }
-                
-                updateToggleButtons();
             }
         }
 
-        function addOutput(content, className = 'info') {
-            const div = document.createElement('div');
-            div.className = className;
-            div.innerHTML = content;
-            output.appendChild(div);
+        function addOutput(text, className = '') {
+            const output = document.getElementById('output');
+            const line = document.createElement('div');
+            if (className) line.className = className;
+            line.innerHTML = text;
+            output.appendChild(line);
             output.scrollTop = output.scrollHeight;
         }
 
-        function updateStats(stats) {
-            document.getElementById('executionTime').textContent = 
-                stats.executionTime ? stats.executionTime.toFixed(2) : '--';
-            document.getElementById('jitCompilations').textContent = 
-                stats.jitCompilations || '--';
-            document.getElementById('cachedMethods').textContent = 
-                stats.cachedMethods || '--';
-            document.getElementById('jitStatus').textContent = 
-                stats.jitEnabled ? '✅ ON' : '❌ OFF';
+        function updateStats(newStats) {
+            document.getElementById('execTime').textContent = newStats.executionTime.toFixed(2);
+            document.getElementById('jitCount').textContent = newStats.jitCompilations;
+            document.getElementById('cacheHits').textContent = newStats.cachedMethods;
+            document.getElementById('jitStatus').textContent = newStats.jitEnabled ? 'ON' : 'OFF';
+            
+            Object.assign(stats, newStats);
         }
 
-        function updateToggleButtons() {
-            const jitButton = document.getElementById('toggleJIT');
-            const debugButton = document.getElementById('toggleDebug');
-            
-            jitButton.textContent = jitEnabled ? '🔧 JIT: ON' : '🔧 JIT: OFF';
-            jitButton.classList.toggle('active', jitEnabled);
-            
-            debugButton.textContent = debugEnabled ? '🐛 Debug: ON' : '🐛 Debug: OFF';
-            debugButton.classList.toggle('active', debugEnabled);
-        }
-
-        document.getElementById('runTest').addEventListener('click', async () => {
+        // Event Listeners
+        document.getElementById('runExample').addEventListener('click', async () => {
             try {
                 await initVM();
                 
-                addOutput('<strong>🚀 Starting "3 squared" test with JIT compilation...</strong>');
+                addOutput('<strong>🚀 Running 3 squared with JIT compilation...</strong>');
                 
+                // Configure VM settings
+                vm.setJITEnabled(jitEnabled);
+                vm.setDebugMode(debugMode);
+                
+                const startTime = performance.now();
                 const result = await vm.runMinimalExample();
+                const endTime = performance.now();
+                
+                const success = result.results && result.results.includes(9);
                 const stats = vm.getJITStatistics();
                 
-                const success = result.results.includes(9);
                 addOutput(`
-                    <strong>📋 Test Results:</strong><br>
-                    • Result: ${result.results.join(', ')}<br>
-                    • Expected: 9<br>
-                    • Status: ${success ? '✅ PASSED' : '❌ FAILED'}<br>
-                    • Execution Time: ${result.executionTime.toFixed(2)}ms<br>
-                    • JIT Compilations: ${result.jitCompilations}<br>
+                    <strong>📊 Execution Result:</strong> ${success ? '✅ PASSED' : '❌ FAILED'}<br>
+                    • Result: ${result.results ? result.results.join(', ') : 'No results'}<br>
+                    • Execution Time: ${(endTime - startTime).toFixed(2)}ms<br>
+                    • JIT Compilations: ${result.jitCompilations || 0}<br>
                     • JIT Status: ${jitEnabled ? 'Enabled' : 'Disabled'}
                 `, success ? 'result' : 'error');
                 
                 updateStats({
-                    executionTime: result.executionTime,
-                    jitCompilations: result.jitCompilations,
-                    cachedMethods: stats.cachedMethods,
-                    jitEnabled: stats.jitEnabled
+                    executionTime: endTime - startTime,
+                    jitCompilations: result.jitCompilations || 0,
+                    cachedMethods: stats.cachedMethods || 0,
+                    jitEnabled: jitEnabled
                 });
                 
             } catch (error) {
@@ -262,37 +376,45 @@
                 
                 addOutput('<strong>🔄 Running multiple tests to trigger JIT compilation...</strong>');
                 
+                vm.setJITEnabled(jitEnabled);
+                vm.setDebugMode(debugMode);
+                
                 const runs = 15; // Exceed JIT threshold
                 const results = [];
                 
                 for (let i = 0; i < runs; i++) {
+                    const startTime = performance.now();
                     const result = await vm.runMinimalExample();
-                    results.push(result);
+                    const endTime = performance.now();
+                    
+                    results.push({
+                        ...result,
+                        executionTime: endTime - startTime
+                    });
                     
                     if (i === 0 || i === 4 || i === 9 || i === 14) {
-                        addOutput(`Run ${i + 1}: ${result.results[0]} (JIT: ${result.jitCompilations})`);
+                        addOutput(`Run ${i + 1}: ${result.results ? result.results[0] : 'N/A'} (JIT: ${result.jitCompilations || 0}, Time: ${(endTime - startTime).toFixed(2)}ms)`);
                     }
                 }
                 
-                const lastResult = results[results.length - 1];
-                const totalJIT = results.reduce((sum, r) => sum + r.jitCompilations, 0);
+                const totalJIT = results.reduce((sum, r) => sum + (r.jitCompilations || 0), 0);
                 const avgTime = results.reduce((sum, r) => sum + r.executionTime, 0) / runs;
-                const stats = vm.getJITStatistics();
+                const vmStats = vm.getJITStatistics();
                 
                 addOutput(`
                     <strong>📊 Multiple Run Summary:</strong><br>
                     • Total Runs: ${runs}<br>
                     • Total JIT Compilations: ${totalJIT}<br>
                     • Average Execution Time: ${avgTime.toFixed(2)}ms<br>
-                    • Cached Methods: ${stats.cachedMethods}<br>
-                    • All results correct: ${results.every(r => r.results.includes(9)) ? '✅ YES' : '❌ NO'}
+                    • Cached Methods: ${vmStats.cachedMethods || 0}<br>
+                    • All results correct: ${results.every(r => r.results && r.results.includes(9)) ? '✅ YES' : '❌ NO'}
                 `, 'result');
                 
                 updateStats({
                     executionTime: avgTime,
                     jitCompilations: totalJIT,
-                    cachedMethods: stats.cachedMethods,
-                    jitEnabled: stats.jitEnabled
+                    cachedMethods: vmStats.cachedMethods || 0,
+                    jitEnabled: jitEnabled
                 });
                 
             } catch (error) {
@@ -302,45 +424,83 @@
 
         document.getElementById('toggleJIT').addEventListener('click', () => {
             jitEnabled = !jitEnabled;
+            const button = document.getElementById('toggleJIT');
+            button.textContent = jitEnabled ? '🔧 JIT: ON' : '🔧 JIT: OFF';
+            button.className = jitEnabled ? 'toggle active' : 'toggle';
+            
             if (vm) {
-                vm.enableJIT(jitEnabled);
+                vm.setJITEnabled(jitEnabled);
             }
-            updateToggleButtons();
-            addOutput(`🔧 JIT compilation ${jitEnabled ? 'enabled' : 'disabled'}`);
+            
+            addOutput(`🔧 JIT Compilation ${jitEnabled ? 'ENABLED' : 'DISABLED'}`, 'info');
+            updateStats({...stats, jitEnabled});
         });
 
         document.getElementById('toggleDebug').addEventListener('click', () => {
-            debugEnabled = !debugEnabled;
+            debugMode = !debugMode;
+            const button = document.getElementById('toggleDebug');
+            button.textContent = debugMode ? '🐛 Debug: ON' : '🐛 Debug: OFF';
+            button.className = debugMode ? 'toggle active' : 'toggle';
+            
             if (vm) {
-                vm.setDebugMode(debugEnabled);
+                vm.setDebugMode(debugMode);
             }
-            updateToggleButtons();
-            addOutput(`🐛 Debug mode ${debugEnabled ? 'enabled' : 'disabled'}`);
-        });
-
-        document.getElementById('clearResults').addEventListener('click', () => {
-            output.innerHTML = '';
-            addOutput('<strong>🗑️ Results cleared</strong>');
+            
+            addOutput(`🐛 Debug Mode ${debugMode ? 'ENABLED' : 'DISABLED'}`, 'info');
         });
 
         document.getElementById('showStats').addEventListener('click', () => {
-            const statsPanel = document.getElementById('statsPanel');
-            const isVisible = statsPanel.style.display !== 'none';
-            statsPanel.style.display = isVisible ? 'none' : 'grid';
-            
-            if (!isVisible && vm) {
-                const stats = vm.getJITStatistics();
-                updateStats({
-                    jitCompilations: stats.compilationCount,
-                    cachedMethods: stats.cachedMethods,
-                    jitEnabled: stats.jitEnabled
-                });
+            if (vm) {
+                const vmStats = vm.getJITStatistics();
+                addOutput(`
+                    <strong>📊 Detailed JIT Statistics:</strong><br>
+                    • Total Method Invocations: ${vmStats.totalInvocations || 0}<br>
+                    • JIT Compilation Threshold: ${vmStats.jitThreshold || 10}<br>
+                    • Compiled Methods in Cache: ${vmStats.cachedMethods || 0}<br>
+                    • Cache Hit Rate: ${vmStats.cacheHitRate || 0}%<br>
+                    • Average Compilation Time: ${vmStats.avgCompilationTime || 0}ms<br>
+                    • JIT Enabled: ${jitEnabled ? 'Yes' : 'No'}<br>
+                    • Debug Mode: ${debugMode ? 'Yes' : 'No'}
+                `, 'info');
+            } else {
+                addOutput('🔧 VM not initialized. Run a test first.', 'info');
             }
         });
 
-        // Initialize display
-        updateToggleButtons();
-        addOutput('<strong>🎯 SqueakWASM VM Phase 3 Ready</strong><br>Click "Run (3 squared) with JIT" to start!');
+        document.getElementById('clearResults').addEventListener('click', () => {
+            document.getElementById('output').innerHTML = `
+<strong>🎉 SqueakWASM VM Phase 3 - JIT Compilation Test Interface</strong>
+
+This page demonstrates bytecode-to-WASM Just-In-Time compilation in the SqueakWASM virtual machine.
+
+<strong>🎯 Test Features:</strong>
+• Runtime bytecode translation to WebAssembly
+• Hot method detection and automatic compilation
+• Performance monitoring and statistics
+• Debug mode with detailed compilation logs
+
+<strong>🚀 Getting Started:</strong>
+1. Click "Run (3 squared) with JIT" to execute the basic example
+2. Use "Run Multiple Times" to trigger JIT compilation (threshold: 10 invocations)
+3. Toggle JIT compilation and debug modes to see different behaviors
+4. View statistics to monitor performance improvements
+
+Ready to test JIT compilation!
+            `;
+            
+            updateStats({
+                executionTime: 0,
+                jitCompilations: 0,
+                cachedMethods: 0,
+                jitEnabled: jitEnabled
+            });
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            addOutput('🚀 Phase 3 JIT Compilation Test Interface loaded!\n');
+            addOutput('💡 <strong>Tip:</strong> Use "Run Multiple Times" to see JIT compilation kick in after the threshold is reached.\n');
+        });
     </script>
 </body>
 </html>
