@@ -87,3 +87,7 @@ export class SqueakVM {
         return 1;
     }
 }
+
+if (typeof window !== 'undefined') {
+    window.SqueakVM = SqueakVM;
+}
