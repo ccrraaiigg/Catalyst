@@ -1,4 +1,4 @@
-// Only run main if this is#!/usr/bin/env node
+#!/usr/bin/env node
 
 /**
  * Build script for SqueakJS to WASM VM - Phase 3: JIT Compilation Support
@@ -354,8 +354,8 @@ Ready to test JIT compilation!
         </div>
     </div>
 
-    <script type="module" src="squeak-vm.js"></script>
-    <script type="module">
+    <script src="squeak-vm.js"></script>
+    <script>
         let vm = null;
         let jitEnabled = true;
         let debugMode = false;
@@ -657,14 +657,13 @@ function main() {
         description: 'SqueakWASM VM Phase 3: JIT Compilation Support',
         phase: 3,
         features: [
-            'Real bytecode-to-WASM JIT compilation using CDN-loaded WASM tools',
+            'Bytecode-to-WASM JIT compilation',
             'Hot method detection and compilation',
             'JIT compilation statistics',
             'Performance monitoring',
             'Debug mode support',
             'Enhanced 3 squared example with translated methods',
-            'Proper UTF-8 character encoding for emoji and symbols',
-            'No build step required - loads tools from CDN'
+            'Proper UTF-8 character encoding for emoji and symbols'
         ],
         buildDate: new Date().toISOString(),
         files: {
@@ -695,14 +694,12 @@ function main() {
         console.log('• 🐛 Debug mode for detailed compilation logs');
         console.log('• 🚀 Performance improvements for hot methods');
         console.log('• 🎨 Proper UTF-8 character display for all emoji and symbols');
-        console.log('• 🌐 CDN-based WASM tools loading without build dependencies');
     } else {
         console.log('\n❌ Build completed with errors');
         process.exit(1);
     }
 }
 
-// Only run main if this is the main module
 if (require.main === module) {
     main();
 }

@@ -50,13 +50,12 @@
     "current": 3,
     "name": "JIT Compilation Support",
     "features": [
-      "Real bytecode-to-WASM JIT compilation using CDN-loaded WASM tools",
+      "Bytecode-to-WASM JIT compilation",
       "Hot method detection and compilation", 
       "Runtime JIT enable/disable controls",
       "Compilation statistics and monitoring",
       "Debug mode with detailed logging",
-      "Actual WASM execution of compiled methods",
-      "No build step required - loads tools from CDN"
+      "Enhanced 3 squared example with translated methods"
     ],
     "status": "completed",
     "nextPhase": "Slang Integration"
@@ -64,8 +63,7 @@
   "build": {
     "tools": {
       "wasm-tools": "^1.0.0",
-      "wasm-tools-cdn": "Multiple CDN sources (esm.run, jsdelivr, unpkg, esm.sh)",
-      "required": ["wasm-tools (build time only)"]
+      "required": ["wasm-tools"]
     },
     "targets": {
       "wasm": "dist/squeak-vm-core.wasm",
@@ -77,8 +75,7 @@
     "jit": {
       "threshold": 10,
       "enabled": true,
-      "debugMode": false,
-      "compiler": "js-wasm-tools"
+      "debugMode": false
     },
     "benchmarks": {
       "example": "3 squared = 9",
@@ -101,6 +98,58 @@
     "architecture": "docs/architecture.md",
     "jit": "docs/jit-compilation.md",
     "api": "docs/api.md",
-    "examples": "examples/"
+    "examples": "docs/examples.md"
+  },
+  "testing": {
+    "framework": "built-in",
+    "coverage": [
+      "bytecode translation",
+      "jit compilation",
+      "method execution",
+      "performance monitoring"
+    ],
+    "examples": [
+      "3 squared computation",
+      "multiple method calls",
+      "jit threshold triggering",
+      "debug mode validation"
+    ]
+  },
+  "roadmap": {
+    "phase4": {
+      "name": "Slang Integration", 
+      "timeline": "2-3 weeks",
+      "goals": [
+        "Extend Slang translator for WASM",
+        "Simulation-based debugging",
+        "VM component generation"
+      ]
+    },
+    "phase5": {
+      "name": "Snapshot Loading",
+      "timeline": "2-3 weeks", 
+      "goals": [
+        "Full Squeak snapshot support",
+        "Multi-process environments",
+        "Complete bytecode set"
+      ]
+    },
+    "phase6": {
+      "name": "Advanced Optimizations",
+      "timeline": "1-2 weeks",
+      "goals": [
+        "Sista bytecode support",
+        "Advanced JIT optimizations",
+        "Inline caching"
+      ]
+    }
+  },
+  "contributors": {
+    "maintainers": ["SqueakWASM Project Team"],
+    "acknowledgments": [
+      "SqueakJS original implementation",
+      "WebAssembly GC proposal authors",
+      "Smalltalk community"
+    ]
   }
 }
