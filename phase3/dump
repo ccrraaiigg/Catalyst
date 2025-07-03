@@ -289,7 +289,7 @@
  0x2a3 | 07 69 6e 69 | export Export { name: "init_vm", kind: Func, index: 42 }
        | 74 5f 76 6d
        | 00 2a      
- 0x2ad | 0a b1 05    | code section
+ 0x2ad | 0a cc 05    | code section
  0x2b0 | 29          | 41 count
 ============== func 2 ====================
  0x2b1 | 06          | size of function
@@ -494,353 +494,365 @@
  0x3d6 | 6c          | i32_mul
  0x3d7 | 0b          | end
 ============== func 30 ====================
- 0x3d8 | 02          | size of function
+ 0x3d8 | 06          | size of function
  0x3d9 | 00          | 0 local blocks
- 0x3da | 0b          | end
+ 0x3da | 20 00       | local_get local_index:0
+ 0x3dc | 08 00       | throw tag_index:0
+ 0x3de | 0b          | end
 ============== func 31 ====================
- 0x3db | 02          | size of function
- 0x3dc | 00          | 0 local blocks
- 0x3dd | 0b          | end
+ 0x3df | 04          | size of function
+ 0x3e0 | 00          | 0 local blocks
+ 0x3e1 | 08 01       | throw tag_index:1
+ 0x3e3 | 0b          | end
 ============== func 32 ====================
- 0x3de | 02          | size of function
- 0x3df | 00          | 0 local blocks
- 0x3e0 | 0b          | end
+ 0x3e4 | 08          | size of function
+ 0x3e5 | 00          | 0 local blocks
+ 0x3e6 | 20 00       | local_get local_index:0
+ 0x3e8 | 20 01       | local_get local_index:1
+ 0x3ea | 08 02       | throw tag_index:2
+ 0x3ec | 0b          | end
 ============== func 33 ====================
- 0x3e1 | 06          | size of function
- 0x3e2 | 00          | 0 local blocks
- 0x3e3 | 20 00       | local_get local_index:0
- 0x3e5 | fb 1c       | ref_i31
- 0x3e7 | 0b          | end
+ 0x3ed | 06          | size of function
+ 0x3ee | 00          | 0 local blocks
+ 0x3ef | 20 00       | local_get local_index:0
+ 0x3f1 | fb 1c       | ref_i31
+ 0x3f3 | 0b          | end
 ============== func 34 ====================
- 0x3e8 | 2c          | size of function
- 0x3e9 | 01          | 1 local blocks
- 0x3ea | 01 64 08    | 1 locals of type Ref((ref (module 8)))
- 0x3ed | 23 03       | global_get global_index:3
- 0x3ef | 10 08       | call function_index:8
- 0x3f1 | 41 06       | i32_const value:6
- 0x3f3 | 41 0e       | i32_const value:14
- 0x3f5 | d0 02       | ref_null hty:Concrete(Module(2))
- 0x3f7 | d0 00       | ref_null hty:Concrete(Module(0))
- 0x3f9 | d0 08       | ref_null hty:Concrete(Module(8))
- 0x3fb | 41 00       | i32_const value:0
- 0x3fd | 41 00       | i32_const value:0
- 0x3ff | 20 00       | local_get local_index:0
- 0x401 | 20 01       | local_get local_index:1
+ 0x3f4 | 2c          | size of function
+ 0x3f5 | 01          | 1 local blocks
+ 0x3f6 | 01 64 08    | 1 locals of type Ref((ref (module 8)))
+ 0x3f9 | 23 03       | global_get global_index:3
+ 0x3fb | 10 08       | call function_index:8
+ 0x3fd | 41 06       | i32_const value:6
+ 0x3ff | 41 0e       | i32_const value:14
+ 0x401 | d0 02       | ref_null hty:Concrete(Module(2))
  0x403 | d0 00       | ref_null hty:Concrete(Module(0))
- 0x405 | d0 00       | ref_null hty:Concrete(Module(0))
- 0x407 | d0 00       | ref_null hty:Concrete(Module(0))
- 0x409 | fb 00 08    | struct_new struct_type_index:8
- 0x40c | 21 02       | local_set local_index:2
- 0x40e | 20 02       | local_get local_index:2
- 0x410 | 10 09       | call function_index:9
- 0x412 | 20 02       | local_get local_index:2
- 0x414 | 0b          | end
+ 0x405 | d0 08       | ref_null hty:Concrete(Module(8))
+ 0x407 | 41 00       | i32_const value:0
+ 0x409 | 41 00       | i32_const value:0
+ 0x40b | 20 00       | local_get local_index:0
+ 0x40d | 20 01       | local_get local_index:1
+ 0x40f | d0 00       | ref_null hty:Concrete(Module(0))
+ 0x411 | d0 00       | ref_null hty:Concrete(Module(0))
+ 0x413 | d0 00       | ref_null hty:Concrete(Module(0))
+ 0x415 | fb 00 08    | struct_new struct_type_index:8
+ 0x418 | 21 02       | local_set local_index:2
+ 0x41a | 20 02       | local_get local_index:2
+ 0x41c | 10 09       | call function_index:9
+ 0x41e | 20 02       | local_get local_index:2
+ 0x420 | 0b          | end
 ============== func 35 ====================
- 0x415 | 6d          | size of function
- 0x416 | 00          | 0 local blocks
- 0x417 | d0 05       | ref_null hty:Concrete(Module(5))
- 0x419 | 10 08       | call function_index:8
- 0x41b | 41 01       | i32_const value:1
- 0x41d | 41 0b       | i32_const value:11
- 0x41f | d0 02       | ref_null hty:Concrete(Module(2))
- 0x421 | d0 00       | ref_null hty:Concrete(Module(0))
+ 0x421 | 6d          | size of function
+ 0x422 | 00          | 0 local blocks
  0x423 | d0 05       | ref_null hty:Concrete(Module(5))
- 0x425 | d0 06       | ref_null hty:Concrete(Module(6))
- 0x427 | d0 02       | ref_null hty:Concrete(Module(2))
- 0x429 | d0 04       | ref_null hty:Concrete(Module(4))
- 0x42b | 41 00       | i32_const value:0
- 0x42d | fb 00 05    | struct_new struct_type_index:5
- 0x430 | 24 00       | global_set global_index:0
- 0x432 | 23 00       | global_get global_index:0
- 0x434 | 10 08       | call function_index:8
- 0x436 | 41 01       | i32_const value:1
- 0x438 | 41 0b       | i32_const value:11
- 0x43a | d0 02       | ref_null hty:Concrete(Module(2))
- 0x43c | d0 00       | ref_null hty:Concrete(Module(0))
+ 0x425 | 10 08       | call function_index:8
+ 0x427 | 41 01       | i32_const value:1
+ 0x429 | 41 0b       | i32_const value:11
+ 0x42b | d0 02       | ref_null hty:Concrete(Module(2))
+ 0x42d | d0 00       | ref_null hty:Concrete(Module(0))
+ 0x42f | d0 05       | ref_null hty:Concrete(Module(5))
+ 0x431 | d0 06       | ref_null hty:Concrete(Module(6))
+ 0x433 | d0 02       | ref_null hty:Concrete(Module(2))
+ 0x435 | d0 04       | ref_null hty:Concrete(Module(4))
+ 0x437 | 41 00       | i32_const value:0
+ 0x439 | fb 00 05    | struct_new struct_type_index:5
+ 0x43c | 24 00       | global_set global_index:0
  0x43e | 23 00       | global_get global_index:0
- 0x440 | d0 06       | ref_null hty:Concrete(Module(6))
- 0x442 | d0 02       | ref_null hty:Concrete(Module(2))
- 0x444 | d0 04       | ref_null hty:Concrete(Module(4))
- 0x446 | 41 06       | i32_const value:6
- 0x448 | fb 00 05    | struct_new struct_type_index:5
- 0x44b | 24 01       | global_set global_index:1
- 0x44d | 23 00       | global_get global_index:0
- 0x44f | 23 01       | global_get global_index:1
- 0x451 | fb 05 05 00 | struct_set struct_type_index:5 field_index:0
- 0x455 | 23 01       | global_get global_index:1
- 0x457 | 10 08       | call function_index:8
- 0x459 | 41 01       | i32_const value:1
- 0x45b | 41 0b       | i32_const value:11
- 0x45d | d0 02       | ref_null hty:Concrete(Module(2))
- 0x45f | d0 00       | ref_null hty:Concrete(Module(0))
- 0x461 | 23 00       | global_get global_index:0
- 0x463 | d0 06       | ref_null hty:Concrete(Module(6))
- 0x465 | d0 02       | ref_null hty:Concrete(Module(2))
- 0x467 | d0 04       | ref_null hty:Concrete(Module(4))
- 0x469 | 41 00       | i32_const value:0
- 0x46b | fb 00 05    | struct_new struct_type_index:5
- 0x46e | 24 05       | global_set global_index:5
- 0x470 | 41 00       | i32_const value:0
- 0x472 | fb 1c       | ref_i31
- 0x474 | 24 06       | global_set global_index:6
- 0x476 | 41 01       | i32_const value:1
- 0x478 | fb 1c       | ref_i31
- 0x47a | 24 07       | global_set global_index:7
+ 0x440 | 10 08       | call function_index:8
+ 0x442 | 41 01       | i32_const value:1
+ 0x444 | 41 0b       | i32_const value:11
+ 0x446 | d0 02       | ref_null hty:Concrete(Module(2))
+ 0x448 | d0 00       | ref_null hty:Concrete(Module(0))
+ 0x44a | 23 00       | global_get global_index:0
+ 0x44c | d0 06       | ref_null hty:Concrete(Module(6))
+ 0x44e | d0 02       | ref_null hty:Concrete(Module(2))
+ 0x450 | d0 04       | ref_null hty:Concrete(Module(4))
+ 0x452 | 41 06       | i32_const value:6
+ 0x454 | fb 00 05    | struct_new struct_type_index:5
+ 0x457 | 24 01       | global_set global_index:1
+ 0x459 | 23 00       | global_get global_index:0
+ 0x45b | 23 01       | global_get global_index:1
+ 0x45d | fb 05 05 00 | struct_set struct_type_index:5 field_index:0
+ 0x461 | 23 01       | global_get global_index:1
+ 0x463 | 10 08       | call function_index:8
+ 0x465 | 41 01       | i32_const value:1
+ 0x467 | 41 0b       | i32_const value:11
+ 0x469 | d0 02       | ref_null hty:Concrete(Module(2))
+ 0x46b | d0 00       | ref_null hty:Concrete(Module(0))
+ 0x46d | 23 00       | global_get global_index:0
+ 0x46f | d0 06       | ref_null hty:Concrete(Module(6))
+ 0x471 | d0 02       | ref_null hty:Concrete(Module(2))
+ 0x473 | d0 04       | ref_null hty:Concrete(Module(4))
+ 0x475 | 41 00       | i32_const value:0
+ 0x477 | fb 00 05    | struct_new struct_type_index:5
+ 0x47a | 24 05       | global_set global_index:5
  0x47c | 41 00       | i32_const value:0
  0x47e | fb 1c       | ref_i31
- 0x480 | 24 08       | global_set global_index:8
- 0x482 | 0b          | end
+ 0x480 | 24 06       | global_set global_index:6
+ 0x482 | 41 01       | i32_const value:1
+ 0x484 | fb 1c       | ref_i31
+ 0x486 | 24 07       | global_set global_index:7
+ 0x488 | 41 00       | i32_const value:0
+ 0x48a | fb 1c       | ref_i31
+ 0x48c | 24 08       | global_set global_index:8
+ 0x48e | 0b          | end
 ============== func 36 ====================
- 0x483 | 6e          | size of function
- 0x484 | 04          | 4 local blocks
- 0x485 | 01 63 08    | 1 locals of type Ref((ref null (module 8)))
- 0x488 | 01 63 07    | 1 locals of type Ref((ref null (module 7)))
- 0x48b | 02 7f       | 2 locals of type I32
- 0x48d | 01 63 01    | 1 locals of type Ref((ref null (module 1)))
- 0x490 | 03 40       | loop blockty:Empty
- 0x492 | 23 0d       | global_get global_index:13
- 0x494 | d1          | ref_is_null
- 0x495 | 04 40       | if blockty:Empty
- 0x497 | 0f          | return
- 0x498 | 0b          | end
- 0x499 | 23 0d       | global_get global_index:13
- 0x49b | d4          | ref_as_non_null
- 0x49c | 21 00       | local_set local_index:0
- 0x49e | 20 00       | local_get local_index:0
- 0x4a0 | 10 0e       | call function_index:14
- 0x4a2 | d1          | ref_is_null
- 0x4a3 | 04 40       | if blockty:Empty
- 0x4a5 | 0f          | return
- 0x4a6 | 0b          | end
- 0x4a7 | 20 00       | local_get local_index:0
- 0x4a9 | 10 0e       | call function_index:14
- 0x4ab | d4          | ref_as_non_null
- 0x4ac | 21 01       | local_set local_index:1
- 0x4ae | 20 01       | local_get local_index:1
- 0x4b0 | 10 11       | call function_index:17
- 0x4b2 | d1          | ref_is_null
- 0x4b3 | 04 40       | if blockty:Empty
- 0x4b5 | 0f          | return
- 0x4b6 | 0b          | end
- 0x4b7 | 20 01       | local_get local_index:1
- 0x4b9 | 10 11       | call function_index:17
- 0x4bb | d4          | ref_as_non_null
- 0x4bc | 21 04       | local_set local_index:4
- 0x4be | 20 00       | local_get local_index:0
- 0x4c0 | 10 0c       | call function_index:12
- 0x4c2 | 21 02       | local_set local_index:2
- 0x4c4 | 20 02       | local_get local_index:2
- 0x4c6 | 20 04       | local_get local_index:4
- 0x4c8 | 10 02       | call function_index:2
- 0x4ca | 4f          | i32_ge_u
+ 0x48f | 7b          | size of function
+ 0x490 | 04          | 4 local blocks
+ 0x491 | 01 63 08    | 1 locals of type Ref((ref null (module 8)))
+ 0x494 | 01 63 07    | 1 locals of type Ref((ref null (module 7)))
+ 0x497 | 02 7f       | 2 locals of type I32
+ 0x499 | 01 63 01    | 1 locals of type Ref((ref null (module 1)))
+ 0x49c | 03 40       | loop blockty:Empty
+ 0x49e | 1f 40 03 00 | try_table try_table:TryTable { ty: Empty, catches: [One { tag: 0, label: 0 }, One { tag: 1, label: 1 }, One { tag: 2, label: 2 }] }
+       | 00 00 00 01
+       | 01 00 02 02
+ 0x4aa | 23 0d       | global_get global_index:13
+ 0x4ac | d1          | ref_is_null
+ 0x4ad | 04 40       | if blockty:Empty
+ 0x4af | 0f          | return
+ 0x4b0 | 0b          | end
+ 0x4b1 | 23 0d       | global_get global_index:13
+ 0x4b3 | d4          | ref_as_non_null
+ 0x4b4 | 21 00       | local_set local_index:0
+ 0x4b6 | 20 00       | local_get local_index:0
+ 0x4b8 | 10 0e       | call function_index:14
+ 0x4ba | d1          | ref_is_null
+ 0x4bb | 04 40       | if blockty:Empty
+ 0x4bd | 0f          | return
+ 0x4be | 0b          | end
+ 0x4bf | 20 00       | local_get local_index:0
+ 0x4c1 | 10 0e       | call function_index:14
+ 0x4c3 | d4          | ref_as_non_null
+ 0x4c4 | 21 01       | local_set local_index:1
+ 0x4c6 | 20 01       | local_get local_index:1
+ 0x4c8 | 10 11       | call function_index:17
+ 0x4ca | d1          | ref_is_null
  0x4cb | 04 40       | if blockty:Empty
  0x4cd | 0f          | return
  0x4ce | 0b          | end
- 0x4cf | 20 04       | local_get local_index:4
- 0x4d1 | 20 02       | local_get local_index:2
- 0x4d3 | 10 03       | call function_index:3
- 0x4d5 | 21 03       | local_set local_index:3
- 0x4d7 | 20 00       | local_get local_index:0
- 0x4d9 | 20 02       | local_get local_index:2
- 0x4db | 41 01       | i32_const value:1
- 0x4dd | 6a          | i32_add
- 0x4de | 10 0d       | call function_index:13
- 0x4e0 | 20 03       | local_get local_index:3
- 0x4e2 | 10 25       | call function_index:37
- 0x4e4 | 20 03       | local_get local_index:3
- 0x4e6 | 41 fc 00    | i32_const value:124
- 0x4e9 | 46          | i32_eq
- 0x4ea | 04 40       | if blockty:Empty
- 0x4ec | 0f          | return
- 0x4ed | 0b          | end
- 0x4ee | 0c 00       | br relative_depth:0
- 0x4f0 | 0b          | end
- 0x4f1 | 0b          | end
+ 0x4cf | 20 01       | local_get local_index:1
+ 0x4d1 | 10 11       | call function_index:17
+ 0x4d3 | d4          | ref_as_non_null
+ 0x4d4 | 21 04       | local_set local_index:4
+ 0x4d6 | 20 00       | local_get local_index:0
+ 0x4d8 | 10 0c       | call function_index:12
+ 0x4da | 21 02       | local_set local_index:2
+ 0x4dc | 20 02       | local_get local_index:2
+ 0x4de | 20 04       | local_get local_index:4
+ 0x4e0 | 10 02       | call function_index:2
+ 0x4e2 | 4f          | i32_ge_u
+ 0x4e3 | 04 40       | if blockty:Empty
+ 0x4e5 | 23 06       | global_get global_index:6
+ 0x4e7 | 10 1e       | call function_index:30
+ 0x4e9 | 0b          | end
+ 0x4ea | 20 04       | local_get local_index:4
+ 0x4ec | 20 02       | local_get local_index:2
+ 0x4ee | 10 03       | call function_index:3
+ 0x4f0 | 21 03       | local_set local_index:3
+ 0x4f2 | 20 00       | local_get local_index:0
+ 0x4f4 | 20 02       | local_get local_index:2
+ 0x4f6 | 41 01       | i32_const value:1
+ 0x4f8 | 6a          | i32_add
+ 0x4f9 | 10 0d       | call function_index:13
+ 0x4fb | 20 03       | local_get local_index:3
+ 0x4fd | 10 25       | call function_index:37
+ 0x4ff | 0c 01       | br relative_depth:1
+ 0x501 | 1a          | drop
+ 0x502 | 0f          | return
+ 0x503 | 0c 01       | br relative_depth:1
+ 0x505 | 1a          | drop
+ 0x506 | 1a          | drop
+ 0x507 | 0f          | return
+ 0x508 | 0b          | end
+ 0x509 | 0b          | end
+ 0x50a | 0b          | end
 ============== func 37 ====================
- 0x4f2 | 36          | size of function
- 0x4f3 | 00          | 0 local blocks
- 0x4f4 | 20 00       | local_get local_index:0
- 0x4f6 | 41 f0 00    | i32_const value:112
- 0x4f9 | 46          | i32_eq
- 0x4fa | 04 40       | if blockty:Empty
- 0x4fc | 10 26       | call function_index:38
- 0x4fe | 0f          | return
- 0x4ff | 0b          | end
- 0x500 | 20 00       | local_get local_index:0
- 0x502 | 41 f5 00    | i32_const value:117
- 0x505 | 46          | i32_eq
- 0x506 | 04 40       | if blockty:Empty
- 0x508 | 41 03       | i32_const value:3
- 0x50a | 10 0a       | call function_index:10
- 0x50c | 0f          | return
- 0x50d | 0b          | end
- 0x50e | 20 00       | local_get local_index:0
- 0x510 | 41 b0 01    | i32_const value:176
- 0x513 | 46          | i32_eq
- 0x514 | 04 40       | if blockty:Empty
- 0x516 | 10 27       | call function_index:39
- 0x518 | 0f          | return
- 0x519 | 0b          | end
- 0x51a | 20 00       | local_get local_index:0
- 0x51c | 41 fc 00    | i32_const value:124
- 0x51f | 46          | i32_eq
- 0x520 | 04 40       | if blockty:Empty
- 0x522 | 10 28       | call function_index:40
- 0x524 | 0f          | return
- 0x525 | 0b          | end
- 0x526 | 10 1f       | call function_index:31
- 0x528 | 0b          | end
-============== func 38 ====================
- 0x529 | 18          | size of function
- 0x52a | 01          | 1 local blocks
- 0x52b | 01 63 08    | 1 locals of type Ref((ref null (module 8)))
- 0x52e | 23 0d       | global_get global_index:13
- 0x530 | d1          | ref_is_null
- 0x531 | 04 40       | if blockty:Empty
- 0x533 | 10 1f       | call function_index:31
- 0x535 | 0f          | return
- 0x536 | 0b          | end
- 0x537 | 23 0d       | global_get global_index:13
- 0x539 | d4          | ref_as_non_null
- 0x53a | 21 00       | local_set local_index:0
- 0x53c | 20 00       | local_get local_index:0
- 0x53e | 10 0f       | call function_index:15
- 0x540 | 1a          | drop
+ 0x50b | 36          | size of function
+ 0x50c | 00          | 0 local blocks
+ 0x50d | 20 00       | local_get local_index:0
+ 0x50f | 41 f0 00    | i32_const value:112
+ 0x512 | 46          | i32_eq
+ 0x513 | 04 40       | if blockty:Empty
+ 0x515 | 10 26       | call function_index:38
+ 0x517 | 0f          | return
+ 0x518 | 0b          | end
+ 0x519 | 20 00       | local_get local_index:0
+ 0x51b | 41 f5 00    | i32_const value:117
+ 0x51e | 46          | i32_eq
+ 0x51f | 04 40       | if blockty:Empty
+ 0x521 | 41 03       | i32_const value:3
+ 0x523 | 10 0a       | call function_index:10
+ 0x525 | 0f          | return
+ 0x526 | 0b          | end
+ 0x527 | 20 00       | local_get local_index:0
+ 0x529 | 41 b0 01    | i32_const value:176
+ 0x52c | 46          | i32_eq
+ 0x52d | 04 40       | if blockty:Empty
+ 0x52f | 10 27       | call function_index:39
+ 0x531 | 0f          | return
+ 0x532 | 0b          | end
+ 0x533 | 20 00       | local_get local_index:0
+ 0x535 | 41 fc 00    | i32_const value:124
+ 0x538 | 46          | i32_eq
+ 0x539 | 04 40       | if blockty:Empty
+ 0x53b | 10 28       | call function_index:40
+ 0x53d | 0f          | return
+ 0x53e | 0b          | end
+ 0x53f | 10 1f       | call function_index:31
  0x541 | 0b          | end
+============== func 38 ====================
+ 0x542 | 18          | size of function
+ 0x543 | 01          | 1 local blocks
+ 0x544 | 01 63 08    | 1 locals of type Ref((ref null (module 8)))
+ 0x547 | 23 0d       | global_get global_index:13
+ 0x549 | d1          | ref_is_null
+ 0x54a | 04 40       | if blockty:Empty
+ 0x54c | 10 1f       | call function_index:31
+ 0x54e | 0f          | return
+ 0x54f | 0b          | end
+ 0x550 | 23 0d       | global_get global_index:13
+ 0x552 | d4          | ref_as_non_null
+ 0x553 | 21 00       | local_set local_index:0
+ 0x555 | 20 00       | local_get local_index:0
+ 0x557 | 10 0f       | call function_index:15
+ 0x559 | 1a          | drop
+ 0x55a | 0b          | end
 ============== func 39 ====================
- 0x542 | 07          | size of function
- 0x543 | 00          | 0 local blocks
- 0x544 | 41 09       | i32_const value:9
- 0x546 | 10 21       | call function_index:33
- 0x548 | 1a          | drop
- 0x549 | 0b          | end
+ 0x55b | 07          | size of function
+ 0x55c | 00          | 0 local blocks
+ 0x55d | 41 09       | i32_const value:9
+ 0x55f | 10 21       | call function_index:33
+ 0x561 | 1a          | drop
+ 0x562 | 0b          | end
 ============== func 40 ====================
- 0x54a | 06          | size of function
- 0x54b | 00          | 0 local blocks
- 0x54c | 41 09       | i32_const value:9
- 0x54e | 10 00       | call function_index:0
- 0x550 | 0b          | end
+ 0x563 | 08          | size of function
+ 0x564 | 00          | 0 local blocks
+ 0x565 | 41 09       | i32_const value:9
+ 0x567 | 10 21       | call function_index:33
+ 0x569 | 10 1e       | call function_index:30
+ 0x56b | 0b          | end
 ============== func 41 ====================
- 0x551 | 0a          | size of function
- 0x552 | 00          | 0 local blocks
- 0x553 | 41 03       | i32_const value:3
- 0x555 | 41 03       | i32_const value:3
- 0x557 | 10 1d       | call function_index:29
- 0x559 | 10 00       | call function_index:0
- 0x55b | 0b          | end
+ 0x56c | 0a          | size of function
+ 0x56d | 00          | 0 local blocks
+ 0x56e | 41 03       | i32_const value:3
+ 0x570 | 41 03       | i32_const value:3
+ 0x572 | 10 1d       | call function_index:29
+ 0x574 | 10 00       | call function_index:0
+ 0x576 | 0b          | end
 ============== func 42 ====================
- 0x55c | 04          | size of function
- 0x55d | 00          | 0 local blocks
- 0x55e | 10 23       | call function_index:35
- 0x560 | 0b          | end
- 0x561 | 00 f6 0d    | custom section
- 0x564 | 04 6e 61 6d | name: "name"
+ 0x577 | 04          | size of function
+ 0x578 | 00          | 0 local blocks
+ 0x579 | 10 23       | call function_index:35
+ 0x57b | 0b          | end
+ 0x57c | 00 f6 0d    | custom section
+ 0x57f | 04 6e 61 6d | name: "name"
        | 65         
- 0x569 | 00 0d       | module name
- 0x56b | 0c 53 71 75 | "SqueakVMCore"
+ 0x584 | 00 0d       | module name
+ 0x586 | 0c 53 71 75 | "SqueakVMCore"
        | 65 61 6b 56
        | 4d 43 6f 72
        | 65         
- 0x578 | 01 bc 06    | function name section
- 0x57b | 2b          | 43 count
- 0x57c | 00 0d 72 65 | Naming { index: 0, name: "report_result" }
+ 0x593 | 01 bc 06    | function name section
+ 0x596 | 2b          | 43 count
+ 0x597 | 00 0d 72 65 | Naming { index: 0, name: "report_result" }
        | 70 6f 72 74
        | 5f 72 65 73
        | 75 6c 74   
- 0x58b | 01 15 6a 69 | Naming { index: 1, name: "jit_compile_method_js" }
+ 0x5a6 | 01 15 6a 69 | Naming { index: 1, name: "jit_compile_method_js" }
        | 74 5f 63 6f
        | 6d 70 69 6c
        | 65 5f 6d 65
        | 74 68 6f 64
        | 5f 6a 73   
- 0x5a2 | 02 0e 61 72 | Naming { index: 2, name: "array_len_byte" }
+ 0x5bd | 02 0e 61 72 | Naming { index: 2, name: "array_len_byte" }
        | 72 61 79 5f
        | 6c 65 6e 5f
        | 62 79 74 65
- 0x5b2 | 03 0e 61 72 | Naming { index: 3, name: "array_get_byte" }
+ 0x5cd | 03 0e 61 72 | Naming { index: 3, name: "array_get_byte" }
        | 72 61 79 5f
        | 67 65 74 5f
        | 62 79 74 65
- 0x5c2 | 04 10 61 72 | Naming { index: 4, name: "array_len_object" }
+ 0x5dd | 04 10 61 72 | Naming { index: 4, name: "array_len_object" }
        | 72 61 79 5f
        | 6c 65 6e 5f
        | 6f 62 6a 65
        | 63 74      
- 0x5d4 | 05 10 61 72 | Naming { index: 5, name: "array_get_object" }
+ 0x5ef | 05 10 61 72 | Naming { index: 5, name: "array_get_object" }
        | 72 61 79 5f
        | 67 65 74 5f
        | 6f 62 6a 65
        | 63 74      
- 0x5e6 | 06 10 69 73 | Naming { index: 6, name: "is_small_integer" }
+ 0x601 | 06 10 69 73 | Naming { index: 6, name: "is_small_integer" }
        | 5f 73 6d 61
        | 6c 6c 5f 69
        | 6e 74 65 67
        | 65 72      
- 0x5f8 | 07 17 67 65 | Naming { index: 7, name: "get_small_integer_value" }
+ 0x613 | 07 17 67 65 | Naming { index: 7, name: "get_small_integer_value" }
        | 74 5f 73 6d
        | 61 6c 6c 5f
        | 69 6e 74 65
        | 67 65 72 5f
        | 76 61 6c 75
        | 65         
- 0x611 | 08 10 6e 65 | Naming { index: 8, name: "nextIdentityHash" }
+ 0x62c | 08 10 6e 65 | Naming { index: 8, name: "nextIdentityHash" }
        | 78 74 49 64
        | 65 6e 74 69
        | 74 79 48 61
        | 73 68      
- 0x623 | 09 0f 72 65 | Naming { index: 9, name: "register_object" }
+ 0x63e | 09 0f 72 65 | Naming { index: 9, name: "register_object" }
        | 67 69 73 74
        | 65 72 5f 6f
        | 62 6a 65 63
        | 74         
- 0x634 | 0a 10 70 75 | Naming { index: 10, name: "pushSmallInteger" }
+ 0x64f | 0a 10 70 75 | Naming { index: 10, name: "pushSmallInteger" }
        | 73 68 53 6d
        | 61 6c 6c 49
        | 6e 74 65 67
        | 65 72      
- 0x646 | 0b 0b 73 65 | Naming { index: 11, name: "sendMessage" }
+ 0x661 | 0b 0b 73 65 | Naming { index: 11, name: "sendMessage" }
        | 6e 64 4d 65
        | 73 73 61 67
        | 65         
- 0x653 | 0c 0e 67 65 | Naming { index: 12, name: "get_context_pc" }
+ 0x66e | 0c 0e 67 65 | Naming { index: 12, name: "get_context_pc" }
        | 74 5f 63 6f
        | 6e 74 65 78
        | 74 5f 70 63
- 0x663 | 0d 0e 73 65 | Naming { index: 13, name: "set_context_pc" }
+ 0x67e | 0d 0e 73 65 | Naming { index: 13, name: "set_context_pc" }
        | 74 5f 63 6f
        | 6e 74 65 78
        | 74 5f 70 63
- 0x673 | 0e 12 67 65 | Naming { index: 14, name: "get_context_method" }
+ 0x68e | 0e 12 67 65 | Naming { index: 14, name: "get_context_method" }
        | 74 5f 63 6f
        | 6e 74 65 78
        | 74 5f 6d 65
        | 74 68 6f 64
- 0x687 | 0f 14 67 65 | Naming { index: 15, name: "get_context_receiver" }
+ 0x6a2 | 0f 14 67 65 | Naming { index: 15, name: "get_context_receiver" }
        | 74 5f 63 6f
        | 6e 74 65 78
        | 74 5f 72 65
        | 63 65 69 76
        | 65 72      
- 0x69d | 10 14 73 65 | Naming { index: 16, name: "set_context_receiver" }
+ 0x6b8 | 10 14 73 65 | Naming { index: 16, name: "set_context_receiver" }
        | 74 5f 63 6f
        | 6e 74 65 78
        | 74 5f 72 65
        | 63 65 69 76
        | 65 72      
- 0x6b3 | 11 14 67 65 | Naming { index: 17, name: "get_method_bytecodes" }
+ 0x6ce | 11 14 67 65 | Naming { index: 17, name: "get_method_bytecodes" }
        | 74 5f 6d 65
        | 74 68 6f 64
        | 5f 62 79 74
        | 65 63 6f 64
        | 65 73      
- 0x6c9 | 12 1a 69 6e | Naming { index: 18, name: "increment_invocation_count" }
+ 0x6e4 | 12 1a 69 6e | Naming { index: 18, name: "increment_invocation_count" }
        | 63 72 65 6d
        | 65 6e 74 5f
        | 69 6e 76 6f
        | 63 61 74 69
        | 6f 6e 5f 63
        | 6f 75 6e 74
- 0x6e5 | 13 1b 67 65 | Naming { index: 19, name: "get_method_invocation_count" }
+ 0x700 | 13 1b 67 65 | Naming { index: 19, name: "get_method_invocation_count" }
        | 74 5f 6d 65
        | 74 68 6f 64
        | 5f 69 6e 76
@@ -848,99 +860,99 @@
        | 69 6f 6e 5f
        | 63 6f 75 6e
        | 74         
- 0x702 | 14 18 73 65 | Naming { index: 20, name: "set_method_compiled_wasm" }
+ 0x71d | 14 18 73 65 | Naming { index: 20, name: "set_method_compiled_wasm" }
        | 74 5f 6d 65
        | 74 68 6f 64
        | 5f 63 6f 6d
        | 70 69 6c 65
        | 64 5f 77 61
        | 73 6d      
- 0x71c | 15 18 67 65 | Naming { index: 21, name: "get_method_compiled_wasm" }
+ 0x737 | 15 18 67 65 | Naming { index: 21, name: "get_method_compiled_wasm" }
        | 74 5f 6d 65
        | 74 68 6f 64
        | 5f 63 6f 6d
        | 70 69 6c 65
        | 64 5f 77 61
        | 73 6d      
- 0x736 | 16 15 67 65 | Naming { index: 22, name: "get_class_method_dict" }
+ 0x751 | 16 15 67 65 | Naming { index: 22, name: "get_class_method_dict" }
        | 74 5f 63 6c
        | 61 73 73 5f
        | 6d 65 74 68
        | 6f 64 5f 64
        | 69 63 74   
- 0x74d | 17 14 67 65 | Naming { index: 23, name: "get_class_superclass" }
+ 0x768 | 17 14 67 65 | Naming { index: 23, name: "get_class_superclass" }
        | 74 5f 63 6c
        | 61 73 73 5f
        | 73 75 70 65
        | 72 63 6c 61
        | 73 73      
- 0x763 | 18 0e 67 65 | Naming { index: 24, name: "get_class_name" }
+ 0x77e | 18 0e 67 65 | Naming { index: 24, name: "get_class_name" }
        | 74 5f 63 6c
        | 61 73 73 5f
        | 6e 61 6d 65
- 0x773 | 19 13 67 65 | Naming { index: 25, name: "get_dictionary_keys" }
+ 0x78e | 19 13 67 65 | Naming { index: 25, name: "get_dictionary_keys" }
        | 74 5f 64 69
        | 63 74 69 6f
        | 6e 61 72 79
        | 5f 6b 65 79
        | 73         
- 0x788 | 1a 15 67 65 | Naming { index: 26, name: "get_dictionary_values" }
+ 0x7a3 | 1a 15 67 65 | Naming { index: 26, name: "get_dictionary_values" }
        | 74 5f 64 69
        | 63 74 69 6f
        | 6e 61 72 79
        | 5f 76 61 6c
        | 75 65 73   
- 0x79f | 1b 14 67 65 | Naming { index: 27, name: "get_dictionary_count" }
+ 0x7ba | 1b 14 67 65 | Naming { index: 27, name: "get_dictionary_count" }
        | 74 5f 64 69
        | 63 74 69 6f
        | 6e 61 72 79
        | 5f 63 6f 75
        | 6e 74      
- 0x7b5 | 1c 0f 73 6d | Naming { index: 28, name: "smallIntegerAdd" }
+ 0x7d0 | 1c 0f 73 6d | Naming { index: 28, name: "smallIntegerAdd" }
        | 61 6c 6c 49
        | 6e 74 65 67
        | 65 72 41 64
        | 64         
- 0x7c6 | 1d 14 73 6d | Naming { index: 29, name: "smallIntegerMultiply" }
+ 0x7e1 | 1d 14 73 6d | Naming { index: 29, name: "smallIntegerMultiply" }
        | 61 6c 6c 49
        | 6e 74 65 67
        | 65 72 4d 75
        | 6c 74 69 70
        | 6c 79      
- 0x7dc | 1e 0b 72 65 | Naming { index: 30, name: "returnValue" }
+ 0x7f7 | 1e 0b 72 65 | Naming { index: 30, name: "returnValue" }
        | 74 75 72 6e
        | 56 61 6c 75
        | 65         
- 0x7e9 | 1f 0f 70 72 | Naming { index: 31, name: "primitiveFailed" }
+ 0x804 | 1f 0f 70 72 | Naming { index: 31, name: "primitiveFailed" }
        | 69 6d 69 74
        | 69 76 65 46
        | 61 69 6c 65
        | 64         
- 0x7fa | 20 11 64 6f | Naming { index: 32, name: "doesNotUnderstand" }
+ 0x815 | 20 11 64 6f | Naming { index: 32, name: "doesNotUnderstand" }
        | 65 73 4e 6f
        | 74 55 6e 64
        | 65 72 73 74
        | 61 6e 64   
- 0x80d | 21 12 63 72 | Naming { index: 33, name: "createSmallInteger" }
+ 0x828 | 21 12 63 72 | Naming { index: 33, name: "createSmallInteger" }
        | 65 61 74 65
        | 53 6d 61 6c
        | 6c 49 6e 74
        | 65 67 65 72
- 0x821 | 22 0d 63 72 | Naming { index: 34, name: "createContext" }
+ 0x83c | 22 0d 63 72 | Naming { index: 34, name: "createContext" }
        | 65 61 74 65
        | 43 6f 6e 74
        | 65 78 74   
- 0x830 | 23 19 63 72 | Naming { index: 35, name: "createMinimalObjectMemory" }
+ 0x84b | 23 19 63 72 | Naming { index: 35, name: "createMinimalObjectMemory" }
        | 65 61 74 65
        | 4d 69 6e 69
        | 6d 61 6c 4f
        | 62 6a 65 63
        | 74 4d 65 6d
        | 6f 72 79   
- 0x84b | 24 09 69 6e | Naming { index: 36, name: "interpret" }
+ 0x866 | 24 09 69 6e | Naming { index: 36, name: "interpret" }
        | 74 65 72 70
        | 72 65 74   
- 0x856 | 25 1c 65 78 | Naming { index: 37, name: "execute_bytecode_instruction" }
+ 0x871 | 25 1c 65 78 | Naming { index: 37, name: "execute_bytecode_instruction" }
        | 65 63 75 74
        | 65 5f 62 79
        | 74 65 63 6f
@@ -948,344 +960,344 @@
        | 6e 73 74 72
        | 75 63 74 69
        | 6f 6e      
- 0x874 | 26 0c 70 75 | Naming { index: 38, name: "pushReceiver" }
+ 0x88f | 26 0c 70 75 | Naming { index: 38, name: "pushReceiver" }
        | 73 68 52 65
        | 63 65 69 76
        | 65 72      
- 0x882 | 27 0c 73 65 | Naming { index: 39, name: "sendMultiply" }
+ 0x89d | 27 0c 73 65 | Naming { index: 39, name: "sendMultiply" }
        | 6e 64 4d 75
        | 6c 74 69 70
        | 6c 79      
- 0x890 | 28 09 72 65 | Naming { index: 40, name: "returnTop" }
+ 0x8ab | 28 09 72 65 | Naming { index: 40, name: "returnTop" }
        | 74 75 72 6e
        | 54 6f 70   
- 0x89b | 29 11 72 75 | Naming { index: 41, name: "runMinimalExample" }
+ 0x8b6 | 29 11 72 75 | Naming { index: 41, name: "runMinimalExample" }
        | 6e 4d 69 6e
        | 69 6d 61 6c
        | 45 78 61 6d
        | 70 6c 65   
- 0x8ae | 2a 07 69 6e | Naming { index: 42, name: "init_vm" }
+ 0x8c9 | 2a 07 69 6e | Naming { index: 42, name: "init_vm" }
        | 69 74 5f 76
        | 6d         
- 0x8b7 | 02 c8 03    | local section
- 0x8ba | 22          | 34 count
- 0x8bb | 02          | function 2 local name section
- 0x8bc | 01          | 1 count
- 0x8bd | 00 05 61 72 | Naming { index: 0, name: "array" }
+ 0x8d2 | 02 c8 03    | local section
+ 0x8d5 | 22          | 34 count
+ 0x8d6 | 02          | function 2 local name section
+ 0x8d7 | 01          | 1 count
+ 0x8d8 | 00 05 61 72 | Naming { index: 0, name: "array" }
        | 72 61 79   
- 0x8c4 | 03          | function 3 local name section
- 0x8c5 | 02          | 2 count
- 0x8c6 | 00 05 61 72 | Naming { index: 0, name: "array" }
+ 0x8df | 03          | function 3 local name section
+ 0x8e0 | 02          | 2 count
+ 0x8e1 | 00 05 61 72 | Naming { index: 0, name: "array" }
        | 72 61 79   
- 0x8cd | 01 05 69 6e | Naming { index: 1, name: "index" }
+ 0x8e8 | 01 05 69 6e | Naming { index: 1, name: "index" }
        | 64 65 78   
- 0x8d4 | 04          | function 4 local name section
- 0x8d5 | 01          | 1 count
- 0x8d6 | 00 05 61 72 | Naming { index: 0, name: "array" }
+ 0x8ef | 04          | function 4 local name section
+ 0x8f0 | 01          | 1 count
+ 0x8f1 | 00 05 61 72 | Naming { index: 0, name: "array" }
        | 72 61 79   
- 0x8dd | 05          | function 5 local name section
- 0x8de | 02          | 2 count
- 0x8df | 00 05 61 72 | Naming { index: 0, name: "array" }
+ 0x8f8 | 05          | function 5 local name section
+ 0x8f9 | 02          | 2 count
+ 0x8fa | 00 05 61 72 | Naming { index: 0, name: "array" }
        | 72 61 79   
- 0x8e6 | 01 05 69 6e | Naming { index: 1, name: "index" }
+ 0x901 | 01 05 69 6e | Naming { index: 1, name: "index" }
        | 64 65 78   
- 0x8ed | 06          | function 6 local name section
- 0x8ee | 01          | 1 count
- 0x8ef | 00 03 6f 62 | Naming { index: 0, name: "obj" }
+ 0x908 | 06          | function 6 local name section
+ 0x909 | 01          | 1 count
+ 0x90a | 00 03 6f 62 | Naming { index: 0, name: "obj" }
        | 6a         
- 0x8f4 | 07          | function 7 local name section
- 0x8f5 | 01          | 1 count
- 0x8f6 | 00 03 6f 62 | Naming { index: 0, name: "obj" }
+ 0x90f | 07          | function 7 local name section
+ 0x910 | 01          | 1 count
+ 0x911 | 00 03 6f 62 | Naming { index: 0, name: "obj" }
        | 6a         
- 0x8fb | 09          | function 9 local name section
- 0x8fc | 02          | 2 count
- 0x8fd | 00 06 6f 62 | Naming { index: 0, name: "object" }
+ 0x916 | 09          | function 9 local name section
+ 0x917 | 02          | 2 count
+ 0x918 | 00 06 6f 62 | Naming { index: 0, name: "object" }
        | 6a 65 63 74
- 0x905 | 01 07 6c 61 | Naming { index: 1, name: "lastObj" }
+ 0x920 | 01 07 6c 61 | Naming { index: 1, name: "lastObj" }
        | 73 74 4f 62
        | 6a         
- 0x90e | 0a          | function 10 local name section
- 0x90f | 01          | 1 count
- 0x910 | 00 05 76 61 | Naming { index: 0, name: "value" }
+ 0x929 | 0a          | function 10 local name section
+ 0x92a | 01          | 1 count
+ 0x92b | 00 05 76 61 | Naming { index: 0, name: "value" }
        | 6c 75 65   
- 0x917 | 0b          | function 11 local name section
- 0x918 | 02          | 2 count
- 0x919 | 00 08 73 65 | Naming { index: 0, name: "selector" }
+ 0x932 | 0b          | function 11 local name section
+ 0x933 | 02          | 2 count
+ 0x934 | 00 08 73 65 | Naming { index: 0, name: "selector" }
        | 6c 65 63 74
        | 6f 72      
- 0x923 | 01 08 61 72 | Naming { index: 1, name: "argCount" }
+ 0x93e | 01 08 61 72 | Naming { index: 1, name: "argCount" }
        | 67 43 6f 75
        | 6e 74      
- 0x92d | 0c          | function 12 local name section
- 0x92e | 01          | 1 count
- 0x92f | 00 07 63 6f | Naming { index: 0, name: "context" }
+ 0x948 | 0c          | function 12 local name section
+ 0x949 | 01          | 1 count
+ 0x94a | 00 07 63 6f | Naming { index: 0, name: "context" }
        | 6e 74 65 78
        | 74         
- 0x938 | 0d          | function 13 local name section
- 0x939 | 02          | 2 count
- 0x93a | 00 07 63 6f | Naming { index: 0, name: "context" }
+ 0x953 | 0d          | function 13 local name section
+ 0x954 | 02          | 2 count
+ 0x955 | 00 07 63 6f | Naming { index: 0, name: "context" }
        | 6e 74 65 78
        | 74         
- 0x943 | 01 02 70 63 | Naming { index: 1, name: "pc" }
- 0x947 | 0e          | function 14 local name section
- 0x948 | 01          | 1 count
- 0x949 | 00 07 63 6f | Naming { index: 0, name: "context" }
+ 0x95e | 01 02 70 63 | Naming { index: 1, name: "pc" }
+ 0x962 | 0e          | function 14 local name section
+ 0x963 | 01          | 1 count
+ 0x964 | 00 07 63 6f | Naming { index: 0, name: "context" }
        | 6e 74 65 78
        | 74         
- 0x952 | 0f          | function 15 local name section
- 0x953 | 01          | 1 count
- 0x954 | 00 07 63 6f | Naming { index: 0, name: "context" }
+ 0x96d | 0f          | function 15 local name section
+ 0x96e | 01          | 1 count
+ 0x96f | 00 07 63 6f | Naming { index: 0, name: "context" }
        | 6e 74 65 78
        | 74         
- 0x95d | 10          | function 16 local name section
- 0x95e | 02          | 2 count
- 0x95f | 00 07 63 6f | Naming { index: 0, name: "context" }
+ 0x978 | 10          | function 16 local name section
+ 0x979 | 02          | 2 count
+ 0x97a | 00 07 63 6f | Naming { index: 0, name: "context" }
        | 6e 74 65 78
        | 74         
- 0x968 | 01 08 72 65 | Naming { index: 1, name: "receiver" }
+ 0x983 | 01 08 72 65 | Naming { index: 1, name: "receiver" }
        | 63 65 69 76
        | 65 72      
- 0x972 | 11          | function 17 local name section
- 0x973 | 01          | 1 count
- 0x974 | 00 06 6d 65 | Naming { index: 0, name: "method" }
+ 0x98d | 11          | function 17 local name section
+ 0x98e | 01          | 1 count
+ 0x98f | 00 06 6d 65 | Naming { index: 0, name: "method" }
        | 74 68 6f 64
- 0x97c | 12          | function 18 local name section
- 0x97d | 02          | 2 count
- 0x97e | 00 06 6d 65 | Naming { index: 0, name: "method" }
+ 0x997 | 12          | function 18 local name section
+ 0x998 | 02          | 2 count
+ 0x999 | 00 06 6d 65 | Naming { index: 0, name: "method" }
        | 74 68 6f 64
- 0x986 | 01 07 63 75 | Naming { index: 1, name: "current" }
+ 0x9a1 | 01 07 63 75 | Naming { index: 1, name: "current" }
        | 72 72 65 6e
        | 74         
- 0x98f | 13          | function 19 local name section
- 0x990 | 01          | 1 count
- 0x991 | 00 06 6d 65 | Naming { index: 0, name: "method" }
+ 0x9aa | 13          | function 19 local name section
+ 0x9ab | 01          | 1 count
+ 0x9ac | 00 06 6d 65 | Naming { index: 0, name: "method" }
        | 74 68 6f 64
- 0x999 | 14          | function 20 local name section
- 0x99a | 02          | 2 count
- 0x99b | 00 06 6d 65 | Naming { index: 0, name: "method" }
+ 0x9b4 | 14          | function 20 local name section
+ 0x9b5 | 02          | 2 count
+ 0x9b6 | 00 06 6d 65 | Naming { index: 0, name: "method" }
        | 74 68 6f 64
- 0x9a3 | 01 08 77 61 | Naming { index: 1, name: "wasmFunc" }
+ 0x9be | 01 08 77 61 | Naming { index: 1, name: "wasmFunc" }
        | 73 6d 46 75
        | 6e 63      
- 0x9ad | 15          | function 21 local name section
- 0x9ae | 01          | 1 count
- 0x9af | 00 06 6d 65 | Naming { index: 0, name: "method" }
+ 0x9c8 | 15          | function 21 local name section
+ 0x9c9 | 01          | 1 count
+ 0x9ca | 00 06 6d 65 | Naming { index: 0, name: "method" }
        | 74 68 6f 64
- 0x9b7 | 16          | function 22 local name section
- 0x9b8 | 01          | 1 count
- 0x9b9 | 00 05 63 6c | Naming { index: 0, name: "class" }
-       | 61 73 73   
- 0x9c0 | 17          | function 23 local name section
- 0x9c1 | 01          | 1 count
- 0x9c2 | 00 05 63 6c | Naming { index: 0, name: "class" }
-       | 61 73 73   
- 0x9c9 | 18          | function 24 local name section
- 0x9ca | 01          | 1 count
- 0x9cb | 00 05 63 6c | Naming { index: 0, name: "class" }
-       | 61 73 73   
- 0x9d2 | 19          | function 25 local name section
+ 0x9d2 | 16          | function 22 local name section
  0x9d3 | 01          | 1 count
- 0x9d4 | 00 04 64 69 | Naming { index: 0, name: "dict" }
+ 0x9d4 | 00 05 63 6c | Naming { index: 0, name: "class" }
+       | 61 73 73   
+ 0x9db | 17          | function 23 local name section
+ 0x9dc | 01          | 1 count
+ 0x9dd | 00 05 63 6c | Naming { index: 0, name: "class" }
+       | 61 73 73   
+ 0x9e4 | 18          | function 24 local name section
+ 0x9e5 | 01          | 1 count
+ 0x9e6 | 00 05 63 6c | Naming { index: 0, name: "class" }
+       | 61 73 73   
+ 0x9ed | 19          | function 25 local name section
+ 0x9ee | 01          | 1 count
+ 0x9ef | 00 04 64 69 | Naming { index: 0, name: "dict" }
        | 63 74      
- 0x9da | 1a          | function 26 local name section
- 0x9db | 01          | 1 count
- 0x9dc | 00 04 64 69 | Naming { index: 0, name: "dict" }
+ 0x9f5 | 1a          | function 26 local name section
+ 0x9f6 | 01          | 1 count
+ 0x9f7 | 00 04 64 69 | Naming { index: 0, name: "dict" }
        | 63 74      
- 0x9e2 | 1b          | function 27 local name section
- 0x9e3 | 01          | 1 count
- 0x9e4 | 00 04 64 69 | Naming { index: 0, name: "dict" }
+ 0x9fd | 1b          | function 27 local name section
+ 0x9fe | 01          | 1 count
+ 0x9ff | 00 04 64 69 | Naming { index: 0, name: "dict" }
        | 63 74      
- 0x9ea | 1c          | function 28 local name section
- 0x9eb | 02          | 2 count
- 0x9ec | 00 01 61    | Naming { index: 0, name: "a" }
- 0x9ef | 01 01 62    | Naming { index: 1, name: "b" }
- 0x9f2 | 1d          | function 29 local name section
- 0x9f3 | 02          | 2 count
- 0x9f4 | 00 01 61    | Naming { index: 0, name: "a" }
- 0x9f7 | 01 01 62    | Naming { index: 1, name: "b" }
- 0x9fa | 1e          | function 30 local name section
- 0x9fb | 01          | 1 count
- 0x9fc | 00 05 76 61 | Naming { index: 0, name: "value" }
+ 0xa05 | 1c          | function 28 local name section
+ 0xa06 | 02          | 2 count
+ 0xa07 | 00 01 61    | Naming { index: 0, name: "a" }
+ 0xa0a | 01 01 62    | Naming { index: 1, name: "b" }
+ 0xa0d | 1d          | function 29 local name section
+ 0xa0e | 02          | 2 count
+ 0xa0f | 00 01 61    | Naming { index: 0, name: "a" }
+ 0xa12 | 01 01 62    | Naming { index: 1, name: "b" }
+ 0xa15 | 1e          | function 30 local name section
+ 0xa16 | 01          | 1 count
+ 0xa17 | 00 05 76 61 | Naming { index: 0, name: "value" }
        | 6c 75 65   
- 0xa03 | 20          | function 32 local name section
- 0xa04 | 02          | 2 count
- 0xa05 | 00 08 72 65 | Naming { index: 0, name: "receiver" }
+ 0xa1e | 20          | function 32 local name section
+ 0xa1f | 02          | 2 count
+ 0xa20 | 00 08 72 65 | Naming { index: 0, name: "receiver" }
        | 63 65 69 76
        | 65 72      
- 0xa0f | 01 08 73 65 | Naming { index: 1, name: "selector" }
+ 0xa2a | 01 08 73 65 | Naming { index: 1, name: "selector" }
        | 6c 65 63 74
        | 6f 72      
- 0xa19 | 21          | function 33 local name section
- 0xa1a | 01          | 1 count
- 0xa1b | 00 05 76 61 | Naming { index: 0, name: "value" }
+ 0xa34 | 21          | function 33 local name section
+ 0xa35 | 01          | 1 count
+ 0xa36 | 00 05 76 61 | Naming { index: 0, name: "value" }
        | 6c 75 65   
- 0xa22 | 22          | function 34 local name section
- 0xa23 | 03          | 3 count
- 0xa24 | 00 06 6d 65 | Naming { index: 0, name: "method" }
+ 0xa3d | 22          | function 34 local name section
+ 0xa3e | 03          | 3 count
+ 0xa3f | 00 06 6d 65 | Naming { index: 0, name: "method" }
        | 74 68 6f 64
- 0xa2c | 01 08 72 65 | Naming { index: 1, name: "receiver" }
+ 0xa47 | 01 08 72 65 | Naming { index: 1, name: "receiver" }
        | 63 65 69 76
        | 65 72      
- 0xa36 | 02 07 63 6f | Naming { index: 2, name: "context" }
+ 0xa51 | 02 07 63 6f | Naming { index: 2, name: "context" }
        | 6e 74 65 78
        | 74         
- 0xa3f | 24          | function 36 local name section
- 0xa40 | 05          | 5 count
- 0xa41 | 00 07 63 6f | Naming { index: 0, name: "context" }
+ 0xa5a | 24          | function 36 local name section
+ 0xa5b | 05          | 5 count
+ 0xa5c | 00 07 63 6f | Naming { index: 0, name: "context" }
        | 6e 74 65 78
        | 74         
- 0xa4a | 01 06 6d 65 | Naming { index: 1, name: "method" }
+ 0xa65 | 01 06 6d 65 | Naming { index: 1, name: "method" }
        | 74 68 6f 64
- 0xa52 | 02 02 70 63 | Naming { index: 2, name: "pc" }
- 0xa56 | 03 08 62 79 | Naming { index: 3, name: "bytecode" }
+ 0xa6d | 02 02 70 63 | Naming { index: 2, name: "pc" }
+ 0xa71 | 03 08 62 79 | Naming { index: 3, name: "bytecode" }
        | 74 65 63 6f
        | 64 65      
- 0xa60 | 04 09 62 79 | Naming { index: 4, name: "bytecodes" }
+ 0xa7b | 04 09 62 79 | Naming { index: 4, name: "bytecodes" }
        | 74 65 63 6f
        | 64 65 73   
- 0xa6b | 25          | function 37 local name section
- 0xa6c | 01          | 1 count
- 0xa6d | 00 08 62 79 | Naming { index: 0, name: "bytecode" }
+ 0xa86 | 25          | function 37 local name section
+ 0xa87 | 01          | 1 count
+ 0xa88 | 00 08 62 79 | Naming { index: 0, name: "bytecode" }
        | 74 65 63 6f
        | 64 65      
- 0xa77 | 26          | function 38 local name section
- 0xa78 | 01          | 1 count
- 0xa79 | 00 07 63 6f | Naming { index: 0, name: "context" }
+ 0xa92 | 26          | function 38 local name section
+ 0xa93 | 01          | 1 count
+ 0xa94 | 00 07 63 6f | Naming { index: 0, name: "context" }
        | 6e 74 65 78
        | 74         
- 0xa82 | 03 15       | label section
- 0xa84 | 01          | 1 count
- 0xa85 | 24          | function 36 label name section
- 0xa86 | 01          | 1 count
- 0xa87 | 00 10 69 6e | Naming { index: 0, name: "interpreter_loop" }
+ 0xa9d | 03 15       | label section
+ 0xa9f | 01          | 1 count
+ 0xaa0 | 24          | function 36 label name section
+ 0xaa1 | 01          | 1 count
+ 0xaa2 | 00 10 69 6e | Naming { index: 0, name: "interpreter_loop" }
        | 74 65 72 70
        | 72 65 74 65
        | 72 5f 6c 6f
        | 6f 70      
- 0xa99 | 04 6b       | type name section
- 0xa9b | 09          | 9 count
- 0xa9c | 00 0b 4f 62 | Naming { index: 0, name: "ObjectArray" }
+ 0xab4 | 04 6b       | type name section
+ 0xab6 | 09          | 9 count
+ 0xab7 | 00 0b 4f 62 | Naming { index: 0, name: "ObjectArray" }
        | 6a 65 63 74
        | 41 72 72 61
        | 79         
- 0xaa9 | 01 09 42 79 | Naming { index: 1, name: "ByteArray" }
+ 0xac4 | 01 09 42 79 | Naming { index: 1, name: "ByteArray" }
        | 74 65 41 72
        | 72 61 79   
- 0xab4 | 02 0c 53 71 | Naming { index: 2, name: "SqueakObject" }
+ 0xacf | 02 0c 53 71 | Naming { index: 2, name: "SqueakObject" }
        | 75 65 61 6b
        | 4f 62 6a 65
        | 63 74      
- 0xac2 | 03 0e 56 61 | Naming { index: 3, name: "VariableObject" }
+ 0xadd | 03 0e 56 61 | Naming { index: 3, name: "VariableObject" }
        | 72 69 61 62
        | 6c 65 4f 62
        | 6a 65 63 74
- 0xad2 | 04 06 53 79 | Naming { index: 4, name: "Symbol" }
+ 0xaed | 04 06 53 79 | Naming { index: 4, name: "Symbol" }
        | 6d 62 6f 6c
- 0xada | 05 05 43 6c | Naming { index: 5, name: "Class" }
+ 0xaf5 | 05 05 43 6c | Naming { index: 5, name: "Class" }
        | 61 73 73   
- 0xae1 | 06 0a 44 69 | Naming { index: 6, name: "Dictionary" }
+ 0xafc | 06 0a 44 69 | Naming { index: 6, name: "Dictionary" }
        | 63 74 69 6f
        | 6e 61 72 79
- 0xaed | 07 0e 43 6f | Naming { index: 7, name: "CompiledMethod" }
+ 0xb08 | 07 0e 43 6f | Naming { index: 7, name: "CompiledMethod" }
        | 6d 70 69 6c
        | 65 64 4d 65
        | 74 68 6f 64
- 0xafd | 08 07 43 6f | Naming { index: 8, name: "Context" }
+ 0xb18 | 08 07 43 6f | Naming { index: 8, name: "Context" }
        | 6e 74 65 78
        | 74         
- 0xb06 | 07 a2 02    | global name section
- 0xb09 | 14          | 20 count
- 0xb0a | 00 0b 6f 62 | Naming { index: 0, name: "objectClass" }
+ 0xb21 | 07 a2 02    | global name section
+ 0xb24 | 14          | 20 count
+ 0xb25 | 00 0b 6f 62 | Naming { index: 0, name: "objectClass" }
        | 6a 65 63 74
        | 43 6c 61 73
        | 73         
- 0xb17 | 01 0a 63 6c | Naming { index: 1, name: "classClass" }
+ 0xb32 | 01 0a 63 6c | Naming { index: 1, name: "classClass" }
        | 61 73 73 43
        | 6c 61 73 73
- 0xb23 | 02 0b 6d 65 | Naming { index: 2, name: "methodClass" }
+ 0xb3e | 02 0b 6d 65 | Naming { index: 2, name: "methodClass" }
        | 74 68 6f 64
        | 43 6c 61 73
        | 73         
- 0xb30 | 03 0c 63 6f | Naming { index: 3, name: "contextClass" }
+ 0xb4b | 03 0c 63 6f | Naming { index: 3, name: "contextClass" }
        | 6e 74 65 78
        | 74 43 6c 61
        | 73 73      
- 0xb3e | 04 0b 73 79 | Naming { index: 4, name: "symbolClass" }
+ 0xb59 | 04 0b 73 79 | Naming { index: 4, name: "symbolClass" }
        | 6d 62 6f 6c
        | 43 6c 61 73
        | 73         
- 0xb4b | 05 11 73 6d | Naming { index: 5, name: "smallIntegerClass" }
+ 0xb66 | 05 11 73 6d | Naming { index: 5, name: "smallIntegerClass" }
        | 61 6c 6c 49
        | 6e 74 65 67
        | 65 72 43 6c
        | 61 73 73   
- 0xb5e | 06 09 6e 69 | Naming { index: 6, name: "nilObject" }
+ 0xb79 | 06 09 6e 69 | Naming { index: 6, name: "nilObject" }
        | 6c 4f 62 6a
        | 65 63 74   
- 0xb69 | 07 0a 74 72 | Naming { index: 7, name: "trueObject" }
+ 0xb84 | 07 0a 74 72 | Naming { index: 7, name: "trueObject" }
        | 75 65 4f 62
        | 6a 65 63 74
- 0xb75 | 08 0b 66 61 | Naming { index: 8, name: "falseObject" }
+ 0xb90 | 08 0b 66 61 | Naming { index: 8, name: "falseObject" }
        | 6c 73 65 4f
        | 62 6a 65 63
        | 74         
- 0xb82 | 09 0c 70 6c | Naming { index: 9, name: "plusSelector" }
+ 0xb9d | 09 0c 70 6c | Naming { index: 9, name: "plusSelector" }
        | 75 73 53 65
        | 6c 65 63 74
        | 6f 72      
- 0xb90 | 0a 0d 74 69 | Naming { index: 10, name: "timesSelector" }
+ 0xbab | 0a 0d 74 69 | Naming { index: 10, name: "timesSelector" }
        | 6d 65 73 53
        | 65 6c 65 63
        | 74 6f 72   
- 0xb9f | 0b 0f 73 71 | Naming { index: 11, name: "squaredSelector" }
+ 0xbba | 0b 0f 73 71 | Naming { index: 11, name: "squaredSelector" }
        | 75 61 72 65
        | 64 53 65 6c
        | 65 63 74 6f
        | 72         
- 0xbb0 | 0c 12 72 65 | Naming { index: 12, name: "reportToJSSelector" }
+ 0xbcb | 0c 12 72 65 | Naming { index: 12, name: "reportToJSSelector" }
        | 70 6f 72 74
        | 54 6f 4a 53
        | 53 65 6c 65
        | 63 74 6f 72
- 0xbc4 | 0d 0d 61 63 | Naming { index: 13, name: "activeContext" }
+ 0xbdf | 0d 0d 61 63 | Naming { index: 13, name: "activeContext" }
        | 74 69 76 65
        | 43 6f 6e 74
        | 65 78 74   
- 0xbd3 | 0e 0d 63 75 | Naming { index: 14, name: "currentMethod" }
+ 0xbee | 0e 0d 63 75 | Naming { index: 14, name: "currentMethod" }
        | 72 72 65 6e
        | 74 4d 65 74
        | 68 6f 64   
- 0xbe2 | 0f 0f 63 75 | Naming { index: 15, name: "currentReceiver" }
+ 0xbfd | 0f 0f 63 75 | Naming { index: 15, name: "currentReceiver" }
        | 72 72 65 6e
        | 74 52 65 63
        | 65 69 76 65
        | 72         
- 0xbf3 | 10 10 6e 65 | Naming { index: 16, name: "nextIdentityHash" }
+ 0xc0e | 10 10 6e 65 | Naming { index: 16, name: "nextIdentityHash" }
        | 78 74 49 64
        | 65 6e 74 69
        | 74 79 48 61
        | 73 68      
- 0xc05 | 11 0b 66 69 | Naming { index: 17, name: "firstObject" }
+ 0xc20 | 11 0b 66 69 | Naming { index: 17, name: "firstObject" }
        | 72 73 74 4f
        | 62 6a 65 63
        | 74         
- 0xc12 | 12 0a 6c 61 | Naming { index: 18, name: "lastObject" }
+ 0xc2d | 12 0a 6c 61 | Naming { index: 18, name: "lastObject" }
        | 73 74 4f 62
        | 6a 65 63 74
- 0xc1e | 13 0b 6f 62 | Naming { index: 19, name: "objectCount" }
+ 0xc39 | 13 0b 6f 62 | Naming { index: 19, name: "objectCount" }
        | 6a 65 63 74
        | 43 6f 75 6e
        | 74         
- 0xc2b | 0b 2d       | tag name section
- 0xc2d | 03          | 3 count
- 0xc2e | 00 06 52 65 | Naming { index: 0, name: "Return" }
+ 0xc46 | 0b 2d       | tag name section
+ 0xc48 | 03          | 3 count
+ 0xc49 | 00 06 52 65 | Naming { index: 0, name: "Return" }
        | 74 75 72 6e
- 0xc36 | 01 0f 50 72 | Naming { index: 1, name: "PrimitiveFailed" }
+ 0xc51 | 01 0f 50 72 | Naming { index: 1, name: "PrimitiveFailed" }
        | 69 6d 69 74
        | 69 76 65 46
        | 61 69 6c 65
        | 64         
- 0xc47 | 02 11 44 6f | Naming { index: 2, name: "DoesNotUnderstand" }
+ 0xc62 | 02 11 44 6f | Naming { index: 2, name: "DoesNotUnderstand" }
        | 65 73 4e 6f
        | 74 55 6e 64
        | 65 72 73 74
