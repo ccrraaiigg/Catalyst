@@ -3,12 +3,14 @@
 
 (module $SqueakVMCore
   ;; Import JavaScript interface functions
-  (import "js" "report_result" (func $report_result (param i32)))
+  (import "system" "reportResult" (func $system_report_result (param i32)))
+  (import "system" "currentTimeMillis" (func $currentTimeMillis (result i64)))
+  (import "system" "consoleLog" (func $consoleLog (param i32)))
   
   ;; Import JIT compilation interface
-  (import "js" "jit_compile_method_js" (func $jit_compile_method_js 
+  (import "jit" "compileMethod" (func $jit_compile_method_js 
     (param i32 i32 i32 i32) (result i32)))
-;;  (import "jit" "reportError" (func $js_report_error (param i32)))
+  (import "jit" "reportError" (func $js_report_error (param i32)))
   
   ;; FIXED: Use proper recursive type group with named fields
   (rec
@@ -526,7 +528,7 @@
     local.tee $result
     
     ;; Report result to JavaScript
-    call $report_result
+    call $system_report_result
     
     ;; Return result
     local.get $result
