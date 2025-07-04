@@ -217,7 +217,7 @@
   ;; Stack operations using Context's real stack
   (func $pushOnStack
     (param $context (ref $Context))
-    (param $value (ref null eq))
+    (param $value eqref)
     (local $stack (ref null $ObjectArray))
     (local $sp i32)
     
@@ -471,7 +471,7 @@
           ref.as_non_null
           local.get $i
           array.get $ObjectArray
-          ref.cast $CompiledMethod
+          ref.cast (ref $CompiledMethod)
           return
         end
         
@@ -795,6 +795,7 @@
     local.get $sender
     ref.as_non_null
     local.get $result
+    ref.as_non_null
     call $pushOnStack
     
     local.get $result
@@ -1075,9 +1076,9 @@
     if
       ;; Push receiver onto stack
       local.get $context
-      struct.get $Context $receiver
       local.get $context
-      swap
+      struct.get $Context $receiver
+      ref.as_non_null
       call $pushOnStack
       i32.const 0  ;; Continue execution
       return
@@ -1105,6 +1106,7 @@
         ;; Push value2 back and continue
         local.get $context
         local.get $value2
+        ref.as_non_null
         call $pushOnStack
         i32.const 0
         return
@@ -1127,9 +1129,10 @@
       
       ;; Create result SmallInteger and push onto stack
       local.get $result
-      call $createSmallInteger
       local.get $context
-      swap
+      local.get $result
+      call $createSmallInteger
+      ref.as_non_null
       call $pushOnStack
       
       i32.const 0  ;; Continue execution
@@ -1214,6 +1217,7 @@
           ;; Method not found - push receiver back
           local.get $context
           local.get $receiver
+          ref.as_non_null
           call $pushOnStack
           i32.const 0
           return

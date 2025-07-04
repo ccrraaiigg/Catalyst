@@ -42,7 +42,7 @@ function dumpWasm(wasmFile) {
         console.log(`🔍 Analyzing ${wasmFile}...`);
         
         const dumpFile = wasmFile.replace('.wasm', '.dump.wat');
-        const result = spawnSync('wasm-tools', ['print', wasmFile], {
+        const result = spawnSync('wasm-tools', ['dump', wasmFile], {
             cwd: process.cwd()
         });
         
