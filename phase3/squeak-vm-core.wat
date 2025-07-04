@@ -85,7 +85,7 @@
                            (field $header i32)
                            (field $bytecodes (ref null $ByteArray))
                            (field $invocationCount (mut i32))
-                           (field $compiledWasm (mut (ref null func)))
+                           (field $compiledFunc (mut i32))  ;; Index into function table
                            (field $jitThreshold i32)
                            )))
    
@@ -106,6 +106,14 @@
                         (field $temps (mut (ref null $ObjectArray)))
                         (field $stack (mut (ref null $ObjectArray)))
                         )))
+   
+   ;; Type 9: Polymorphic Inline Cache entry
+   (type $PICEntry (struct
+                    (field $selector (mut (ref null eq)))
+                    (field $receiverClass (mut (ref null $Class)))
+                    (field $method (mut (ref null $CompiledMethod)))
+                    (field $hitCount (mut i32))
+                    ))
    )
 
   ;; Global VM state with proper initializers
@@ -137,13 +145,17 @@
   (global $jitThreshold (mut i32) (i32.const 10))
   (global $jitEnabled (mut i32) (i32.const 1))
   (global $totalCompilations (mut i32) (i32.const 0))
-  (global $methodCache (mut (ref null $ObjectArray)) (ref.null $ObjectArray))
-  (global $compiledFunctions (mut (ref null $ObjectArray)) (ref.null $ObjectArray))
   
-  ;; WASM exception types for VM control flow
-  (tag $Return (param (ref null eq)))
-  (tag $PrimitiveFailed)
-  (tag $DoesNotUnderstand (param (ref null eq)) (param (ref null $ObjectArray)))
+  ;; Polymorphic Inline Cache - global method cache
+  (global $methodCacheSize (mut i32) (i32.const 256))
+  (global $methodCache (mut (ref null $ObjectArray)) (ref.null $ObjectArray))
+  
+  ;; Function table for compiled methods
+  (table $funcTable 100 funcref)
+  
+  ;; Function table for compiled methods  
+  (global $compiledFunctions (mut (ref null $ObjectArray)) (ref.null $ObjectArray))
+  (global $nextFunctionIndex (mut i32) (i32.const 1))
   
   ;; Array operations with proper typing
   (func $array_len_byte
@@ -201,39 +213,7 @@
     global.set $nextIdentityHash
     global.get $nextIdentityHash
   )
-  
-  ;; Object enumeration for #become: support
-  (func $register_object
-    (param $object (ref $SqueakObject))
-    (local $lastObj (ref null $SqueakObject))
-    
-    ;; Link object into enumeration chain
-    global.get $lastObject
-    local.tee $lastObj
-    ref.is_null
-    if
-      ;; First object
-      local.get $object
-      global.set $firstObject
-    else
-      ;; Link to previous last object
-      local.get $lastObj
-      ref.as_non_null
-      local.get $object
-      struct.set $SqueakObject $nextObject
-    end
-    
-    ;; Update last object pointer
-    local.get $object
-    global.set $lastObject
-    
-    ;; Increment object count
-    global.get $objectCount
-    i32.const 1
-    i32.add
-    global.set $objectCount
-  )
-  
+
   ;; Stack operations using Context's real stack
   (func $pushOnStack
     (param $context (ref $Context))
@@ -363,6 +343,463 @@
     array.get $ObjectArray
   )
 
+  ;; Get class of any object (including SmallIntegers)
+  (func $getClass (param $obj (ref null eq)) (result (ref null $Class))
+    local.get $obj
+    ref.test (ref i31)
+    if (result (ref null $Class))
+      ;; SmallInteger
+      global.get $smallIntegerClass
+    else
+      ;; Regular object
+      local.get $obj
+      ref.cast (ref $SqueakObject)
+      struct.get $SqueakObject $class
+    end
+  )
+
+  ;; Generic method lookup that works for all messages
+  (func $lookupMethod 
+    (param $receiver (ref null eq))
+    (param $selector (ref null eq))
+    (result (ref null $CompiledMethod))
+    (local $class (ref null $Class))
+    (local $currentClass (ref null $Class))
+    (local $methodDict (ref null $Dictionary))
+    (local $keys (ref null $ObjectArray))
+    (local $values (ref null $ObjectArray))
+    (local $count i32)
+    (local $i i32)
+    (local $key (ref null eq))
+    
+    ;; Get receiver's class
+    local.get $receiver
+    call $getClass
+    local.set $currentClass
+    
+    ;; Walk up the class hierarchy
+    loop $hierarchy_loop
+      local.get $currentClass
+      ref.is_null
+      if
+        ;; Reached top of hierarchy - method not found
+        ref.null $CompiledMethod
+        return
+      end
+      
+      ;; Get method dictionary from current class
+      local.get $currentClass
+      ref.as_non_null
+      struct.get $Class $methodDict
+      local.tee $methodDict
+      ref.is_null
+      if
+        ;; No method dictionary - try superclass
+        local.get $currentClass
+        ref.as_non_null
+        struct.get $Class $superclass
+        local.set $currentClass
+        br $hierarchy_loop
+      end
+      
+      ;; Search in current class's method dictionary
+      local.get $methodDict
+      ref.as_non_null
+      struct.get $Dictionary $keys
+      local.tee $keys
+      ref.is_null
+      if
+        ;; No keys - try superclass
+        local.get $currentClass
+        ref.as_non_null
+        struct.get $Class $superclass
+        local.set $currentClass
+        br $hierarchy_loop
+      end
+      
+      local.get $methodDict
+      ref.as_non_null
+      struct.get $Dictionary $values
+      local.tee $values
+      ref.is_null
+      if
+        ;; No values - try superclass
+        local.get $currentClass
+        ref.as_non_null
+        struct.get $Class $superclass
+        local.set $currentClass
+        br $hierarchy_loop
+      end
+      
+      ;; Get count
+      local.get $methodDict
+      ref.as_non_null
+      struct.get $Dictionary $count
+      local.set $count
+      
+      ;; Linear search for selector in current class
+      i32.const 0
+      local.set $i
+      
+      loop $search_loop
+        local.get $i
+        local.get $count
+        i32.ge_u
+        if
+          ;; Not found in this class - try superclass
+          local.get $currentClass
+          ref.as_non_null
+          struct.get $Class $superclass
+          local.set $currentClass
+          br $hierarchy_loop
+        end
+        
+        ;; Get key at index i
+        local.get $keys
+        ref.as_non_null
+        local.get $i
+        array.get $ObjectArray
+        local.set $key
+        
+        ;; Compare with selector
+        local.get $key
+        local.get $selector
+        ref.eq
+        if
+          ;; Found! Get the method
+          local.get $values
+          ref.as_non_null
+          local.get $i
+          array.get $ObjectArray
+          ref.cast $CompiledMethod
+          return
+        end
+        
+        ;; Increment and continue
+        local.get $i
+        i32.const 1
+        i32.add
+        local.set $i
+        br $search_loop
+      end
+    end
+    
+    ;; Should never reach here
+    ref.null $CompiledMethod
+  )
+
+  ;; Polymorphic Inline Cache lookup
+  (func $lookupInCache
+    (param $selector (ref null eq))
+    (param $receiverClass (ref null $Class))
+    (result (ref null $CompiledMethod))
+    (local $cache (ref null $ObjectArray))
+    (local $cacheSize i32)
+    (local $hash i32)
+    (local $index i32)
+    (local $entry (ref null $PICEntry))
+    (local $probeLimit i32)
+    
+    ;; Get method cache
+    global.get $methodCache
+    local.tee $cache
+    ref.is_null
+    if
+      ref.null $CompiledMethod
+      return
+    end
+    
+    ;; Simple hash function (identity hash of selector + class)
+    local.get $selector
+    ref.cast (ref $SqueakObject)
+    struct.get $SqueakObject $identityHash
+    
+    local.get $receiverClass
+    ref.as_non_null
+    struct.get $Class $identityHash
+    i32.add
+    
+    global.get $methodCacheSize
+    i32.rem_u
+    local.set $index
+    
+    ;; Linear probing with limit
+    i32.const 8  ;; Max probe distance
+    local.set $probeLimit
+    
+    loop $probe_loop
+      local.get $probeLimit
+      i32.const 0
+      i32.le_s
+      if
+        ;; Probe limit exceeded
+        ref.null $CompiledMethod
+        return
+      end
+      
+      ;; Get cache entry
+      local.get $cache
+      ref.as_non_null
+      local.get $index
+      array.get $ObjectArray
+      local.tee $entry
+      ref.is_null
+      if
+        ;; Empty slot - cache miss
+        ref.null $CompiledMethod
+        return
+      end
+      
+      ;; Check if entry matches
+      local.get $entry
+      ref.cast $PICEntry
+      local.tee $entry
+      struct.get $PICEntry $selector
+      local.get $selector
+      ref.eq
+      
+      local.get $entry
+      struct.get $PICEntry $receiverClass
+      local.get $receiverClass
+      ref.eq
+      i32.and
+      if
+        ;; Cache hit - increment hit count and return method
+        local.get $entry
+        local.get $entry
+        struct.get $PICEntry $hitCount
+        i32.const 1
+        i32.add
+        struct.set $PICEntry $hitCount
+        
+        local.get $entry
+        struct.get $PICEntry $method
+        return
+      end
+      
+      ;; Try next slot
+      local.get $index
+      i32.const 1
+      i32.add
+      global.get $methodCacheSize
+      i32.rem_u
+      local.set $index
+      
+      local.get $probeLimit
+      i32.const 1
+      i32.sub
+      local.set $probeLimit
+      
+      br $probe_loop
+    end
+    
+    ;; Should never reach here
+    ref.null $CompiledMethod
+  )
+
+  ;; Store method in cache
+  (func $storeInCache
+    (param $selector (ref null eq))
+    (param $receiverClass (ref null $Class))
+    (param $method (ref $CompiledMethod))
+    (local $cache (ref null $ObjectArray))
+    (local $index i32)
+    (local $entry (ref $PICEntry))
+    
+    ;; Get method cache
+    global.get $methodCache
+    local.tee $cache
+    ref.is_null
+    if
+      return
+    end
+    
+    ;; Simple hash function
+    local.get $selector
+    ref.cast (ref $SqueakObject)
+    struct.get $SqueakObject $identityHash
+    
+    local.get $receiverClass
+    ref.as_non_null
+    struct.get $Class $identityHash
+    i32.add
+    
+    global.get $methodCacheSize
+    i32.rem_u
+    local.set $index
+    
+    ;; Create new cache entry
+    local.get $selector
+    local.get $receiverClass
+    local.get $method
+    i32.const 1  ;; Initial hit count
+    struct.new $PICEntry
+    local.set $entry
+    
+    ;; Store in cache
+    local.get $cache
+    ref.as_non_null
+    local.get $index
+    local.get $entry
+    array.set $ObjectArray
+  )
+
+  ;; Create context for method call
+  (func $createMethodContext 
+    (param $receiver (ref null eq))
+    (param $method (ref $CompiledMethod))
+    (param $selector (ref null eq))
+    (result (ref $Context))
+    (local $stack (ref $ObjectArray))
+    
+    ;; Create new stack for the method
+    i32.const 20
+    ref.null eq
+    array.new $ObjectArray
+    local.set $stack
+    
+    ;; Create context for method
+    global.get $objectClass ;; class (Context is-a Object for now)
+    call $nextIdentityHash
+    i32.const 14         ;; format (MethodContext)
+    i32.const 14         ;; size
+    ref.null $SqueakObject ;; nextObject
+    i32.const 8
+    ref.null eq
+    array.new $ObjectArray ;; slots
+    global.get $activeContext  ;; sender (current context)
+    i32.const 0          ;; pc
+    i32.const 0          ;; sp
+    local.get $method    ;; method
+    local.get $receiver  ;; receiver
+    ref.null $ObjectArray ;; args
+    ref.null $ObjectArray ;; temps
+    local.get $stack     ;; stack
+    struct.new $Context
+  )
+
+  ;; SmallInteger operations
+  (func $createSmallInteger (param $value i32) (result (ref i31))
+    local.get $value
+    ref.i31
+  )
+  
+  (func $extractIntegerValue (param $obj (ref null eq)) (result i32)
+    local.get $obj
+    ref.test (ref i31)
+    if (result i32)
+      local.get $obj
+      ref.cast (ref i31)
+      i31.get_s
+    else
+      ;; Not a SmallInteger - return 0 for safety
+      i32.const 0
+    end
+  )
+
+  ;; Check if method has compiled function
+  (func $hasCompiledFunction (param $method (ref $CompiledMethod)) (result i32)
+    local.get $method
+    struct.get $CompiledMethod $compiledFunc
+    i32.const 0
+    i32.ne
+  )
+
+  ;; Execute compiled WASM function by calling it directly
+  (func $executeCompiledFunction 
+    (param $context (ref $Context))
+    (param $funcIndex i32)
+    (result i32)
+    ;; Call the compiled function directly using call_indirect
+    ;; The function should operate on the context and return 0 for success
+    local.get $context
+    local.get $funcIndex
+    call_indirect (param (ref $Context)) (result i32)
+  )
+
+  ;; Trigger JIT compilation for hot method
+  (func $triggerJITCompilation (param $method (ref $CompiledMethod))
+    (local $bytecodes (ref null $ByteArray))
+    (local $bytecodeLen i32)
+    (local $compiledFuncIndex i32)
+    
+    ;; Get bytecode array
+    local.get $method
+    struct.get $CompiledMethod $bytecodes
+    local.tee $bytecodes
+    ref.is_null
+    if
+      return  ;; No bytecodes to compile
+    end
+    
+    ;; Get bytecode length
+    local.get $bytecodes
+    ref.as_non_null
+    array.len
+    local.set $bytecodeLen
+    
+    ;; Call JavaScript JIT compiler
+    local.get $method
+    ref.cast (ref $SqueakObject)
+    struct.get $SqueakObject $identityHash  ;; Use method identity as pointer
+    i32.const 0x1000  ;; Simplified bytecode pointer
+    local.get $bytecodeLen
+    call $compileMethod
+    local.set $compiledFuncIndex
+    
+    ;; Store compiled function if successful
+    local.get $compiledFuncIndex
+    i32.const 0
+    i32.ne
+    if
+      ;; Store function index in method
+      local.get $method
+      local.get $compiledFuncIndex
+      struct.set $CompiledMethod $compiledFunc
+      
+      ;; Increment compilation count
+      global.get $totalCompilations
+      i32.const 1
+      i32.add
+      global.set $totalCompilations
+    end
+  )
+
+  ;; Handle method return and context switching
+  (func $handleMethodReturn (param $context (ref $Context)) (result (ref null eq))
+    (local $sender (ref null $Context))
+    (local $result (ref null eq))
+    
+    ;; Get result from top of stack
+    local.get $context
+    call $topOfStack
+    local.set $result
+    
+    ;; Get sender context
+    local.get $context
+    struct.get $Context $sender
+    local.tee $sender
+    ref.is_null
+    if
+      ;; No sender - we're done
+      local.get $result
+      return
+    end
+    
+    ;; Switch back to sender context
+    local.get $sender
+    ref.as_non_null
+    global.set $activeContext
+    
+    ;; Push result onto sender's stack
+    local.get $sender
+    ref.as_non_null
+    local.get $result
+    call $pushOnStack
+    
+    local.get $result
+  )
+
   ;; VM initialization and bootstrap
   (func $initialize (export "initialize") (result i32)
     ;; Create minimal object memory for 3 squared example
@@ -388,12 +825,13 @@
     (local $squaredSelector (ref $Symbol))
     
     ;; Initialize method cache
-    i32.const 100
+    global.get $methodCacheSize
     ref.null eq
     array.new $ObjectArray
     global.set $methodCache
     
-    i32.const 100  
+    ;; Initialize compiled functions array
+    i32.const 100
     ref.null eq
     array.new $ObjectArray
     global.set $compiledFunctions
@@ -509,10 +947,11 @@
     local.set $receiver
     
     ;; Create bytecode sequence for main method: "3 squared"
-    ;; Bytecodes: push receiver (3), send #squared
-    i32.const 2
+    ;; Bytecodes: push receiver (3), send #squared (selector index 0)
+    i32.const 3
     i32.const 0x70  ;; Push receiver
-    i32.const 0xD0  ;; Send #squared (simplified selector index)
+    i32.const 0xD0  ;; Send message
+    i32.const 0     ;; Selector index (0 = #squared in literal array)
     array.new $ByteArray
     local.set $mainBytecodes
     
@@ -532,13 +971,14 @@
     i32.const 12      ;; format (CompiledMethod)
     i32.const 11      ;; size
     ref.null $SqueakObject ;; nextObject
-    i32.const 6
-    ref.null eq
-    array.new $ObjectArray ;; slots
+    ;; Create literal array containing the #squared selector
+    i32.const 1
+    local.get $squaredSelector
+    array.new $ObjectArray ;; slots (literal array)
     i32.const 0       ;; header
     local.get $mainBytecodes
     i32.const 0       ;; invocationCount
-    ref.null func     ;; compiledWasm (none initially)
+    i32.const 0       ;; compiledFunc (none initially)
     i32.const 10      ;; jitThreshold
     struct.new $CompiledMethod
     local.set $mainMethod
@@ -555,7 +995,7 @@
     i32.const 0       ;; header
     local.get $squaredBytecodes
     i32.const 0       ;; invocationCount
-    ref.null func     ;; compiledWasm (none initially)
+    i32.const 0       ;; compiledFunc (none initially)
     i32.const 10      ;; jitThreshold
     struct.new $CompiledMethod
     local.set $squaredMethod
@@ -623,7 +1063,10 @@
     (local $int1 i32)
     (local $int2 i32)
     (local $result i32)
-    (local $newContext (ref null $Context))
+    (local $newContext (ref $Context))
+    (local $selector (ref null eq))
+    (local $method (ref null $CompiledMethod))
+    (local $receiverClass (ref null $Class))
     
     ;; Execute bytecode based on opcode
     local.get $bytecode
@@ -703,31 +1146,97 @@
     end
     
     local.get $bytecode
-    i32.const 0xD0  ;; Send #squared (simplified)
+    i32.const 0xD0  ;; Send message (generic for any selector)
     i32.eq
     if
       ;; Pop receiver from stack
       local.get $context
       call $popFromStack
-      local.set $receiver
-      
-      ;; Look up #squared method and create new context
-      local.get $receiver
-      call $createSquaredContext
-      local.tee $newContext
+      local.tee $receiver
       ref.is_null
       if
-        ;; Method lookup failed - push receiver back
-        local.get $context
-        local.get $receiver
-        call $pushOnStack
         i32.const 0
         return
       end
       
-      ;; Switch to new context for #squared method
-      local.get $newContext
+      ;; Decode selector from bytecode stream
+      ;; Get current method and PC to read selector index
+      local.get $context
+      struct.get $Context $method
       ref.as_non_null
+      struct.get $CompiledMethod $bytecodes
+      ref.as_non_null
+      
+      local.get $context
+      struct.get $Context $pc
+      i32.const 1
+      i32.add  ;; Next byte after 0xD0 is selector index
+      array.get_u $ByteArray
+      local.tee $int1  ;; Reuse local for selector index
+      
+      ;; Get selector from method's literal array at index
+      local.get $context
+      struct.get $Context $method
+      ref.as_non_null
+      struct.get $CompiledMethod $slots
+      ref.as_non_null
+      local.get $int1
+      array.get $ObjectArray
+      local.set $selector
+      
+      ;; Increment PC to skip selector index byte
+      local.get $context
+      local.get $context
+      struct.get $Context $pc
+      i32.const 1
+      i32.add
+      struct.set $Context $pc
+      
+      ;; Get receiver's class
+      local.get $receiver
+      call $getClass
+      local.set $receiverClass
+      
+      ;; Try polymorphic inline cache first
+      local.get $selector
+      local.get $receiverClass
+      call $lookupInCache
+      local.tee $method
+      ref.is_null
+      if
+        ;; Cache miss - do full method lookup
+        local.get $receiver
+        local.get $selector
+        call $lookupMethod
+        local.tee $method
+        ref.is_null
+        if
+          ;; Method not found - push receiver back
+          local.get $context
+          local.get $receiver
+          call $pushOnStack
+          i32.const 0
+          return
+        end
+        
+        ;; Store in cache for future use
+        local.get $selector
+        local.get $receiverClass
+        local.get $method
+        ref.as_non_null
+        call $storeInCache
+      end
+      
+      ;; Create new context for method
+      local.get $receiver
+      local.get $method
+      ref.as_non_null
+      local.get $selector
+      call $createMethodContext
+      local.set $newContext
+      
+      ;; Switch to new context
+      local.get $newContext
       global.set $activeContext
       
       i32.const 0  ;; Continue execution in new context
@@ -736,149 +1245,6 @@
     
     ;; Unknown bytecode - continue execution
     i32.const 0
-  )
-
-  ;; Create context for #squared method by looking it up in SmallInteger class
-  (func $createSquaredContext (param $receiver (ref null eq)) (result (ref null $Context))
-    (local $method (ref null $CompiledMethod))
-    (local $stack (ref $ObjectArray))
-    (local $context (ref $Context))
-    (local $smallIntClass (ref null $Class))
-    (local $methodDict (ref null $Dictionary))
-    (local $keys (ref null $ObjectArray))
-    (local $values (ref null $ObjectArray))
-    (local $count i32)
-    (local $i i32)
-    (local $key (ref null eq))
-    (local $squaredSel (ref null eq))
-    
-    ;; Get SmallInteger class
-    global.get $smallIntegerClass
-    local.tee $smallIntClass
-    ref.is_null
-    if
-      ref.null $Context
-      return
-    end
-    
-    ;; Get method dictionary
-    local.get $smallIntClass
-    ref.as_non_null
-    struct.get $Class $methodDict
-    local.tee $methodDict
-    ref.is_null
-    if
-      ref.null $Context
-      return
-    end
-    
-    ;; Get keys and values arrays
-    local.get $methodDict
-    ref.as_non_null
-    struct.get $Dictionary $keys
-    local.tee $keys
-    ref.is_null
-    if
-      ref.null $Context
-      return
-    end
-    
-    local.get $methodDict
-    ref.as_non_null
-    struct.get $Dictionary $values
-    local.tee $values
-    ref.is_null
-    if
-      ref.null $Context
-      return
-    end
-    
-    ;; Get squared selector for comparison
-    global.get $squaredSelector
-    local.set $squaredSel
-    
-    ;; Get count
-    local.get $methodDict
-    ref.as_non_null
-    struct.get $Dictionary $count
-    local.set $count
-    
-    ;; Linear search for #squared selector
-    i32.const 0
-    local.set $i
-    
-    loop $search_loop
-      local.get $i
-      local.get $count
-      i32.ge_u
-      if
-        ;; Not found
-        ref.null $Context
-        return
-      end
-      
-      ;; Get key at index i
-      local.get $keys
-      ref.as_non_null
-      local.get $i
-      array.get $ObjectArray
-      local.set $key
-      
-      ;; Compare with squared selector (simplified comparison)
-      local.get $key
-      local.get $squaredSel
-      ref.eq
-      if
-        ;; Found! Get the method
-        local.get $values
-        ref.as_non_null
-        local.get $i
-        array.get $ObjectArray
-        ref.cast $CompiledMethod
-        local.set $method
-        br $search_loop
-      end
-      
-      ;; Increment and continue
-      local.get $i
-      i32.const 1
-      i32.add
-      local.set $i
-      br $search_loop
-    end
-    
-    ;; Check if we found a method
-    local.get $method
-    ref.is_null
-    if
-      ref.null $Context
-      return
-    end
-    
-    ;; Create new stack for the method
-    i32.const 20
-    ref.null eq
-    array.new $ObjectArray
-    local.set $stack
-    
-    ;; Create context for SmallInteger>>squared
-    global.get $objectClass ;; class (Context is-a Object for now)
-    i32.const 3001       ;; identityHash
-    i32.const 14         ;; format (MethodContext)
-    i32.const 14         ;; size
-    ref.null $SqueakObject ;; nextObject
-    i32.const 8
-    ref.null eq
-    array.new $ObjectArray ;; slots
-    global.get $activeContext  ;; sender (current context)
-    i32.const 0          ;; pc
-    i32.const 0          ;; sp
-    local.get $method    ;; method (SmallInteger>>squared)
-    local.get $receiver  ;; receiver
-    ref.null $ObjectArray ;; args
-    ref.null $ObjectArray ;; temps
-    local.get $stack     ;; stack
-    struct.new $Context
   )
 
   ;; Main interpreter loop - ONLY export this and initialize()
@@ -891,8 +1257,8 @@
     (local $invocationCount i32)
     (local $bytecodes (ref null $ByteArray))
     (local $bytecodeLength i32)
-    (local $compiledFunc i32)
     (local $shouldReturn i32)
+    (local $funcIndex i32)
     
     ;; Main execution loop - handle multiple method calls
     loop $execution_loop
@@ -944,19 +1310,20 @@
         call $triggerJITCompilation
       end
       
-      ;; Check method cache for compiled version
+      ;; Check if method has compiled function
       local.get $method
-      call $getCompiledFunction
-      local.tee $compiledFunc
-      i32.const 0
-      i32.ne
+      call $hasCompiledFunction
       if
         ;; Execute compiled WASM function
+        local.get $method
+        struct.get $CompiledMethod $compiledFunc
+        local.set $funcIndex
+        
         local.get $context
         ref.as_non_null
-        local.get $compiledFunc
+        local.get $funcIndex
         call $executeCompiledFunction
-        local.set $resultValue
+        drop  ;; Ignore return value
         
         ;; Handle return from compiled method
         local.get $context
@@ -1069,165 +1436,4 @@
     
     local.get $pc
   )
-
-  ;; SmallInteger operations
-  (func $createSmallInteger (param $value i32) (result (ref i31))
-    local.get $value
-    ref.i31
-  )
-  
-  (func $extractIntegerValue (param $obj (ref null eq)) (result i32)
-    local.get $obj
-    ref.test (ref i31)
-    if (result i32)
-      local.get $obj
-      ref.cast (ref i31)
-      i31.get_s
-    else
-      ;; Not a SmallInteger - return 0 for safety
-      i32.const 0
-    end
-  )
-  
-  ;; Check method cache for compiled function
-  (func $getCompiledFunction (param $method (ref $CompiledMethod)) (result i32)
-    ;; For now, check the compiledWasm field directly
-    ;; In a full implementation, this would search a hash table
-    local.get $method
-    struct.get $CompiledMethod $compiledWasm
-    ref.is_null
-    if (result i32)
-      i32.const 0  ;; No compiled function
-    else
-      i32.const 1  ;; Has compiled function (simplified)
-    end
-  )
-  
-  ;; Execute compiled WASM function
-  (func $executeCompiledFunction 
-    (param $context (ref $Context))
-    (param $funcIndex i32)
-    (result (ref null eq))
-    ;; In a real implementation, this would call the compiled function
-    ;; For now, we'll execute the equivalent of our 3 squared computation directly
-    
-    ;; Push receiver twice and multiply (equivalent to squared)
-    local.get $context
-    struct.get $Context $receiver
-    local.get $context
-    swap
-    call $pushOnStack
-    
-    local.get $context
-    struct.get $Context $receiver
-    local.get $context
-    swap
-    call $pushOnStack
-    
-    ;; Pop two values, multiply, and push result
-    local.get $context
-    call $popFromStack
-    local.get $context
-    call $popFromStack
-    
-    ;; Extract values and multiply
-    call $extractIntegerValue
-    swap
-    call $extractIntegerValue
-    i32.mul
-    
-    ;; Create result and push onto stack
-    call $createSmallInteger
-    local.get $context
-    swap
-    call $pushOnStack
-    
-    ;; Return the result
-    local.get $context
-    call $topOfStack
-  )
-  
-  ;; Handle method return and context switching
-  (func $handleMethodReturn (param $context (ref $Context)) (result (ref null eq))
-    (local $sender (ref null $Context))
-    (local $result (ref null eq))
-    
-    ;; Get result from top of stack
-    local.get $context
-    call $topOfStack
-    local.set $result
-    
-    ;; Get sender context
-    local.get $context
-    struct.get $Context $sender
-    local.tee $sender
-    ref.is_null
-    if
-      ;; No sender - we're done
-      local.get $result
-      return
-    end
-    
-    ;; Switch back to sender context
-    local.get $sender
-    ref.as_non_null
-    global.set $activeContext
-    
-    ;; Push result onto sender's stack
-    local.get $sender
-    ref.as_non_null
-    local.get $result
-    call $pushOnStack
-    
-    local.get $result
-  )
-  
-  ;; Trigger JIT compilation for hot method
-  (func $triggerJITCompilation (param $method (ref $CompiledMethod))
-    (local $bytecodes (ref null $ByteArray))
-    (local $bytecodePtr i32)
-    (local $bytecodeLen i32)
-    (local $compiledFunc i32)
-    
-    ;; Get bytecode array
-    local.get $method
-    struct.get $CompiledMethod $bytecodes
-    local.tee $bytecodes
-    ref.is_null
-    if
-      return  ;; No bytecodes to compile
-    end
-    
-    ;; Get bytecode length
-    local.get $bytecodes
-    ref.as_non_null
-    array.len
-    local.set $bytecodeLen
-    
-    ;; For demo purposes, use a simple pointer (in real implementation,
-    ;; this would be the actual memory address of the bytecode array)
-    i32.const 0x1000
-    local.set $bytecodePtr
-    
-    ;; Call JavaScript JIT compiler
-    i32.const 0        ;; method pointer (simplified)
-    local.get $bytecodePtr
-    local.get $bytecodeLen
-    call $compileMethod
-    local.set $compiledFunc
-    
-    ;; Store compiled function if successful
-    local.get $compiledFunc
-    i32.const 0
-    i32.ne
-    if
-      ;; For demo, just mark as compiled (in real implementation,
-      ;; would store the actual function reference)
-      global.get $totalCompilations
-      i32.const 1
-      i32.add
-      global.set $totalCompilations
-    end
-  )
 )
-    
