@@ -13,7 +13,7 @@
     "Proper UTF-8 character encoding for emoji and symbols",
     "Runtime JIT enable/disable controls"
   ],
-  "buildDate": "2025-07-04T03:57:27.951Z",
+  "buildDate": "2025-07-04T17:34:07.066Z",
   "files": {
     "wasm": [
       "squeak-vm-core.wasm"

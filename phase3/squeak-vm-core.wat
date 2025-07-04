@@ -552,7 +552,7 @@
       
       ;; Check if entry matches
       local.get $entry
-      ref.cast $PICEntry
+      ref.cast (ref $PICEntry)
       local.tee $entry
       struct.get $PICEntry $selector
       local.get $selector
