@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawnSync } = require('child_process');
 
 function ensureDir(dir) {
     if (!fs.existsSync(dir)) {
@@ -14,25 +14,23 @@ function compileWatToWasm(watFile, wasmFile) {
     console.log(`📝 Compiling ${watFile} to ${wasmFile}...`);
     
     try {
-        const result = spawn('wasm-tools', ['parse', watFile, '-o', wasmFile], { 
+        const result = spawnSync('wasm-tools', ['parse', watFile, '-o', wasmFile], { 
             stdio: 'inherit',
             cwd: process.cwd()
         });
         
-        result.on('close', (code) => {
-            if (code === 0) {
-                console.log(`✓ Successfully compiled ${watFile}`);
-            } else {
-                console.error(`✗ Compilation failed for ${watFile} with exit code ${code}`);
-            }
-        });
-        
-        result.on('error', (err) => {
-            console.error(`✗ Error compiling ${watFile}:`, err.message);
+        if (result.error) {
+            console.error(`✗ Error running wasm-tools:`, result.error.message);
             return false;
-        });
+        }
         
-        return code === 0;
+        if (result.status === 0) {
+            console.log(`✓ Successfully compiled ${watFile}`);
+            return true;
+        } else {
+            console.error(`✗ Compilation failed for ${watFile} with exit code ${result.status}`);
+            return false;
+        }
     } catch (error) {
         console.error(`✗ Failed to compile ${watFile}:`, error.message);
         return false;
@@ -44,26 +42,23 @@ function dumpWasm(wasmFile) {
         console.log(`🔍 Analyzing ${wasmFile}...`);
         
         const dumpFile = wasmFile.replace('.wasm', '.dump.wat');
-        const result = spawn('wasm-tools', ['print', wasmFile], {
-            stdio: ['pipe', 'pipe', 'pipe'],
+        const result = spawnSync('wasm-tools', ['print', wasmFile], {
             cwd: process.cwd()
         });
         
-        let output = '';
-        result.stdout.on('data', (data) => {
-            output += data.toString();
-        });
+        if (result.error) {
+            console.error(`✗ Error running wasm-tools for analysis:`, result.error.message);
+            return false;
+        }
         
-        result.on('close', (code) => {
-            if (code === 0) {
-                fs.writeFileSync(dumpFile, output, 'utf8');
-                console.log(`✓ Generated analysis dump: ${dumpFile}`);
-            } else {
-                console.error(`✗ Failed to analyze ${wasmFile}`);
-            }
-        });
-        
-        return code === 0;
+        if (result.status === 0) {
+            fs.writeFileSync(dumpFile, result.stdout.toString(), 'utf8');
+            console.log(`✓ Generated analysis dump: ${dumpFile}`);
+            return true;
+        } else {
+            console.error(`✗ Failed to analyze ${wasmFile}`);
+            return false;
+        }
     } catch (error) {
         console.error(`✗ Failed to analyze ${wasmFile}:`, error.message);
         return false;
@@ -74,20 +69,23 @@ function validateWasmFile(wasmFile) {
     try {
         console.log(`✅ Validating ${wasmFile}...`);
         
-        const result = spawn('wasm-tools', ['validate', wasmFile], { 
+        const result = spawnSync('wasm-tools', ['validate', wasmFile], { 
             stdio: 'inherit',
             cwd: process.cwd()
         });
         
-        result.on('close', (code) => {
-            if (code === 0) {
-                console.log(`✓ ${wasmFile} is valid`);
-            } else {
-                console.error(`✗ Validation failed for ${wasmFile}`);
-            }
-        });
+        if (result.error) {
+            console.error(`✗ Error running wasm-tools for validation:`, result.error.message);
+            return false;
+        }
         
-        return code === 0;
+        if (result.status === 0) {
+            console.log(`✓ ${wasmFile} is valid`);
+            return true;
+        } else {
+            console.error(`✗ Validation failed for ${wasmFile}`);
+            return false;
+        }
     } catch (error) {
         console.error(`✗ Failed to validate ${wasmFile}:`, error.message);
         return false;
@@ -110,7 +108,7 @@ function copyFile(src, dest) {
     }
 }
 
-async function main() {
+function main() {
     console.log('🚀 Building SqueakWASM Phase 3 with JIT Compilation...\n');
 
     const outputDir = './dist';
