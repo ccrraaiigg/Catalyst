@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>🚀 Phase 3 JIT Compilation Test Interface</title>
     <style>
         body {
@@ -175,6 +176,8 @@
     </style>
 </head>
 <body>
+  <script type="module" src="./squeak-vm.js"></script>
+
     <div class="container">
         <h1>🚀 Phase 3 JIT Compilation Test Interface</h1>
         <p class="subtitle">SqueakWASM Virtual Machine with Runtime Bytecode Compilation</p>
@@ -235,15 +238,13 @@
                 </label>
                 <button id="clearCache" class="toggle">Clear Method Cache</button>
                 <button id="resetStats" class="toggle">Reset Statistics</button>
+                <button id="testFunctionTable" class="toggle">Test Function Table</button>
             </div>
         </div>
 
         <div class="output" id="output">
             <div><strong>🎯 Phase 3 JIT Compilation Test Interface loaded!</strong></div>
             <div>💡 <strong>Tip:</strong> Use "Run Multiple Times" to see JIT compilation kick in after the threshold is reached.</div>
-            <div>🔧 <strong>Initializing SqueakWASM VM...</strong></div>
-            <div>✅ <strong>VM initialized successfully!</strong></div>
-            <div><strong>Ready to test JIT compilation!</strong></div>
         </div>
     </div>
 
@@ -259,29 +260,26 @@
             jitEnabled: true
         };
 
-        async function initVM() {
+        function initVM() {
             if (!vm) {
-                try {
-                    addOutput('<strong>🔧 Initializing SqueakWASM VM...</strong>');
-                    
-                    // Load the JS module that contains SqueakVM class
-                    const { SqueakVM } = await import('./squeak-vm.js');
-                    
+                return import('./squeak-vm.js')
+                    .then(({ SqueakVM }) => {
                     vm = new SqueakVM();
-                    await vm.initialize();
-                    
-                    // Set up result callback
+                        return vm.initialize();
+                    })
+                    .then(() => {
                     vm.onResult = (result) => {
                         addOutput(`<strong>📢 Result received:</strong> ${result}`, 'result');
                     };
-                    
                     addOutput('<strong>✅ VM initialized successfully!</strong>');
-                    
-                } catch (error) {
+                    })
+                    .catch(error => {
                     addOutput(`<strong>❌ VM initialization failed:</strong> ${error.message}`, 'error');
                     throw error;
-                }
+                    });
             }
+            // If already initialized, return a resolved promise
+            return Promise.resolve();
         }
 
         function addOutput(text, className = '') {
@@ -303,23 +301,17 @@
         }
 
         // Event Listeners
-        document.getElementById('runExample').addEventListener('click', async () => {
-            try {
-                await initVM();
-                
+        document.getElementById('runExample').addEventListener('click', () => {
+            initVM()
+                .then(() => {
                 addOutput('<strong>🚀 Running 3 squared with JIT compilation...</strong>');
-                
-                // Configure VM settings
                 vm.setJITEnabled(jitEnabled);
                 vm.setDebugMode(debugMode);
-                
                 const startTime = performance.now();
-                const result = await vm.run(); // Use vm.run() instead of runMinimalExample()
+                    return vm.run().then(result => {
                 const endTime = performance.now();
-                
                 const success = result.success;
                 const vmStats = vm.getJITStatistics();
-                
                 addOutput(`
                     <strong>📊 Execution Result:</strong> ${success ? '✅ PASSED' : '❌ FAILED'}<br>
                     • Result: ${result.results ? result.results.join(', ') : 'No results'}<br>
@@ -327,17 +319,17 @@
                     • JIT Compilations: ${result.jitCompilations || 0}<br>
                     • JIT Status: ${jitEnabled ? 'Enabled' : 'Disabled'}
                 `, success ? 'result' : 'error');
-                
                 updateStats({
                     executionTime: endTime - startTime,
                     jitCompilations: result.jitCompilations || 0,
                     cachedMethods: vmStats.cachedMethods || 0,
                     jitEnabled: jitEnabled
                 });
-                
-            } catch (error) {
+                    });
+                })
+                .catch(error => {
                 addOutput(`<strong>❌ Error:</strong> ${error.message}`, 'error');
-            }
+                });
         });
 
         document.getElementById('runMultiple').addEventListener('click', async () => {
@@ -437,14 +429,25 @@
             }
         });
 
+        document.getElementById('testFunctionTable').addEventListener('click', () => {
+            initVM()
+                .then(() => {
+                    addOutput('<strong>🧪 Testing function table functionality...</strong>');
+                    const success = vm.testFunctionTable();
+                    if (success) {
+                        addOutput('<strong>✅ Function table test passed!</strong>', 'result');
+                    } else {
+                        addOutput('<strong>❌ Function table test failed!</strong>', 'error');
+                    }
+                })
+                .catch(error => {
+                    addOutput(`<strong>❌ Function table test error:</strong> ${error.message}`, 'error');
+                });
+        });
+
         // Listen for result events from WASM
         window.addEventListener('squeakResult', (event) => {
             addOutput(`<strong>🎯 WASM Result Event:</strong> ${event.detail.value}`, 'result');
-        });
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            addOutput('<strong>🎯 Phase 3 JIT Compilation Test Interface ready!</strong>');
         });
     </script>
 </body>

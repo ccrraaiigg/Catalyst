@@ -3,7 +3,8 @@
 (module
  ;; Import external functions from JavaScript
  (import "env" "reportResult" (func $reportResult (param i32)))
- (import "env" "compileMethod" (func $compileMethod (param i32 i32 i32) (result i32))) ;; (methodPtr, bytecodePtr, bytecodeLen) -> function
+ (import "env" "compileMethod" (func $compileMethod 
+				     (param i32 i32 i32) (result i32))) ;; (method, bytecode, length) -> function
  (import "env" "debugLog" (func $debugLog (param i32 i32 i32))) ;; level, message, length
 
  (rec
@@ -111,9 +112,6 @@
                    (field $method (mut (ref null $CompiledMethod)))
                    (field $hitCount (mut i32))
                    ))
-  
-  ;; Type 10: JIT function type
-  (type $jit_func_type (func (param (ref null $Context)) (result i32)))
   )
 
  ;; Global VM state
@@ -125,7 +123,6 @@
  (global $contextClass (mut (ref null $Class)) (ref.null $Class))
  (global $symbolClass (mut (ref null $Class)) (ref.null $Class))
  (global $smallIntegerClass (mut (ref null $Class)) (ref.null $Class))
- (global $mainMethod (mut (ref null $CompiledMethod)) (ref.null $CompiledMethod))
  
  ;; Essential objects
  (global $nilObject (mut (ref null eq)) (ref.null eq))
@@ -154,21 +151,18 @@
  (global $methodCache (mut (ref null $ObjectArray)) (ref.null $ObjectArray))
 
  ;; Function table for compiled methods
- (table $funcTable (export "funcTable") 100 funcref)
- 
- ;; Memory for JIT compilation - bytecode data transfer
- (memory $jitMemory (export "jitMemory") 1)
+ (table $funcTable 100 funcref)
   
  ;; Array operations with proper typing
  (func $array_len_byte
-       (param $array (ref null $ByteArray))
+       (param $array (ref $ByteArray))
        (result i32)
        local.get $array
        array.len
        ) ;; (func $array_len_byte
  
  (func $array_get_byte
-       (param $array (ref null $ByteArray))
+       (param $array (ref $ByteArray))
        (param $index i32)
        (result i32)
        local.get $array
@@ -177,14 +171,14 @@
        ) ;; (func $array_get_byte
  
  (func $array_len_object
-       (param $array (ref null $ObjectArray))
+       (param $array (ref $ObjectArray))
        (result i32)
        local.get $array
        array.len
        ) ;; (func $array_len_object
  
  (func $array_get_object
-       (param $array (ref null $ObjectArray))
+       (param $array (ref $ObjectArray))
        (param $index i32)
        (result (ref null eq))
        local.get $array
@@ -218,7 +212,7 @@
 
  ;; Stack operations
  (func $pushOnStack
-       (param $context (ref null $Context))
+       (param $context (ref $Context))
        (param $value eqref)
        (local $stack (ref null $ObjectArray))
        (local $sp i32)
@@ -259,7 +253,7 @@
        ) ;; (func $pushOnStack
  
  (func $popFromStack
-       (param $context (ref null $Context))
+       (param $context (ref $Context))
        (result (ref null eq))
        (local $stack (ref null $ObjectArray))
        (local $sp i32)
@@ -305,7 +299,7 @@
        ) ;; (func $popFromStack
  
  (func $topOfStack
-       (param $context (ref null $Context))
+       (param $context (ref $Context))
        (result (ref null eq))
        (local $stack (ref null $ObjectArray))
        (local $sp i32)
@@ -649,8 +643,8 @@
        (param $receiver (ref null eq))
        (param $method (ref $CompiledMethod))
        (param $selector (ref null eq))
-       (result (ref null $Context))
-       (local $stack (ref null $ObjectArray))
+       (result (ref $Context))
+       (local $stack (ref $ObjectArray))
        
        ;; Create new stack for the method
        ref.null eq
@@ -705,77 +699,16 @@
        i32.ne
        ) ;; (func $hasCompiledFunction (param $method (ref $CompiledMethod)) (result i32)
 
- ;; Copy bytecode array to linear memory for JIT compilation
- (func $copyBytecodesToMemory
-       (param $bytecodes (ref null $ByteArray))
-       (param $memoryOffset i32)
-       (result i32)
-       (local $len i32)
-       (local $i i32)
-       (local $bytecode i32)
-       
-       ;; Get bytecode array length
-       local.get $bytecodes
-       ref.is_null
-       if
-       i32.const 0
-       return
-       end ;; if
-       
-       local.get $bytecodes
-       ref.as_non_null
-       array.len
-       local.set $len
-       
-       ;; Copy each bytecode to memory
-       i32.const 0
-       local.set $i
-       
-       loop $copy_loop
-       local.get $i
-       local.get $len
-       i32.ge_u
-       if
-       local.get $len
-       return
-       end ;; if
-       
-       ;; Get bytecode at index i
-       local.get $bytecodes
-       ref.as_non_null
-       local.get $i
-       array.get_u $ByteArray
-       local.set $bytecode
-       
-       ;; Store in memory
-       local.get $memoryOffset
-       local.get $i
-       i32.add
-       local.get $bytecode
-       i32.store8
-       
-       ;; Increment i
-       local.get $i
-       i32.const 1
-       i32.add
-       local.set $i
-       br $copy_loop
-       end ;; loop $copy_loop
-       
-       local.get $len
-       ) ;; (func $copyBytecodesToMemory
-
  ;; Execute compiled WASM function by calling it directly
  (func $executeCompiledFunction 
-       (param $context (ref null $Context))
+       (param $context (ref $Context))
        (param $funcIndex i32)
        (result i32)
        ;; Call the compiled function directly using call_indirect
        ;; The function should operate on the context and return 0 for success
        local.get $context
-       ref.as_non_null
        local.get $funcIndex
-       call_indirect (type $jit_func_type)
+       call_indirect (param (ref $Context)) (result i32)
        ) ;; (func $executeCompiledFunction
 
  ;; Trigger JIT compilation for hot method
@@ -783,7 +716,6 @@
        (local $bytecodes (ref null $ByteArray))
        (local $bytecodeLen i32)
        (local $compiledFuncIndex i32)
-       (local $memoryOffset i32)
        
        ;; Get bytecode array
        local.get $method
@@ -800,20 +732,12 @@
        array.len
        local.set $bytecodeLen
        
-       ;; Copy bytecodes to memory starting at offset 0
-       i32.const 0
-       local.set $memoryOffset
-       
-       local.get $bytecodes
-       local.get $memoryOffset
-       call $copyBytecodesToMemory
-       local.set $bytecodeLen  ;; Update with actual copied length
-       
-       ;; Call JavaScript JIT compiler with memory pointer
+       ;; Call JavaScript JIT compiler
        local.get $method
-       struct.get $CompiledMethod $identityHash
-       local.get $memoryOffset  ;; Memory pointer to bytecode data
-       local.get $bytecodeLen   ;; Length of bytecode data
+       ref.cast (ref $SqueakObject)
+       struct.get $SqueakObject $identityHash  ;; Use method identity as pointer
+       i32.const 0x1000  ;; Simplified bytecode pointer
+       local.get $bytecodeLen
        call $compileMethod
        local.set $compiledFuncIndex
        
@@ -836,7 +760,7 @@
        ) ;; (func $triggerJITCompilation (param $method (ref $CompiledMethod))
 
  ;; Handle method return and context switching
- (func $handleMethodReturn (param $context (ref null $Context)) (result (ref null eq))
+ (func $handleMethodReturn (param $context (ref $Context)) (result (ref null eq))
        (local $sender (ref null $Context))
        (local $result (ref null eq))
        
@@ -893,9 +817,13 @@
 
  ;; Create minimal bootstrap environment for 3 squared
  (func $createMinimalBootstrap (result i32)
+       (local $mainMethod (ref $CompiledMethod))
        (local $squaredMethod (ref $CompiledMethod))
+       (local $mainContext (ref $Context))
        (local $mainBytecodes (ref $ByteArray))
        (local $squaredBytecodes (ref $ByteArray))
+       (local $stack (ref $ObjectArray))
+       (local $receiver (ref i31))
        (local $methodDict (ref $Dictionary))
        
        ;; Initialize method cache
@@ -1004,6 +932,11 @@
        struct.new $Symbol
        global.set $squaredSelector
        
+       ;; Create SmallInteger 3 as receiver
+       i32.const 3
+       ref.i31
+       local.set $receiver
+       
        ;; Create bytecode sequence for main method: "3 squared"
        ;; Bytecodes: push receiver (3), send #squared (selector index 0)
        i32.const 0x70  ;; Push receiver
@@ -1036,7 +969,7 @@
        i32.const 0       ;; compiledFunc (none initially)
        i32.const 10      ;; jitThreshold
        struct.new $CompiledMethod
-       global.set $mainMethod
+       local.set $mainMethod
        
        ;; Create SmallInteger>>squared method
        global.get $objectClass ;; class
@@ -1074,13 +1007,43 @@
        i32.const 1
        struct.set $Dictionary $count
        
+       ;; Create execution stack with proper size
+       ref.null eq
+       i32.const 20
+       array.new $ObjectArray
+       local.set $stack
+       
+       ;; Create initial context for main method
+       global.get $objectClass ;; class (Context is-a Object for now)
+       i32.const 2001       ;; identityHash
+       i32.const 14         ;; format (MethodContext)
+       i32.const 14         ;; size
+       ref.null $SqueakObject ;; nextObject
+       ref.null eq
+       i32.const 8
+       array.new $ObjectArray ;; slots
+       ref.null $Context    ;; sender
+       i32.const 0          ;; pc
+       i32.const 0          ;; sp (stack pointer)
+       local.get $mainMethod ;; method
+       local.get $receiver   ;; receiver (SmallInteger 3)
+       ref.null $ObjectArray ;; args
+       ref.null $ObjectArray ;; temps
+       local.get $stack      ;; stack
+       struct.new $Context
+       local.set $mainContext
+       
+       ;; Set as active context
+       local.get $mainContext
+       global.set $activeContext
+
        ;; success
        i32.const 1
        ) ;; (func $createMinimalBootstrap (result i32)
 
  ;; Interpret single bytecode - returns 1 if method should return, 0 to continue
  (func $interpretBytecode 
-       (param $context (ref null $Context))
+       (param $context (ref $Context))
        (param $bytecode i32) 
        (result i32)
        (local $receiver (ref null eq))
@@ -1089,7 +1052,7 @@
        (local $int1 i32)
        (local $int2 i32)
        (local $result i32)
-       (local $newContext (ref null $Context))
+       (local $newContext (ref $Context))
        (local $selector (ref null eq))
        (local $method (ref null $CompiledMethod))
        (local $receiverClass (ref null $Class))
@@ -1268,55 +1231,20 @@
        (local $method (ref null $CompiledMethod))
        (local $bytecode i32)
        (local $pc i32)
-       (local $stack (ref null $ObjectArray))
-       (local $receiver (ref null eq))
        (local $resultValue (ref null eq))
        (local $invocationCount i32)
        (local $bytecodes (ref null $ByteArray))
        (local $funcIndex i32)
-
-       ;; Create execution stack with proper size
-       ref.null eq
-       i32.const 20
-       array.new $ObjectArray
-       local.set $stack
-       
-       ;; Create SmallInteger 3 as receiver
-       i32.const 3
-       ref.i31
-       local.set $receiver
-       
-       ;; Create initial context for main method
-       global.get $objectClass ;; class (Context is-a Object for now)
-       i32.const 2001       ;; identityHash
-       i32.const 14         ;; format (MethodContext)
-       i32.const 14         ;; size
-       ref.null $SqueakObject ;; nextObject
-       ref.null eq
-       i32.const 8
-       array.new $ObjectArray ;; slots
-       ref.null $Context    ;; sender
-       i32.const 0          ;; pc
-       i32.const 0          ;; sp (stack pointer)
-       global.get $mainMethod ;; method
-       local.get $receiver   ;; receiver (SmallInteger 3)
-       ref.null $ObjectArray ;; args
-       ref.null $ObjectArray ;; temps
-       local.get $stack      ;; stack
-       struct.new $Context
-       global.set $activeContext
-
-       block $finished
        
        ;; Main execution loop
-       loop $execution_loop
+       loop $execution_loop ;; 1
        ;; Get active context
        global.get $activeContext
        local.tee $context
        ref.is_null
        if
        ;; No active context - execution complete
-       br $finished
+       br $execution_loop
        end ;; if
        
        ;; Cast to non-null and get method
@@ -1470,8 +1398,7 @@
       
        br $execution_loop ;; default - restart execution loop
        end ;; if
-       end ;; $finished
-
+       
        ;; Extract integer result for reporting
        local.get $resultValue
        call $extractIntegerValue
@@ -1482,49 +1409,4 @@
        i32.const 1 ;; success
        return
        ) ;; loop $execution_loop
- 
- ;; === Externref-compatible field access helpers for JIT ===
- (func (export "getContextReceiver") (param (ref null $Context)) (result (ref null eq))
-   local.get 0
-   struct.get $Context $receiver)
- (func (export "getContextMethod") (param (ref null $Context)) (result (ref null $CompiledMethod))
-   local.get 0
-   struct.get $Context $method)
- (func (export "getCompiledMethodSlots") (param (ref null $CompiledMethod)) (result (ref null $ObjectArray))
-   local.get 0
-   struct.get $CompiledMethod $slots)
- (func (export "getCompiledMethodBytecodes") (param (ref null $CompiledMethod)) (result (ref null $ByteArray))
-   local.get 0
-   struct.get $CompiledMethod $bytecodes)
- (func (export "getCompiledMethodHeader") (param (ref null $CompiledMethod)) (result i32)
-   local.get 0
-   struct.get $CompiledMethod $header)
- (func (export "getCompiledMethodCompiledFunc") (param (ref null $CompiledMethod)) (result i32)
-   local.get 0
-   struct.get $CompiledMethod $compiledFunc)
- (func (export "getCompiledMethodInvocationCount") (param (ref null $CompiledMethod)) (result i32)
-   local.get 0
-   struct.get $CompiledMethod $invocationCount)
- (func (export "getCompiledMethodJitThreshold") (param (ref null $CompiledMethod)) (result i32)
-   local.get 0
-   struct.get $CompiledMethod $jitThreshold)
- (func (export "getClassMethodDict") (param (ref null $Class)) (result (ref null $Dictionary))
-   local.get 0
-   struct.get $Class $methodDict)
- (func (export "getDictionaryKeys") (param (ref null $Dictionary)) (result (ref null $ObjectArray))
-   local.get 0
-   struct.get $Dictionary $keys)
- (func (export "getDictionaryValues") (param (ref null $Dictionary)) (result (ref null $ObjectArray))
-   local.get 0
-   struct.get $Dictionary $values)
- (func (export "getDictionaryCount") (param (ref null $Dictionary)) (result i32)
-   local.get 0
-   struct.get $Dictionary $count)
- (func (export "getObjectArrayElement") (param (ref null $ObjectArray) i32) (result (ref null eq))
-   local.get 0
-   local.get 1
-   array.get $ObjectArray)
- (func (export "setActiveContext") (param (ref null $Context))
-   local.get 0
-   global.set $activeContext)
-)
+ ) ;; (func $interpret (export "interpret") (result i32)

@@ -1112,6 +1112,17 @@ async function main() {
 - Advanced control flow optimizations
 - JIT compilation of Sista-specific bytecodes
 
+### Phase 7: Adaptive Optimization (2-3 weeks)
+- **Performance Profiling Infrastructure**: Instrument VM with automated profiling hooks for method execution time, memory usage, and call frequency
+- **Usage Metrics Collection**: Track method invocation patterns, object allocation rates, and memory pressure indicators
+- **Dynamic JIT Threshold Adjustment**: Automatically adjust compilation thresholds based on runtime performance characteristics and memory constraints
+- **Profile-Guided Optimization**: Use collected metrics to optimize method translation strategies (inlining decisions, register allocation, loop optimizations)
+- **Adaptive Memory Management**: Adjust GC frequency and object allocation strategies based on observed memory usage patterns
+- **Hot Path Detection**: Identify and optimize frequently executed code paths across method boundaries
+- **Performance Regression Detection**: Monitor for performance degradations and automatically trigger re-optimization
+- **Machine Learning Integration**: Use collected metrics to predict optimal compilation strategies for similar method patterns
+- **Real-time Optimization Feedback**: Provide live performance insights to developers through Smalltalk tools and browser console
+
 ## Rationale for JIT-First Approach
 
 **Performance Foundation**: JIT compilation provides the performance foundation needed for the VM to be practical. Without it, even basic operations would be too slow for real development work.
