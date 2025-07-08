@@ -4,7 +4,7 @@ A WebAssembly implementation of the SqueakJS Smalltalk virtual machine with inte
 
 ## 🚀 Phase 3 Overview
 
-Phase 3 represents a major milestone in the SqueakWASM project, introducing **runtime bytecode-to-WASM translation** for hot method compilation. This phase demonstrates the same "3 squared" example from Phase 2, but with the ability to compile frequently-executed methods to optimized WASM code.
+Phase 3 represents a major milestone in the SqueakWASM project, introducing **runtime bytecode-to-WASM translation** for hot method compilation. This phase demonstrates the same "3 workload" example from Phase 2, but with the ability to compile frequently-executed methods to optimized WASM code.
 
 ### ✨ New Features in Phase 3
 
@@ -43,7 +43,7 @@ Phase 3 represents a major milestone in the SqueakWASM project, introducing **ru
 - ✅ Runtime JIT enable/disable controls
 - ✅ Debug mode with detailed logging
 
-**Test Case**: The "3 squared = 9" example now supports:
+**Test Case**: The "3 workload = result" example now supports:
 - Method invocation counting
 - JIT compilation threshold detection
 - Runtime bytecode-to-WAT translation
@@ -93,7 +93,7 @@ open http://localhost:8000/dist/test.html
 
 The Phase 3 test page provides:
 
-1. **🚀 Run (3 squared) with JIT**: Execute the example with JIT compilation support
+1. **🚀 Run (3 workload) with JIT**: Execute the example with JIT compilation support
 2. **🔄 Run Multiple Times**: Trigger JIT compilation by exceeding invocation thresholds
 3. **🔧 Toggle JIT**: Enable/disable JIT compilation at runtime
 4. **🐛 Toggle Debug**: Enable detailed compilation logging
@@ -245,7 +245,7 @@ Phase 3 maintains compatibility with the SqueakJS architecture while adding JIT 
 
 *Benchmarks will be added as more comprehensive test cases are implemented.*
 
-### Current Metrics (3 squared example)
+### Current Metrics (3 workload example)
 - **Interpretation**: ~0.1-0.5ms per execution
 - **JIT Compilation**: ~1-5ms compilation time
 - **Compiled Execution**: Target <0.05ms per execution

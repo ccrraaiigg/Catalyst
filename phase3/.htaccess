@@ -1,0 +1,26 @@
+# Enable cross-origin isolation for high-resolution timers
+# This improves performance.now() resolution from ~100μs to ~5μs
+
+# Cross-Origin Opener Policy
+Header always set Cross-Origin-Opener-Policy "same-origin"
+
+# Cross-Origin Embedder Policy  
+Header always set Cross-Origin-Embedder-Policy "require-corp"
+
+# Cross-Origin Resource Policy (for assets)
+Header always set Cross-Origin-Resource-Policy "cross-origin"
+
+# Enable compression for WebAssembly files
+<Files "*.wasm">
+    Header set Content-Type "application/wasm"
+    Header set Cross-Origin-Resource-Policy "cross-origin"
+</Files>
+
+# Cache control for development
+<Files "*.wat">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+</Files>
+
+<Files "*.wasm">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+</Files> 

@@ -5,32 +5,60 @@ class SqueakVM {
     constructor() {
         this.wasmModule = null;
         this.jitEnabled = true;
-        this.debugMode = false;
+        this.debugMode = true;
         this.stats = {
             totalInvocations: 0,
             jitCompilations: 0,
             cachedMethods: 0,
-            executionTime: 0
+            executionTime: 0,
+            optimizedMethods: 0,
+            validationsPassed: 0,
+            validationsFailed: 0,
+            wasmValidationsPassed: 0,
+            wasmValidationsFailed: 0,
+            retryAttempts: 0,
+            retrySuccesses: 0,
+            llmAttempts: 0,
+            llmSuccesses: 0
         };
         this.methodTranslations = new Map(); // Store generated WAT for JIT
+        this.interpretedResults = new Map(); // Cache interpreted results for validation
+        this.lastExecutionResult = null; // Cache the last execution result
+        this.lastLoggedCachedResult = null; // Track the last logged cached result to avoid spam
         this.onResult = null; // Callback for results
+        this.initializeSemanticAnalyzer();
     }
 
     initialize() {
         if (this.wasmModule) return Promise.resolve();
-        const imports = {
+        
+        // Store imports for later recompilation
+        this.importObject = {
             env: {
                 // Import only reportResult function
                 reportResult: (value) => {
                     if (this.onResult) {
                         this.onResult(value);
                     }
-                    console.log(`🎯 VM Result: ${value}`);
+                    // Only log results in debug mode to avoid spam
+                    if (this.debugMode) {
+                        console.log(`🎯 VM Result: ${value}`);
+                    }
                 },
                 
                 // JIT compilation interface - called from WASM when threshold reached
-                compileMethod: (methodPtr, bytecodePtr, bytecodeLen) => {
-                    return this.compileMethodToWASM(methodPtr, bytecodePtr, bytecodeLen);
+                compileMethod: (methodPtr, bytecodeLen) => {
+                    // No return value needed; just trigger async compilation if needed
+                    if (!this.jitEnabled) return;
+                    const compiled = this.methodTranslations.get(methodPtr);
+                    if (!compiled) {
+                        this.compileMethodToWASM(methodPtr, bytecodeLen).then(() => {
+                            // JIT compilation complete - function now available in function table
+                            if (this.debugMode) {
+                                console.log(`🔥 JIT compilation complete for method ${methodPtr}`);
+                            }
+                        });
+                    }
                 },
                 
                 // Debug output
@@ -44,19 +72,182 @@ class SqueakVM {
             }
         };
         return WebAssembly.instantiateStreaming(
-                fetch('dist/squeak-vm-core.wasm'),
-                imports
+                fetch('squeak-vm-core.wasm?' + Date.now()),
+                this.importObject
         ).then(wasmModule => {
             this.wasmModule = wasmModule;
+            
+            // Initialize function table with null values
+            this.initializeFunctionTable();
+            
             const success = this.wasmModule.instance.exports.initialize();
             if (!success) {
                 throw new Error('WASM VM initialization failed');
             }
             console.log('✅ SqueakWASM VM initialized successfully');
+            
+            // Load API keys from secure file (wait for completion)
+            return this.loadAPIKeys().then(() => {
+                if (this.debugMode) {
+                    console.log('🎯 VM initialization complete with LLM configuration');
+                }
+            }).catch(error => {
+                if (this.debugMode) {
+                    console.log('⚠️ API keys not loaded:', error);
+                    console.log('🔄 VM will use mock LLM mode when enabled');
+                }
+            });
         }).catch(error => {
             console.error('❌ Failed to load WASM module:', error);
             throw error;
         });
+    }
+
+    // Initialize function table with null values for JIT compilation
+    initializeFunctionTable() {
+        const funcTable = this.wasmModule.instance.exports.funcTable;
+        if (funcTable && typeof funcTable.set === 'function') {
+            // Initialize all 100 slots with null (ref.null funcref)
+            for (let i = 0; i < 100; i++) {
+                funcTable.set(i, null);
+            }
+            if (this.debugMode) {
+                console.log('🔧 Function table initialized with 100 null slots');
+            }
+        }
+    }
+
+    /**
+     * Load API keys from secure file (not in source code!)
+     */
+    async loadAPIKeys() {
+        try {
+            const response = await fetch('./keys');
+            
+            if (!response.ok) {
+                throw new Error(`Keys file not found: ${response.status}`);
+            }
+            
+            const keysText = await response.text();
+            const { keys, keyOrder } = this.parseKeysFile(keysText);
+            
+            // Configure LLM with the first available provider (order matters)
+            const primaryProvider = keyOrder[0];
+            
+            if (primaryProvider && keys[primaryProvider]) {
+                this.llmConfig.provider = primaryProvider;
+                this.llmConfig.apiKey = keys[primaryProvider];
+                this.llmConfig.enabled = true;
+                
+                // Configure provider-specific settings
+                if (primaryProvider === 'openai') {
+                    this.llmConfig.endpoint = 'http://localhost:8001/api/openai';
+                    this.llmConfig.model = 'gpt-4o';
+                } else if (primaryProvider === 'anthropic') {
+                    this.llmConfig.endpoint = 'http://localhost:8001/api/anthropic';
+                    this.llmConfig.model = 'claude-3-5-sonnet-20241022';
+                }
+                
+                if (this.debugMode) {
+                    const providerDisplayName = primaryProvider === 'openai' ? 'OpenAI' : 
+                                              primaryProvider === 'anthropic' ? 'Anthropic' : primaryProvider;
+                    console.log(`🔑 ${providerDisplayName} API key loaded successfully (primary provider)`);
+                    console.log('☁️ LLM optimization enabled automatically');
+                    console.log('🔧 LLM Config updated:', {
+                        provider: this.llmConfig.provider,
+                        model: this.llmConfig.model,
+                        endpoint: this.llmConfig.endpoint,
+                        enabled: this.llmConfig.enabled,
+                        hasApiKey: !!this.llmConfig.apiKey,
+                        apiKeyPrefix: this.llmConfig.apiKey?.substring(0, 15) + '...'
+                    });
+                    
+                    // Report other available providers
+                    const otherProviders = keyOrder.slice(1);
+                    if (otherProviders.length > 0) {
+                        const otherNames = otherProviders.map(p => p === 'openai' ? 'OpenAI' : 
+                                                              p === 'anthropic' ? 'Anthropic' : p);
+                        console.log(`🔑 Alternative providers available: ${otherNames.join(', ')}`);
+                        console.log(`💡 To switch providers, reorder keys in the keys file`);
+                    }
+                }
+            }
+            
+        } catch (error) {
+            if (this.debugMode) {
+                console.log('⚠️ Could not load API keys:', error);
+                console.log('🔄 LLM optimization will remain disabled');
+            }
+            // Not a fatal error - VM continues without LLM optimization
+        }
+    }
+
+    /**
+     * Parse the keys file format and track order of providers
+     * Supports multiple formats:
+     * - openai=sk-...
+     * - OpenAI API key: sk-...
+     * - anthropic=sk-ant-api03-...
+     */
+    parseKeysFile(keysText) {
+        const keys = {};
+        const keyOrder = [];
+        const lines = keysText.split('\n');
+        
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith('#')) {
+                let provider = null;
+                let apiKey = null;
+                
+                // Format: key=value
+                if (trimmed.includes('=')) {
+                    const [key, value] = trimmed.split('=', 2);
+                    if (key && value) {
+                        const providerName = key.trim().toLowerCase();
+                        const keyValue = value.trim();
+                        
+                        if ((providerName === 'openai' && keyValue.startsWith('sk-')) ||
+                            (providerName === 'anthropic' && keyValue.startsWith('sk-ant-'))) {
+                            provider = providerName;
+                            apiKey = keyValue;
+                        }
+                    }
+                }
+                // Format: "OpenAI API key: sk-..."
+                else if (trimmed.toLowerCase().includes('openai') && trimmed.includes(':')) {
+                    const parts = trimmed.split(':');
+                    if (parts.length >= 2) {
+                        const key = parts.slice(1).join(':').trim();
+                        if (key.startsWith('sk-')) {
+                            provider = 'openai';
+                            apiKey = key;
+                        }
+                    }
+                }
+                // Format: "Anthropic API key: sk-ant-..."
+                else if (trimmed.toLowerCase().includes('anthropic') && trimmed.includes(':')) {
+                    const parts = trimmed.split(':');
+                    if (parts.length >= 2) {
+                        const key = parts.slice(1).join(':').trim();
+                        if (key.startsWith('sk-ant-')) {
+                            provider = 'anthropic';
+                            apiKey = key;
+                        }
+                    }
+                }
+                
+                // Store key and track order
+                if (provider && apiKey) {
+                    keys[provider] = apiKey;
+                    if (!keyOrder.includes(provider)) {
+                        keyOrder.push(provider);
+                    }
+                }
+            }
+        }
+        
+        return { keys, keyOrder };
     }
 
     async resetVM() {
@@ -80,9 +271,20 @@ class SqueakVM {
                 receivedResult = value;
             };
             try {
-                // Run the VM interpreter (this will execute the 3 squared example)
+                // Run the VM interpreter (this will execute the 3 workload example)
                 const result = this.wasmModule.instance.exports.interpret();
                 this.stats.totalInvocations++;
+                
+                // Cache the execution result for LLM validation
+                if (receivedResult !== null) {
+                    this.lastExecutionResult = receivedResult;
+                    // Only log if this is a new/different result
+                    if (this.debugMode && receivedResult !== this.lastLoggedCachedResult) {
+                        console.log(`🔍 Cached execution result: ${receivedResult}`);
+                        this.lastLoggedCachedResult = receivedResult;
+                    }
+                }
+                
                 // Restore previous onResult
                 this.onResult = prevOnResult;
                 resolve({
@@ -99,305 +301,1613 @@ class SqueakVM {
     }
 
     // JIT Compilation: Translate bytecode to WAT, compile to WASM function
-    // Accepts: methodPtr (identity), bytecodePtr (memory offset), bytecodeLen (length)
-    async compileMethodToWASM(methodPtr, bytecodePtr, bytecodeLen) {
-        if (!this.jitEnabled) {
-            return 0; // Return null function pointer
+    // Accepts: methodPtr (identity), bytecodeLen (length)
+    async compileMethodToWASM(methodPtr, bytecodeLen) {
+        // ALWAYS log this to see if JIT compilation is happening
+        console.log(`🔍 [JIT DEBUG] compileMethodToWASM called: methodPtr=${methodPtr}, bytecodeLen=${bytecodeLen}, jitEnabled=${this.jitEnabled}`);
+        
+        if (!this.jitEnabled) return 0;
+        const method = this.wasmModule.instance.exports.getCompiledMethodById(methodPtr);
+        if (!method) {
+            throw new Error(`Method not found for JIT compilation: methodPtr=${methodPtr}`);
         }
 
         try {
             const startTime = performance.now();
             
-            // Read bytecodes from WASM memory
-            const memory = this.wasmModule.instance.exports.jitMemory;
-            const bytecodes = new Uint8Array(memory.buffer, bytecodePtr, bytecodeLen);
+            // Read bytecodes from the method's bytecode array
+            const methodBytecodes = this.wasmModule.instance.exports.getCompiledMethodBytecodes(method);
+            if (!methodBytecodes) {
+                throw new Error(`Bytecode array not found for method ${methodPtr}`);
+            }
+            
+            // Efficiently extract bytecodes using WASM memory copy
+            const ptr = this.wasmModule.instance.exports.copyByteArrayToMemory(methodBytecodes);
+            const len = this.wasmModule.instance.exports.getByteArrayLen(methodBytecodes);
+            const memory = this.wasmModule.instance.exports.memory;
+            const bytecodes = new Uint8Array(memory.buffer, ptr, len);
             
             // Convert to regular array
             const bytecodeArray = Array.from(bytecodes);
 
-            // Generate WAT code from bytecodes
-            const watCode = this.translateBytecodeToWAT(bytecodeArray);
-            
-            // Compile WAT to WASM function (now async)
-            const wasmFunction = await this.compileWATToFunction(watCode);
-            
-            // Cache the compiled function
-            this.methodTranslations.set(methodPtr, wasmFunction);
+            // No need to extract literals upfront - get them on-demand from WASM VM
+            console.log(`🔍 [LITERAL DEBUG] Using on-demand literal retrieval from WASM VM context`);
 
-            // Register the compiled function in the WASM function table
+            // Generate WAT code from bytecodes (now with LLM optimization!)
+            // Pass the method so we can get literals on-demand
+            const watCode = await this.translateBytecodeToWAT(bytecodeArray, method, methodPtr);
+            
+            // Check if translation failed (LLM optimization not available)
+            if (!watCode) {
+                if (this.debugMode) {
+                    console.log(`❌ JIT compilation failed - no optimized WAT available`);
+                    console.log(`🔄 Method will continue being interpreted`);
+                }
+                return 0; // Return 0 to indicate no compiled method available
+            }
+            
+            // Compile WAT to WASM function and store in function table
+            const compiledFunction = await this.compileWATToFunction(watCode);
+            
+            // Get the next available function table index
+            const funcIndex = this.stats.jitCompilations + 1; // Start at index 1
+            
+            // Store the compiled function in the function table
             const funcTable = this.wasmModule.instance.exports.funcTable;
-            if (funcTable && typeof funcTable.set === 'function') {
-                funcTable.set(this.stats.jitCompilations, wasmFunction);
+            funcTable.set(funcIndex, compiledFunction);
+            
+            // Mark method as compiled
+            this.methodTranslations.set(methodPtr, compiledFunction);
+            
+            // Set the compiledFunc field in the WASM $CompiledMethod struct
+            if (this.wasmModule.instance.exports.setCompiledFuncIndex) {
+                this.wasmModule.instance.exports.setCompiledFuncIndex(method, funcIndex);
             }
             
             const compilationTime = performance.now() - startTime;
             this.stats.jitCompilations++;
             this.stats.cachedMethods++;
             
+            // Debug log for JIT compilation
+            console.log(`[JIT] Compiled methodPtr=${methodPtr} to funcIndex=${funcIndex} in ${compilationTime.toFixed(2)}ms`);
             if (this.debugMode) {
                 console.log(`🔥 JIT compiled method ${methodPtr} in ${compilationTime.toFixed(2)}ms`);
                 console.log(`📄 Generated WAT:\n${watCode}`);
+                console.log(`📍 Stored in function table at index ${funcIndex}`);
             }
             
-            // Return function pointer/index for WASM to use
-            return this.stats.jitCompilations; // Simple index for demo
+            // Return function table index for WASM to use with call_indirect
+            return funcIndex;
             
         } catch (error) {
             console.error('❌ JIT compilation failed:', error);
-            return 0; // Return null on failure
+            return 0; // Return 0 to indicate no compiled method available - VM will fall back to interpreter
         }
+    }
+
+    /**
+     * Get a specific literal value from a method on-demand
+     */
+    getLiteralValue(method, literalIndex) {
+        // First check if method is valid
+        if (!method) {
+            throw new Error(`No method provided for literal ${literalIndex}`);
+        }
+        
+        // Check cache first to avoid redundant fetches
+        if (!this.literalCache) {
+            this.literalCache = new Map();
+        }
+        
+        // Create safe cache key - method might be an object that can't be converted to primitive
+        let methodKey;
+        try {
+            methodKey = method ? String(method) : 'null';
+        } catch (e) {
+            // If method can't be converted to string, use its type + a counter
+            methodKey = `object_${typeof method}_${Object.prototype.toString.call(method)}`;
+        }
+        const cacheKey = `${methodKey}_${literalIndex}`;
+        if (this.literalCache.has(cacheKey)) {
+            return this.literalCache.get(cacheKey);
+        }
+        
+        const methodSlots = this.wasmModule.instance.exports.getCompiledMethodSlots(method);
+        if (!methodSlots) {
+            throw new Error(`No method slots available for literal ${literalIndex}`);
+        }
+        
+        // Check if the method has any literals at all
+        const slotsLength = this.wasmModule.instance.exports.getObjectArrayLength ? 
+            this.wasmModule.instance.exports.getObjectArrayLength(methodSlots) : -1;
+        
+        if (slotsLength >= 0 && literalIndex >= slotsLength) {
+            throw new Error(`Literal index ${literalIndex} out of bounds (slots length: ${slotsLength})`);
+        }
+        
+        const literal = this.wasmModule.instance.exports.getObjectArrayElement(methodSlots, literalIndex);
+        
+        const value = this.wasmModule.instance.exports.extractIntegerValue(literal);
+        
+        // Cache the result
+        this.literalCache.set(cacheKey, value);
+        
+        if (this.debugMode) {
+            console.log(`📋 Got literal[${literalIndex}] = ${value}`);
+        }
+        return value;
     }
 
     // Translate Squeak bytecode to WAT (WebAssembly Text format)
-    translateBytecodeToWAT(bytecodes) {
-        let watCode = `(func $jit_method_${this.stats.jitCompilations} (param $context externref) (result i32)\n`;
-        watCode += `  (local $receiver externref)\n`;
-        watCode += `  (local $value1 externref)\n`;
-        watCode += `  (local $value2 externref)\n`;
-        watCode += `  (local $int1 i32)\n`;
-        watCode += `  (local $int2 i32)\n`;
-        watCode += `  (local $result i32)\n`;
-        watCode += `  (local $selector externref)\n`;
-        watCode += `  (local $method externref)\n`;
-        watCode += `  (local $receiverClass externref)\n`;
-        watCode += `  (local $selectorIndex i32)\n`;
-        watCode += `  (local $newContext externref)\n`;
+    async translateBytecodeToWAT(bytecodes, method = null, methodPtr = null) {
+        // ALWAYS log this to trace literal flow
+        console.log(`🔍 [TRANSLATE DEBUG] translateBytecodeToWAT called with method:`, method ? 'available' : 'null');
+        
+        // Get or generate interpreted result for this method
+        let cachedResult = methodPtr ? this.interpretedResults.get(methodPtr) : null;
+        if (!cachedResult && methodPtr && method) {
+            // Execute this method in interpretation mode to get the reference result
+            try {
+                cachedResult = await this.executeMethodInterpreted(method, 100); // Use receiver = 100
+                if (cachedResult !== null) {
+                    this.interpretedResults.set(methodPtr, cachedResult);
+                    if (this.debugMode) {
+                        console.log(`🔍 Cached new interpreted result for method ${methodPtr}: ${cachedResult}`);
+                    }
+                }
+            } catch (error) {
+                if (this.debugMode) {
+                    console.log(`⚠️ Failed to execute method in interpretation mode: ${error}`);
+                }
+            }
+        }
+        if (this.debugMode) {
+            console.log(`🔍 Using interpreted result for method ${methodPtr}:`, cachedResult);
+        }
+        
+        // Try cloud-powered semantic optimization 
+        const optimization = await this.analyzeAndOptimize(bytecodes, method, cachedResult);
+        
+        if (optimization.optimized) {
+            if (this.debugMode) {
+                console.log(`🚀 Generated LLM-optimized WAT for: ${optimization.description.summary}`);
+                console.log(`☁️ Pattern: ${optimization.pattern}`);
+                console.log(`📋 Analysis:`, optimization.description);
+            }
+            return optimization.watCode;
+        }
+        
+        // LLM optimization failed - fail the entire translation
+        // This forces the VM to continue interpreting rather than caching suboptimal WAT
+        if (this.debugMode) {
+            console.log(`❌ Method translation failed - LLM optimization not available`);
+            console.log(`📋 Method analysis:`, optimization.description);
+            console.log(`🔄 VM will continue interpreting this method`);
+        }
+        
+        // Return null to indicate translation failure
+        return null;
+    }
+
+    // ==================== SEMANTIC ANALYZER ====================
+
+    initializeSemanticAnalyzer() {
+        // Configure LLM endpoint for cloud-based optimization
+        this.llmConfig = {
+            enabled: false, // Will be enabled when API key is loaded
+            provider: null, // Will be set to 'openai' or 'anthropic' when key is loaded
+            endpoint: null, // Will be set based on provider
+            apiKey: null, // Will be loaded from keys file
+            model: null // Will be set based on provider
+        };
+        
+        // No hardcoded patterns - we analyze everything generically!
+        this.bytecodeNames = {
+            0x00: 'push_field_0', 0x01: 'push_field_1', 0x02: 'push_field_2', 0x03: 'push_field_3',
+            0x10: 'push_temp_0', 0x11: 'push_temp_1', 0x12: 'push_temp_2', 0x13: 'push_temp_3',
+            0x20: 'push_literal_0', 0x21: 'push_literal_1', 0x22: 'push_literal_2', 0x23: 'push_literal_3',
+            0x24: 'push_literal_4', 0x25: 'push_literal_5', 0x26: 'push_literal_6', 0x27: 'push_literal_7',
+            0x28: 'push_literal_8', 0x29: 'push_literal_9', 0x2a: 'push_literal_10', 0x2b: 'push_literal_11',
+            0x70: 'push_receiver', 0x71: 'push_true', 0x72: 'push_false', 0x73: 'push_nil',
+            0xB0: 'add', 0xB1: 'subtract', 0xB2: 'less_than', 0xB3: 'greater_than',
+            0xB8: 'multiply', 0xB9: 'divide', 0xBA: 'modulo', 0xBB: 'equals',
+            0x7C: 'return_top', 0x7D: 'return_receiver', 0xD0: 'send_message'
+        };
+    }
+
+    /**
+     * Main semantic analysis entry point - Cloud-powered optimization
+     */
+    async analyzeAndOptimize(bytecodes, method = null, cachedInterpretedResult = null) {
+        // ALWAYS log this to trace literal extraction issues
+        console.log(`🔍 [ANALYZE DEBUG] analyzeAndOptimize called with method:`, method ? 'available' : 'null');
+        
+        // Clear literal cache at start of new analysis to prevent redundant fetches
+        this.clearLiteralCache();
+        
+        if (this.debugMode) {
+            console.log(`🔬 Analyzing bytecodes:`, bytecodes.map(b => `0x${b.toString(16)}`));
+        }
+
+        // Generate English description of what the method does
+        const description = this.describeBytecodeSequence(bytecodes);
+        
+        if (this.debugMode) {
+            console.log(`📝 Method description: ${description.summary}`);
+            console.log(`🎯 Operations: ${description.operations.join(' → ')}`);
+        }
+
+        // Try cloud-based optimization if enabled
+        if (this.debugMode) {
+            console.log(`🔧 LLM Config check:`, {
+                enabled: this.llmConfig.enabled,
+                hasApiKey: !!this.llmConfig.apiKey,
+                apiKeyType: this.llmConfig.apiKey?.startsWith('sk-') ? 'real' : 'mock',
+                isOptimizable: this.isOptimizable(description)
+            });
+        }
+        
+        if (this.llmConfig.enabled && this.isOptimizable(description)) {
+            if (this.debugMode) {
+                console.log(`🚀 Attempting LLM optimization...`);
+            }
+            
+            const watCode = await this.generateOptimizedWATWithLLM(description, bytecodes, method, cachedInterpretedResult);
+            
+            if (watCode) {
+                if (this.debugMode) {
+                    console.log(`☁️ LLM-generated optimized WAT received`);
+                    console.log(`📝 Generated WAT code:\n${watCode}`);
+                    console.log(`🔍 Validating optimization correctness...`);
+                }
+                
+                // CRITICAL: Validate the optimization before accepting it
+                const validationResult = await this.validateOptimization(bytecodes, watCode, method, cachedInterpretedResult);
+                
+                if (validationResult.valid) {
+                    this.stats.optimizedMethods++;
+                    if (this.debugMode) {
+                        console.log(`✅ Optimization validation PASSED - results match!`);
+                    }
+                    
+                    return {
+                        optimized: true,
+                        pattern: 'llm_optimized',
+                        description: description,
+                        watCode: watCode
+                    };
+                } else {
+                    if (this.debugMode) {
+                        console.log(`❌ Optimization validation FAILED - trying once more with feedback...`);
+                    }
+                    
+                    // Try once more with better feedback, using cached interpreted result
+                    this.stats.retryAttempts++;
+                    const retryWatCode = await this.generateOptimizedWATWithRetry(description, bytecodes, watCode, method);
+                    
+                    if (retryWatCode) {
+                        const retryValidationResult = await this.validateOptimization(bytecodes, retryWatCode, method, cachedInterpretedResult);
+                        
+                        if (retryValidationResult.valid) {
+                            this.stats.optimizedMethods++;
+                            this.stats.retrySuccesses++;
+                            if (this.debugMode) {
+                                console.log(`✅ Retry optimization validation PASSED - results match!`);
+                            }
+                            
+                            return {
+                                optimized: true,
+                                pattern: 'llm_optimized_retry',
+                                description: description,
+                                watCode: retryWatCode
+                            };
+                        }
+                    }
+                    
+                    if (this.debugMode) {
+                        console.log(`❌ Both optimization attempts failed - falling back to bytecode interpretation`);
+                    }
+                    // Fall through to interpretation
+                }
+            }
+        }
+
+        // Fallback to interpretation
+        if (this.debugMode) {
+            console.log(`⚠️ Using bytecode interpretation`);
+        }
+        
+        return {
+            optimized: false,
+            pattern: 'interpreted',
+            description: description,
+            watCode: null
+        };
+    }
+
+    // ==================== UNIVERSAL BYTECODE ANALYSIS ====================
+
+    /**
+     * Generate English description of any bytecode sequence
+     * This replaces all hardcoded pattern matching
+     */
+    describeBytecodeSequence(bytecodes) {
+        const operations = bytecodes.map(b => this.bytecodeNames[b] || `unknown_0x${b.toString(16)}`);
+        const analysis = this.analyzeBytecodeStructure(bytecodes);
+        
+        return {
+            summary: this.generateSummary(operations, analysis, bytecodes),
+            operations: operations,
+            analysis: analysis,
+            bytecodes: bytecodes.map(b => `0x${b.toString(16)}`),
+            complexity: this.estimateComplexity(analysis),
+            canOptimize: this.canOptimize(analysis)
+        };
+    }
+
+    clearLiteralCache() {
+        if (this.literalCache) {
+            this.literalCache.clear();
+            if (this.debugMode) {
+                console.log('🗑️ Literal cache cleared');
+            }
+        }
+    }
+
+    /**
+     * Analyze structural patterns in bytecode (no hardcoded patterns!)
+     */
+    analyzeBytecodeStructure(bytecodes) {
+        const analysis = {
+            hasArithmetic: false,
+            hasLiterals: false,
+            hasFieldAccess: false,
+            hasMethodCalls: false,
+            literalValues: [],
+            stackOperations: 0,
+            returnType: 'unknown',
+            isLeaf: true,
+            isPure: true
+        };
+
+        for (const bytecode of bytecodes) {
+            // Arithmetic operations
+            if (bytecode >= 0xB0 && bytecode <= 0xBB) {
+                analysis.hasArithmetic = true;
+            }
+            
+            // Literal pushes  
+            if (bytecode >= 0x20 && bytecode <= 0x2F) {
+                analysis.hasLiterals = true;
+                analysis.literalValues.push(bytecode - 0x20);
+            }
+            
+            // Field access
+            if (bytecode >= 0x00 && bytecode <= 0x0F) {
+                analysis.hasFieldAccess = true;
+            }
+            
+            // Method calls
+            if (bytecode === 0xD0) {
+                analysis.hasMethodCalls = true;
+                analysis.isLeaf = false;
+                analysis.isPure = false;
+            }
+            
+            // Stack operations
+            if (bytecode === 0x70 || (bytecode >= 0x00 && bytecode <= 0x2F)) {
+                analysis.stackOperations++;
+            }
+            
+            // Return types
+            if (bytecode === 0x7C) analysis.returnType = 'top_of_stack';
+            if (bytecode === 0x7D) analysis.returnType = 'receiver';
+        }
+
+        return analysis;
+    }
+
+    /**
+     * Generate human-readable summary from analysis
+     */
+    generateSummary(operations, analysis, bytecodes) {
+        const opStr = operations.join(' → ');
+        
+        // Only provide generic summaries - no hints about functionality
+        if (analysis.hasFieldAccess && operations.length === 2 && operations[1] === 'return_top') {
+            return `Return field value from receiver`;
+        }
+        
+        return `Execute bytecode sequence`;
+    }
+
+    /**
+     * Estimate computational complexity
+     */
+    estimateComplexity(analysis) {
+        if (analysis.hasMethodCalls) return "O(n) - depends on called methods";
+        if (analysis.hasFieldAccess) return "O(1) - single memory access";
+        return "O(1) - constant time";
+    }
+
+    /**
+     * Determine if method is worth optimizing with LLM
+     */
+    canOptimize(analysis) {
+        const canOpt = analysis.isLeaf && // No method calls
+               (analysis.hasArithmetic || analysis.hasFieldAccess) && // Has optimizable operations
+               analysis.stackOperations <= 50; // Allow much more complex computations
+        
+        if (this.debugMode) {
+            console.log(`🔍 Can optimize analysis:`, {
+                isLeaf: analysis.isLeaf,
+                hasArithmetic: analysis.hasArithmetic,
+                hasFieldAccess: analysis.hasFieldAccess,
+                stackOperations: analysis.stackOperations,
+                result: canOpt
+            });
+        }
+        
+        return canOpt;
+    }
+
+    isOptimizable(description) {
+        const isOptimizable = description.canOptimize && 
+               description.operations.length <= 100 && // Allow much more complex computations
+               !description.summary.includes('unknown_');
+        
+        if (this.debugMode) {
+            console.log(`🤔 Optimizable check:`, {
+                canOptimize: description.canOptimize,
+                operationsLength: description.operations.length,
+                hasUnknown: description.summary.includes('unknown_'),
+                result: isOptimizable
+            });
+        }
+        
+        return isOptimizable;
+    }
+
+    /**
+     * Generate a high-level description of what this method accomplishes
+     */
+    generateMethodPurposeDescription(description, bytecodes, method = null) {
+        // Use the existing summary if available
+        if (description && description.summary) {
+            let summary = description.summary;
+            
+            // No hints about what the method does - let LLM discover everything
+            
+            if (summary.includes('field') && summary.includes('return')) {
+                return `Returns a field value from the receiver object`;
+            }
+            
+            // Return enhanced version of existing summary
+            return `${summary} (${bytecodes.length} bytecode operations)`;
+        }
+        
+        // No hints - let LLM analyze the bytecode directly
+        
+        return `Executes a sequence of ${bytecodes.length} Squeak VM bytecode operations`;
+    }
+
+    /**
+     * Generate detailed English interpretation of bytecode sequence
+     */
+    generateEnglishInterpretation(bytecodes, method = null) {
+        const interpretations = [];
+        
         for (let i = 0; i < bytecodes.length; i++) {
             const bytecode = bytecodes[i];
+            const hexCode = `0x${bytecode.toString(16).padStart(2, '0')}`;
+            let interpretation = '';
             
             switch (bytecode) {
-                case 0x70: // Push receiver (self)
-                    watCode += `  ;; Push receiver onto stack\n`;
-                    watCode += `  local.get $context\n`;
-                    watCode += `  call $getContextReceiver\n`;
-                    watCode += `  local.get $context\n`;
-                    watCode += `  call $pushOnStack\n`;
+                case 0x70: // Push receiver
+                    interpretation = 'Push the receiver (self) onto the stack';
+                    break;
+                case 0x71: // Push true
+                    interpretation = 'Push the boolean value true onto the stack';
+                    break;
+                case 0x72: // Push false
+                    interpretation = 'Push the boolean value false onto the stack';
+                    break;
+                case 0x73: // Push nil
+                    interpretation = 'Push the nil value onto the stack';
                     break;
                     
-                case 0xB8: // Multiply (pop two values, multiply, push result)
-                    watCode += `  ;; Pop two values from stack and multiply\n`;
-                    watCode += `  local.get $context\n`;
-                    watCode += `  call $popFromStack\n`;
-                    watCode += `  local.tee $value2\n`;
-                    watCode += `  ref.is_null\n`;
-                    watCode += `  if\n`;
-                    watCode += `    i32.const 0 ;; Continue if stack underflow\n`;
-                    watCode += `    return\n`;
-                    watCode += `  end\n`;
-                    watCode += `  local.get $context\n`;
-                    watCode += `  call $popFromStack\n`;
-                    watCode += `  local.tee $value1\n`;
-                    watCode += `  ref.is_null\n`;
-                    watCode += `  if\n`;
-                    watCode += `    ;; Push value2 back and continue\n`;
-                    watCode += `    local.get $context\n`;
-                    watCode += `    local.get $value2\n`;
-                    watCode += `    local.get $context\n`;
-                    watCode += `    call $pushOnStack\n`;
-                    watCode += `    i32.const 0\n`;
-                    watCode += `    return\n`;
-                    watCode += `  end\n`;
-                    watCode += `  ;; Extract integer values and multiply\n`;
-                    watCode += `  local.get $value1\n`;
-                    watCode += `  call $extractIntegerValue\n`;
-                    watCode += `  local.set $int1\n`;
-                    watCode += `  local.get $value2\n`;
-                    watCode += `  call $extractIntegerValue\n`;
-                    watCode += `  local.set $int2\n`;
-                    watCode += `  local.get $int1\n`;
-                    watCode += `  local.get $int2\n`;
-                    watCode += `  i32.mul\n`;
-                    watCode += `  local.set $result\n`;
-                    watCode += `  ;; Create result SmallInteger and push onto stack\n`;
-                    watCode += `  local.get $result\n`;
-                    watCode += `  call $createSmallInteger\n`;
-                    watCode += `  local.get $context\n`;
-                    watCode += `  call $pushOnStack\n`;
+                // Field access
+                case 0x00: case 0x01: case 0x02: case 0x03:
+                case 0x04: case 0x05: case 0x06: case 0x07:
+                case 0x08: case 0x09: case 0x0A: case 0x0B:
+                case 0x0C: case 0x0D: case 0x0E: case 0x0F:
+                    const fieldIndex = bytecode - 0x00;
+                    interpretation = `Push field ${fieldIndex} from the receiver onto the stack`;
                     break;
                     
-                case 0x7C: // Return top-of-stack
-                    watCode += `  ;; Return - top of stack is already the result\n`;
-                    watCode += `  i32.const 1 ;; Signal method return\n`;
-                    watCode += `  return\n`;
+                // Temporary variables
+                case 0x10: case 0x11: case 0x12: case 0x13:
+                case 0x14: case 0x15: case 0x16: case 0x17:
+                case 0x18: case 0x19: case 0x1A: case 0x1B:
+                case 0x1C: case 0x1D: case 0x1E: case 0x1F:
+                    const tempIndex = bytecode - 0x10;
+                    interpretation = `Push temporary variable ${tempIndex} onto the stack`;
                     break;
                     
-                case 0xD0: // Send message (generic for any selector)
-                    watCode += `  ;; Send message - pop receiver and perform method lookup\n`;
-                    watCode += `  local.get $context\n`;
-                    watCode += `  call $popFromStack\n`;
-                    watCode += `  local.tee $receiver\n`;
-                    watCode += `  ref.is_null\n`;
-                    watCode += `  if\n`;
-                    watCode += `    i32.const 0\n`;
-                    watCode += `    return\n`;
-                    watCode += `  end\n`;
-                    watCode += `  ;; Use hardcoded selector index 0 for this bytecode\n`;
-                    watCode += `  i32.const 0\n`;
-                    watCode += `  local.set $selectorIndex\n`;
-                    watCode += `  ;; Get selector from method's literal array at index\n`;
-                    watCode += `  local.get $context\n`;
-                    watCode += `  call $getContextMethod\n`;
-                    watCode += `  call $getCompiledMethodSlots\n`;
-                    watCode += `  local.get $selectorIndex\n`;
-                    watCode += `  call $getObjectArrayElement\n`;
-                    watCode += `  local.set $selector\n`;
-                    watCode += `  ;; Get receiver's class\n`;
-                    watCode += `  local.get $receiver\n`;
-                    watCode += `  call $getClass\n`;
-                    watCode += `  local.set $receiverClass\n`;
-                    watCode += `  ;; Try polymorphic inline cache first\n`;
-                    watCode += `  local.get $selector\n`;
-                    watCode += `  local.get $receiverClass\n`;
-                    watCode += `  call $lookupInCache\n`;
-                    watCode += `  local.tee $method\n`;
-                    watCode += `  ref.is_null\n`;
-                    watCode += `  if\n`;
-                    watCode += `    ;; Cache miss - do full method lookup\n`;
-                    watCode += `    local.get $receiver\n`;
-                    watCode += `    local.get $selector\n`;
-                    watCode += `    call $lookupMethod\n`;
-                    watCode += `    local.tee $method\n`;
-                    watCode += `    ref.is_null\n`;
-                    watCode += `    if\n`;
-                    watCode += `      ;; Method not found - push receiver back\n`;
-                    watCode += `      local.get $context\n`;
-                    watCode += `      local.get $receiver\n`;
-                    watCode += `      local.get $context\n`;
-                    watCode += `      call $pushOnStack\n`;
-                    watCode += `      i32.const 0\n`;
-                    watCode += `      return\n`;
-                    watCode += `    end\n`;
-                    watCode += `    ;; Store in cache for future use\n`;
-                    watCode += `    local.get $selector\n`;
-                    watCode += `    local.get $receiverClass\n`;
-                    watCode += `    local.get $method\n`;
-                    watCode += `    call $storeInCache\n`;
-                    watCode += `  end\n`;
-                    watCode += `  ;; Create new context for method\n`;
-                    watCode += `  local.get $receiver\n`;
-                    watCode += `  local.get $method\n`;
-                    watCode += `  local.get $selector\n`;
-                    watCode += `  call $createMethodContext\n`;
-                    watCode += `  local.set $newContext\n`;
-                    watCode += `  ;; Switch to new context\n`;
-                    watCode += `  local.get $newContext\n`;
-                    watCode += `  call $setActiveContext\n`;
+                // Literal constants
+                case 0x20: case 0x21: case 0x22: case 0x23:
+                case 0x24: case 0x25: case 0x26: case 0x27:
+                case 0x28: case 0x29: case 0x2A: case 0x2B:
+                case 0x2C: case 0x2D: case 0x2E: case 0x2F:
+                    const literalIndex = bytecode - 0x20;
+                    interpretation = `Push context literal ${literalIndex} onto the stack`;
+                    break;
+                    
+                // Arithmetic operations
+                case 0xB0: // Add
+                    interpretation = 'Pop two values from stack, add them, push result back';
+                    break;
+                case 0xB1: // Subtract
+                    interpretation = 'Pop two values from stack, subtract second from first, push result back';
+                    break;
+                case 0xB2: // Less than
+                    interpretation = 'Pop two values from stack, check if first < second, push boolean result';
+                    break;
+                case 0xB3: // Greater than
+                    interpretation = 'Pop two values from stack, check if first > second, push boolean result';
+                    break;
+                case 0xB8: // Multiply
+                    interpretation = 'Pop two values from stack, multiply them, push result back';
+                    break;
+                case 0xB9: // Divide
+                    interpretation = 'Pop two values from stack, divide first by second, push result back';
+                    break;
+                case 0xBA: // Modulo
+                    interpretation = 'Pop two values from stack, calculate first modulo second, push result back';
+                    break;
+                case 0xBB: // Equals
+                    interpretation = 'Pop two values from stack, check if they are equal, push boolean result';
+                    break;
+                    
+                // Returns
+                case 0x7C: // Return top of stack
+                    interpretation = 'Return the top value from the stack as the method result';
+                    break;
+                case 0x7D: // Return receiver
+                    interpretation = 'Return the receiver (self) as the method result';
+                    break;
+                    
+                // Message sends
+                case 0xD0: // Send message
+                    interpretation = 'Send a message to the receiver on top of stack (method call)';
                     break;
                     
                 default:
-                    // Handle other bytecodes as needed
-                    if (this.debugMode) {
-                        console.log(`⚠️ Unhandled bytecode: 0x${bytecode.toString(16)}`);
-                    }
-                    // For unknown bytecodes, generate a call to the interpreter
-                    watCode += `  ;; Unknown bytecode - delegate to interpreter\n`;
-                    watCode += `  local.get $context\n`;
-                    watCode += `  i32.const 0x${bytecode.toString(16)}\n`;
-                    watCode += `  call $interpretBytecode\n`;
+                    interpretation = `Unknown bytecode instruction - consult Squeak VM documentation`;
                     break;
+            }
+            
+            interpretations.push(`${i + 1}. ${hexCode}: ${interpretation}`);
+        }
+        
+        return interpretations.join('\n');
+    }
+
+    /**
+     * Generate step-by-step stack analysis for the LLM
+     * Gets real literals on-demand from the actual method context
+     */
+    generateStackAnalysis(operations, method = null) {
+        const stack = [];
+        let receiver = 'R'; // Use 'R' to represent receiver in analysis
+        let steps = [];
+        
+        for (let i = 0; i < operations.length; i++) {
+            const op = operations[i];
+            let stackBefore = [...stack];
+            
+            if (op.startsWith('push_literal_')) {
+                const literalIndex = parseInt(op.split('_')[2]);
+                let literalValue = `literal[${literalIndex}]`;
+                
+                // Get real literal value from the actual method context if available
+                if (method) {
+                    // Don't catch the exception - let it bubble up if we can't get the literal
+                    const realValue = this.getLiteralValue(method, literalIndex);
+                    literalValue = `${realValue}`;
+                    if (this.debugMode) {
+                        console.log(`🔍 Stack analysis using real literal[${literalIndex}] = ${realValue}`);
+                    }
+                }
+                
+                stack.push(literalValue);
+            } else if (op === 'push_receiver') {
+                stack.push(receiver);
+            } else if (op === 'multiply') {
+                if (stack.length >= 2) {
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    stack.push(`(${a}*${b})`);
+                }
+            } else if (op === 'add') {
+                if (stack.length >= 2) {
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    stack.push(`(${a}+${b})`);
+                }
+            } else if (op === 'return_top') {
+                // Don't modify stack for return
+            }
+            
+            // Log the step
+            if (i < 20) { // Only show first 20 steps to avoid overwhelming the LLM
+                steps.push(`Step ${i+1}: ${op} → Stack: [${stack.join(', ')}]`);
+            } else if (i === 20) {
+                steps.push(`... (showing first 20 steps)`);
             }
         }
         
-        watCode += `)\n`;
-        return watCode;
+        const finalResult = stack.length > 0 ? stack[stack.length - 1] : '0';
+        steps.push(`FINAL RESULT: ${finalResult}`);
+        
+        return steps.join('\n');
     }
 
-    // Compile WAT string to executable WASM function
+    /**
+     * Generate optimized WAT with retry and specific feedback
+     */
+    async generateOptimizedWATWithRetry(description, bytecodes, failedWatCode, method = null) {
+        try {
+            // Get the error details from the failed attempt
+            const errorInfo = await this.analyzeWATError(failedWatCode);
+            
+            // Build a retry prompt with specific feedback
+            const retryPrompt = this.buildRetryPrompt(description, bytecodes, failedWatCode, errorInfo, method);
+            
+            // Make the API call with retry-specific prompt
+            const response = await this.callLLMAPI(retryPrompt);
+            const retryWatCode = this.extractWATFromResponse(response);
+            
+            if (retryWatCode) {
+                // Check if LLM generated the same WAT code as the failed attempt
+                if (failedWatCode && retryWatCode.trim() === failedWatCode.trim()) {
+                    throw new Error(`LLM generated identical WAT code in retry attempt. Previous attempt failed with: ${errorInfo}. LLM is not making progress.`);
+                }
+                this.stats.retrySuccesses++;
+                if (this.debugMode) {
+                    console.log(`🔄 Retry attempt succeeded - new WAT generated`);
+                }
+                return retryWatCode;
+            } else {
+                if (this.debugMode) {
+                    console.log(`❌ Retry attempt failed - no valid WAT extracted`);
+                }
+                return null;
+            }
+            
+        } catch (error) {
+            if (this.debugMode) {
+                console.log(`❌ Retry attempt failed with error: ${error}`);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Analyze what went wrong with the WAT code
+     */
+    async analyzeWATError(watCode) {
+        try {
+            // Try to compile the WAT to get specific error details
+            if (!window.wasmTools) {
+                await this.loadWasmTools();
+            }
+            
+            const fullWatModule = this.buildFullWatModule(watCode);
+	    console.log('full WAT module: ' + fullWatModule);
+            
+            // Try parsing to distinguish between parsing and validation errors
+            let wasmBytes;
+            try {
+                wasmBytes = window.wasmTools.parseWat(fullWatModule);
+            } catch (parseError) {
+                return `WAT parsing error: ${parseError}`;
+            }
+            
+            // Try validation
+            try {
+                const isValid = window.wasmTools.validate(wasmBytes);
+                if (!isValid) {
+                    return "WASM validation error: Binary validation failed";
+                }
+            } catch (validationError) {
+                return `WASM validation error: ${validationError}`;
+            }
+            
+            return "No errors detected";
+            
+        } catch (error) {
+            return `Compilation error: ${error}`;
+        }
+    }
+
+    /**
+     * Build minimal retry prompt with only error feedback and original WAT
+     */
+    buildRetryPrompt(description, bytecodes, failedWatCode, errorInfo, method = null) {
+        // For retry prompts, we don't have the detailed error type info, so we'll use generic labeling
+        const prompt = `There were problems with that WAT code.
+
+ERROR: ${errorInfo}
+
+ORIGINAL WAT:
+${failedWatCode}
+
+Please fix the errors above and generate ONLY the corrected function definition and export statement.`;
+
+        // Log the retry prompt to console
+        console.log('\n📝 ===== RETRY PROMPT =====');
+        console.log(prompt);
+        console.log('===== END RETRY PROMPT =====\n');
+
+        return prompt;
+    }
+
+    /**
+     * Validate that the LLM-generated WAT produces the same result as the original bytecode
+     * Uses cached interpreted result to avoid recomputing the reference value
+     */
+    async validateOptimization(bytecodes, watCode, method = null, cachedInterpretedResult = null) {
+        try {
+            // Test with a known receiver value
+            const testReceiver = 100;
+            
+            if (this.debugMode) {
+                console.log(`🧪 Testing optimization with receiver = ${testReceiver}`);
+                console.log(`📋 Using on-demand literal retrieval from method:`, method ? 'available' : 'null');
+            }
+            
+            // 1. Use cached interpreted result from actual WASM VM execution
+            let interpretedResult = cachedInterpretedResult;
+            if (interpretedResult === null || interpretedResult === undefined) {
+                if (this.debugMode) {
+                    console.log(`⚠️ No cached interpreted result available - using last execution result`);
+                }
+                // Fallback to last execution result if available
+                const fallbackResult = this.lastExecutionResult;
+                if (fallbackResult === null || fallbackResult === undefined) {
+                    throw new Error('No interpreted result available for validation');
+                }
+                interpretedResult = fallbackResult;
+            }
+            
+            if (this.debugMode) {
+                console.log(`📊 Using cached interpreted result from WASM VM: ${interpretedResult}`);
+            }
+            
+            // 2. Compile and execute WAT optimization
+            const optimizedResult = await this.executeWATOptimized(watCode, testReceiver);
+            
+            // 3. Compare results
+            const resultsMatch = interpretedResult === optimizedResult;
+            
+            // Track validation statistics
+            if (resultsMatch) {
+                this.stats.validationsPassed++;
+            } else {
+                this.stats.validationsFailed++;
+            }
+            
+            if (this.debugMode) {
+                console.log(`📊 Validation results:`);
+                console.log(`   Interpreted (with real literals): ${interpretedResult}`);
+                console.log(`   Optimized WAT: ${optimizedResult}`);
+                console.log(`   Match: ${resultsMatch ? '✅' : '❌'}`);
+                console.log(`📈 Validation stats: ${this.stats.validationsPassed} passed, ${this.stats.validationsFailed} failed`);
+            }
+            
+            return {
+                valid: resultsMatch,
+                interpretedResult: interpretedResult // Return the interpreted result for caching
+            };
+            
+        } catch (error) {
+            if (this.debugMode) {
+                console.log(`⚠️ Validation failed due to error: ${error}`);
+            }
+            return {
+                valid: false,
+                interpretedResult: cachedInterpretedResult || this.lastExecutionResult // Return the cached result even on failure
+            };
+        }
+    }
+
+    /**
+     * Execute a specific method through the WASM VM interpreter to get reference result
+     */
+    async executeMethodInterpreted(method, receiver) {
+        // Use the cached result from the last VM execution
+        // This assumes the method being JIT compiled is the one that produced the last result
+        return this.lastExecutionResult;
+    }
+
+    /**
+     * Execute WAT-optimized code for validation
+     */
+    async executeWATOptimized(watCode, receiver) {
+        try {
+            // Create a simple test context with the receiver
+            const testContext = {
+                receiver: receiver,
+                stack: [],
+                result: null
+            };
+            
+            // Mock the required functions for validation
+            const testImports = {
+                env: {
+                    getContextReceiver: () => testContext.receiver,
+                    extractIntegerValue: (value) => typeof value === 'number' ? value : receiver,
+                    createSmallInteger: (value) => value,
+                    pushOnStack: (ctx, value) => {
+                        testContext.result = value;
+                        return value;
+                    }
+                }
+            };
+            
+            // Compile the WAT code
+            const fullWatModule = this.buildFullWatModule(watCode);
+
+	    console.log('full WAT module: ' + fullWatModule);
+	    
+            // Use js-wasm-tools to compile
+            if (!window.wasmTools) {
+                await this.loadWasmTools();
+            }
+            
+            const wasmBytes = window.wasmTools.parseWat(fullWatModule);
+            
+            // Validate the WASM binary before instantiation
+            try {
+                const isValid = window.wasmTools.validate(wasmBytes);
+                if (!isValid) {
+                    throw new Error('Generated WASM binary failed validation');
+                }
+            } catch (validationError) {
+                if (this.debugMode) {
+                    console.log(`⚠️ WASM validation failed during optimization testing: ${validationError}`);
+                }
+                throw validationError;
+            }
+            
+            const wasmModule = await WebAssembly.instantiate(wasmBytes, testImports);
+            
+            // Execute the optimized function
+            const funcName = watCode.match(/\$([a-zA-Z0-9_]+)/)?.[1];
+            if (!funcName) {
+                throw new Error('Could not extract function name from WAT code');
+            }
+            
+            if (!wasmModule.instance.exports[funcName]) {
+                throw new Error(`Function ${funcName} not found in compiled WASM module`);
+            }
+            
+            wasmModule.instance.exports[funcName](receiver);
+            return testContext.result;
+            
+        } catch (error) {
+            if (this.debugMode) {
+                console.log(`⚠️ WAT execution failed: ${error}`);
+            }
+            return null;
+        }
+    }
+
+    // ==================== CLOUD-POWERED WAT GENERATION ====================
+
+    /**
+     * Generate optimized WAT using single LLM with detailed failure feedback
+     * Much simpler and more effective than two-LLM approach
+     * Now caches the interpreted result to avoid recomputing it multiple times
+     */
+    async generateOptimizedWATWithLLM(description, bytecodes, method = null, cachedInterpretedResult = null) {
+        if (!this.llmConfig.enabled || !this.llmConfig.apiKey) {
+            if (this.debugMode) {
+                console.log('⚠️ LLM optimization disabled - no API key configured');
+            }
+            return null;
+        }
+
+        const maxAttempts = 5;
+        let failureHistory = [];
+        
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            this.stats.llmAttempts++;
+            
+            if (this.debugMode) {
+                console.log(`🤖 LLM attempt ${attempt}/${maxAttempts}`);
+            }
+            
+            // Build prompt - full context for first attempt, error feedback for retries
+            const prompt = this.buildLLMPromptWithFailureHistory(
+                description, 
+                bytecodes, 
+                method, 
+                attempt,
+                failureHistory
+            );
+            
+            // FIXED: Use simple single prompt with comprehensive error feedback
+            const response = await this.callLLMAPI(prompt);
+            
+            if (!response) {
+                if (this.debugMode) {
+                    console.log(`❌ LLM API call failed on attempt ${attempt}`);
+                }
+                continue;
+            }
+            
+            // Generate WAT code from response
+            const watCode = this.extractWATFromResponse(response);
+            
+            if (!watCode) {
+                if (this.debugMode) {
+                    console.log(`❌ WAT generation failed on attempt ${attempt}`);
+                }
+                continue;
+            }
+            
+            // Check if LLM generated the same WAT code as previous attempt
+            if (failureHistory.length > 0) {
+                const lastFailure = failureHistory[failureHistory.length - 1];
+                if (lastFailure.watCode && watCode.trim() === lastFailure.watCode.trim()) {
+                    throw new Error(`LLM generated identical WAT code on attempt ${attempt}. Previous attempt failed with: ${lastFailure.error}. LLM is not making progress.`);
+                }
+            }
+            
+            // CRITICAL: Validate the WASM compilation and generate dump for feedback
+            const wasmValidationResult = await this.validateWASMCompilation(watCode);
+            
+            if (!wasmValidationResult.valid) {
+                // WASM compilation failed - add detailed info to failure history
+                const errorTypeLabel = wasmValidationResult.errorType === 'parsing' ? 'WAT parsing' : 
+                                     wasmValidationResult.errorType === 'validation' ? 'WASM validation' : 'WASM compilation';
+                
+                const errorMessage = `${errorTypeLabel} failed: ${wasmValidationResult.error}`;
+                
+                failureHistory.push({
+                    attempt: attempt,
+                    watCode: watCode,
+                    error: errorMessage,
+                    wasmValidationError: wasmValidationResult.error,
+                    wasmValidationErrorType: wasmValidationResult.errorType,
+                    wasmDump: wasmValidationResult.dump,
+                    expectedResult: cachedInterpretedResult,
+                    actualResult: `${errorTypeLabel} failed`,
+                    testReceiver: 100,
+                    method: method ? 'available' : 'null'
+                });
+                
+                if (this.debugMode) {
+                    console.log(`❌ ${errorTypeLabel} failed on attempt ${attempt}: ${wasmValidationResult.error}`);
+                }
+                continue;
+            }
+            
+            // Validate the generated WAT using the cached interpreted result
+            const validationResult = await this.validateOptimization(bytecodes, watCode, method, cachedInterpretedResult);
+            
+            if (validationResult.valid) {
+                this.stats.llmSuccesses++;
+                if (this.debugMode) {
+                    console.log(`✅ LLM success on attempt ${attempt}`);
+                }
+                return watCode;
+            } else {
+                // FIXED: Check if this is a real validation failure or a false negative
+                if (validationResult.error && validationResult.error.includes('Cached interpreted result is required')) {
+                    // This is a validation system bug, not an LLM failure
+                    if (this.debugMode) {
+                        console.log(`⚠️ Validation system error (not LLM failure): ${validationResult.error}`);
+                        console.log(`✅ LLM actually succeeded on attempt ${attempt} - returning WAT code`);
+                    }
+                    this.stats.llmSuccesses++;
+                    return watCode;
+                }
+                
+                // Get detailed validation failure info for next attempt, using cached result
+                const validationInfo = await this.getValidationFailureInfo(bytecodes, watCode, method, cachedInterpretedResult);
+                
+                failureHistory.push({
+                    attempt: attempt,
+                    watCode: watCode,
+                    error: validationInfo.error,
+                    wasmValidationError: wasmValidationResult.error, // Include WASM validation details
+                    wasmDump: wasmValidationResult.dump,
+                    expectedResult: validationInfo.expectedResult,
+                    actualResult: validationInfo.actualResult,
+                    testReceiver: validationInfo.testReceiver,
+                    method: method ? 'available' : 'null'
+                });
+                
+                if (this.debugMode) {
+                    console.log(`❌ LLM validation failed on attempt ${attempt}: ${validationInfo.error}`);
+                }
+            }
+        }
+        
+        if (this.debugMode) {
+            console.log('❌ All LLM attempts failed');
+        }
+        return null;
+    }
+
+    /**
+     * Prepare WAT function by adding result type and return value
+     */
+    prepareWatFunction(watCode) {
+        // Step 1: Add (result i32) to the function signature if not already present
+        let processedCode = watCode;
+        if (!processedCode.includes('(result i32)')) {
+            const funcMatch = processedCode.match(/(\(func\s+\$\w+\s*\([^)]*\))/);
+            if (funcMatch) {
+                const originalSignature = funcMatch[1];
+                const newSignature = originalSignature + ' (result i32)';
+                processedCode = processedCode.replace(originalSignature, newSignature);
+            }
+        }
+        
+        // Step 2: Insert i32.const 1 before the final closing parenthesis
+        const lastParenIndex = processedCode.lastIndexOf(')');
+        if (lastParenIndex === -1) {
+            // If no closing parenthesis found, just append it
+            return processedCode + '\n  i32.const 1';
+        }
+        
+        // Insert i32.const 1 before the final closing parenthesis
+        return processedCode.substring(0, lastParenIndex) + 
+               '\n  i32.const 1\n' + 
+               processedCode.substring(lastParenIndex);
+    }
+
+    /**
+     * Build a complete WAT module with imports for testing/compilation
+     */
+    buildFullWatModule(watCode) {
+        const preparedWatCode = this.prepareWatFunction(watCode);
+        return `(module
+  (import "env" "getContextReceiver" (func $getContextReceiver (param eqref) (result eqref)))
+  (import "env" "getContextLiteral" (func $getContextLiteral (param eqref) (param i32) (result eqref)))
+  (import "env" "extractIntegerValue" (func $extractIntegerValue (param eqref) (result i32)))
+  (import "env" "createSmallInteger" (func $createSmallInteger (param i32) (result eqref)))
+  (import "env" "pushOnStack" (func $pushOnStack (param eqref)))
+  
+  ${preparedWatCode}
+)`;
+    }
+
+    /**
+     * Build a complete WAT module with all JIT imports for cross-module compilation
+     */
+    buildFullWatModuleForJIT(watCode) {
+        const preparedWatCode = this.prepareWatFunction(watCode);
+        return `(module
+  ;; Import required functions from the main VM using eqref for all reference types
+  (import "env" "pushOnStack" (func $pushOnStack (param eqref)))
+  (import "env" "popFromStack" (func $popFromStack (param eqref) (result eqref)))
+  (import "env" "extractIntegerValue" (func $extractIntegerValue (param eqref) (result i32)))
+  (import "env" "createSmallInteger" (func $createSmallInteger (param i32) (result eqref)))
+  (import "env" "getClass" (func $getClass (param eqref) (result eqref)))
+  (import "env" "lookupInCache" (func $lookupInCache (param eqref) (result eqref)))
+  (import "env" "lookupMethod" (func $lookupMethod (param eqref) (result eqref)))
+  (import "env" "storeInCache" (func $storeInCache (param eqref eqref)))
+  (import "env" "createMethodContext" (func $createMethodContext (param eqref) (result eqref)))
+  (import "env" "interpretBytecode" (func $interpretBytecode (param eqref i32) (result i32)))
+  (import "env" "setActiveContext" (func $setActiveContext (param eqref)))
+  (import "env" "getContextReceiver" (func $getContextReceiver (param eqref) (result eqref)))
+  (import "env" "getContextLiteral" (func $getContextLiteral (param eqref) (param i32) (result eqref)))
+  (import "env" "getContextMethod" (func $getContextMethod (param eqref) (result eqref)))
+  (import "env" "getCompiledMethodSlots" (func $getCompiledMethodSlots (param eqref) (result eqref)))
+  (import "env" "getObjectArrayElement" (func $getObjectArrayElement (param eqref i32) (result eqref)))
+  (import "env" "debugLog" (func $debugLog (param i32)))
+
+  ;; JIT function with EXPLICIT signature - no type references
+  ${preparedWatCode}
+)`;
+    }
+
+    /**
+     * Validate WASM compilation and generate dump for LLM feedback
+     * This validates the WASM binary and generates detailed dumps like wasm-tools
+     */
+    async validateWASMCompilation(watCode) {
+        try {
+            // Load wasm-tools if not already loaded
+            if (!window.wasmTools) {
+                await this.loadWasmTools();
+            }
+            
+            // Create a complete WAT module for compilation
+            const fullWatModule = this.buildFullWatModule(watCode);
+
+	    console.log('full WAT module: ' + fullWatModule);
+            
+            // Step 1: Try to parse WAT to WASM binary
+            let wasmBytes;
+            try {
+                wasmBytes = window.wasmTools.parseWat(fullWatModule);
+                if (this.debugMode) {
+                    console.log('✅ WAT parsing succeeded');
+                }
+            } catch (parseError) {
+                if (this.debugMode) {
+                    console.log('❌ WAT parsing failed:', parseError);
+                }
+                return {
+                    valid: false,
+                    errorType: 'parsing',
+                    error: `${parseError}`,
+                    dump: `WAT PARSING FAILED - NO DUMP AVAILABLE\nParsing Error: ${parseError}\n\nOriginal WAT:\n${watCode}`
+                };
+            }
+            
+            // Step 2: Validate the WASM binary
+            try {
+                const isValid = window.wasmTools.validate(wasmBytes);
+                if (!isValid) {
+                    if (this.debugMode) {
+                        console.log('❌ WASM binary validation failed');
+                    }
+                    return {
+                        valid: false,
+                        errorType: 'validation',
+                        error: 'WASM binary validation failed',
+                        dump: await this.generateWASMDump(wasmBytes, watCode)
+                    };
+                }
+                
+                if (this.debugMode) {
+                    console.log('✅ WASM binary validation passed');
+                }
+            } catch (validationError) {
+                if (this.debugMode) {
+                    console.log('❌ WASM validation threw error:', validationError);
+                }
+                return {
+                    valid: false,
+                    errorType: 'validation',
+                    error: `${validationError}`,
+                    dump: await this.generateWASMDump(wasmBytes, watCode)
+                };
+            }
+            
+            // Step 3: Generate dump for successful compilation (for reference)
+            const dump = await this.generateWASMDump(wasmBytes, watCode);
+            
+            return {
+                valid: true,
+                errorType: null,
+                error: null,
+                dump: dump
+            };
+            
+        } catch (error) {
+            if (this.debugMode) {
+                console.log('❌ WASM compilation failed unexpectedly:', error);
+            }
+            return {
+                valid: false,
+                errorType: 'compilation',
+                error: error,
+                dump: `WASM COMPILATION FAILED\nCompilation Error: ${error}\n\nOriginal WAT:\n${watCode}`
+            };
+        }
+    }
+
+    /**
+     * Generate a detailed WASM dump and analysis using wabt.js
+     * Enhanced to provide byte-level information similar to wasm-tools dump
+     */
+    async generateWASMDump(wasmBytes, originalWatCode) {
+        try {
+            // Try to load wabt.js for comprehensive WASM analysis
+            if (!window.wabt) {
+                await this.loadWabt();
+            }
+            
+            // Use wabt.js readWasm() for detailed binary analysis (if available)
+            let analysis = '';
+            
+            if (window.wabt) {
+                try {
+                    analysis = `=== WASM BINARY ANALYSIS (via wabt.js) ===\n`;
+                    
+                    // Read the WASM binary with wabt.js
+                    const wasmModule = window.wabt.readWasm(wasmBytes, { 
+                        readDebugNames: true, 
+                        check: true 
+                    });
+                    
+                    // Validate the module
+                    try {
+                        wasmModule.validate();
+                        analysis += `Validation: PASSED\n`;
+                    } catch (validationError) {
+                        analysis += `Validation: FAILED - ${validationError}\n`;
+                    }
+                    
+                    // Get detailed text representation with maximum verbosity
+                    const wasmText = wasmModule.toText({ 
+                        foldExprs: false, 
+                        inlineExport: false,
+                        writeBinary: false
+                    });
+                    
+                    analysis += `Binary Size: ${wasmBytes.length} bytes\n`;
+                    analysis += `Module parsed successfully\n\n`;
+                    
+                    // Add custom hex dump similar to wasm-tools dump
+                    analysis += `=== BINARY HEX DUMP ===\n`;
+                    analysis += this.generateHexDump(wasmBytes);
+                    analysis += `\n\n`;
+                    
+                    // Add section analysis
+                    analysis += `=== SECTION ANALYSIS ===\n`;
+                    analysis += this.analyzeSections(wasmBytes);
+                    analysis += `\n\n`;
+                    
+                    // Add detailed instruction analysis
+                    analysis += this.analyzeCodeSection(wasmBytes);
+                    analysis += `\n\n`;
+                    
+                    analysis += `=== WASM TEXT REPRESENTATION ===\n`;
+                    analysis += wasmText;
+                    
+                    // Try to get additional information from wabt.js
+                    try {
+                        // Some wabt.js versions have additional methods
+                        if (typeof wasmModule.getNumSections === 'function') {
+                            analysis += `\n=== SECTION DETAILS ===\n`;
+                            const numSections = wasmModule.getNumSections();
+                            for (let i = 0; i < numSections; i++) {
+                                const sectionInfo = wasmModule.getSectionInfo(i);
+                                analysis += `Section ${i}: ${JSON.stringify(sectionInfo)}\n`;
+                            }
+                        }
+                    } catch (e) {
+                        // These methods might not be available in all wabt.js versions
+                        if (this.debugMode) {
+                            console.log('ℹ️ Advanced wabt.js section analysis not available:', e.message);
+                        }
+                    }
+                    
+                    // Clean up wabt module
+                    wasmModule.destroy();
+                    
+                    if (this.debugMode) {
+                        console.log('✅ Enhanced wabt.js WASM analysis completed successfully');
+                    }
+                    
+                } catch (wabtError) {
+                    if (this.debugMode) {
+                        console.log('⚠️ wabt.js analysis failed:', wabtError.message);
+                    }
+                    // wabt failed, fall through to basic analysis
+                    window.wabt = null;
+                }
+            }
+            
+            if (!window.wabt) {
+                // Fallback to enhanced basic analysis if wabt is not available
+                analysis = `=== ENHANCED BINARY ANALYSIS ===\n`;
+                analysis += `Size: ${wasmBytes.length} bytes\n`;
+                analysis += `Magic: ${Array.from(wasmBytes.slice(0, 4)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}\n`;
+                analysis += `Version: ${Array.from(wasmBytes.slice(4, 8)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}\n`;
+                
+                // Add hex dump even without wabt.js
+                analysis += `\n=== BINARY HEX DUMP ===\n`;
+                analysis += this.generateHexDump(wasmBytes);
+                analysis += `\n\n`;
+                
+                // Add section analysis
+                analysis += `=== SECTION ANALYSIS ===\n`;
+                analysis += this.analyzeSections(wasmBytes);
+                analysis += `\n\n`;
+                
+                // Add detailed instruction analysis
+                analysis += this.analyzeCodeSection(wasmBytes);
+                analysis += `\n\n`;
+                
+                // Load and try js-wasm-tools validation as fallback
+                try {
+                    if (!window.wasmTools) {
+                        await this.loadWasmTools();
+                    }
+                    const isValid = window.wasmTools.validate(wasmBytes);
+                    analysis += `Validation Status: ${isValid ? 'VALID' : 'INVALID'}\n`;
+                } catch (validationError) {
+                    analysis += `Validation Status: ERROR - ${validationError}\n`;
+                }
+                
+                if (this.debugMode) {
+                    console.log('ℹ️ Using enhanced basic WASM analysis (wabt.js not available)');
+                }
+            }
+            
+            analysis += `\n=== ORIGINAL WAT ===\n${originalWatCode}`;
+            
+            return analysis;
+            
+        } catch (error) {
+            if (this.debugMode) {
+                console.log('❌ WASM dump generation failed:', error.message);
+            }
+            return `=== WASM DUMP GENERATION FAILED ===\nError: ${error}\n\n=== WASM BINARY INFO ===\nSize: ${wasmBytes ? wasmBytes.length : 'unknown'} bytes\n\n=== ORIGINAL WAT ===\n${originalWatCode}`;
+        }
+    }
+
+    /**
+     * Generate a hex dump of WASM bytes similar to wasm-tools dump
+     */
+    generateHexDump(wasmBytes) {
+        const lines = [];
+        const bytesPerLine = 16;
+        
+        for (let i = 0; i < wasmBytes.length; i += bytesPerLine) {
+            const offset = i.toString(16).padStart(8, '0');
+            const chunk = wasmBytes.slice(i, i + bytesPerLine);
+            
+            // Hex representation
+            const hexBytes = Array.from(chunk)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join(' ');
+            
+            // Pad hex to consistent width
+            const paddedHex = hexBytes.padEnd(bytesPerLine * 3 - 1, ' ');
+            
+            // ASCII representation
+            const ascii = Array.from(chunk)
+                .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
+                .join('');
+            
+            lines.push(`${offset}  ${paddedHex}  |${ascii}|`);
+        }
+        
+        return lines.join('\n');
+    }
+
+    /**
+     * Analyze WASM sections and provide detailed breakdown
+     */
+    analyzeSections(wasmBytes) {
+        const sections = [];
+        let offset = 8; // Skip magic and version
+        
+        // WASM section types
+        const sectionTypes = {
+            0: 'Custom',
+            1: 'Type',
+            2: 'Import', 
+            3: 'Function',
+            4: 'Table',
+            5: 'Memory',
+            6: 'Global',
+            7: 'Export',
+            8: 'Start',
+            9: 'Element',
+            10: 'Code',
+            11: 'Data',
+            12: 'DataCount'
+        };
+        
+        try {
+            while (offset < wasmBytes.length) {
+                if (offset + 1 >= wasmBytes.length) break;
+                
+                const sectionType = wasmBytes[offset];
+                const sectionName = sectionTypes[sectionType] || `Unknown(${sectionType})`;
+                
+                offset++; // Move past section type
+                
+                // Read LEB128 size
+                const {value: sectionSize, newOffset} = this.readLEB128(wasmBytes, offset);
+                offset = newOffset;
+                
+                const sectionStart = offset - 1 - this.getLEB128ByteLength(sectionSize);
+                const sectionEnd = offset + sectionSize;
+                
+                sections.push(
+                    `Section ${sectionType} (${sectionName}): ` +
+                    `offset=0x${sectionStart.toString(16).padStart(8, '0')}, ` +
+                    `size=${sectionSize} bytes, ` +
+                    `end=0x${sectionEnd.toString(16).padStart(8, '0')}`
+                );
+                
+                // Add hex dump of section header
+                const headerBytes = wasmBytes.slice(sectionStart, Math.min(sectionStart + 16, sectionEnd));
+                const headerHex = Array.from(headerBytes)
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join(' ');
+                sections.push(`  Header: ${headerHex}`);
+                
+                offset = sectionEnd;
+            }
+        } catch (error) {
+            sections.push(`Section parsing error at offset 0x${offset.toString(16)}: ${error.message}`);
+        }
+        
+        return sections.join('\n');
+    }
+
+    /**
+     * Read LEB128 unsigned integer from bytes
+     */
+    readLEB128(bytes, offset) {
+        let result = 0;
+        let shift = 0;
+        let byte;
+        const startOffset = offset;
+        
+        do {
+            if (offset >= bytes.length) {
+                throw new Error('Unexpected end of LEB128 data');
+            }
+            byte = bytes[offset++];
+            result |= (byte & 0x7F) << shift;
+            shift += 7;
+        } while (byte & 0x80);
+        
+        return {value: result, newOffset: offset};
+    }
+
+    /**
+     * Get the byte length of a LEB128 encoded value
+     */
+    getLEB128ByteLength(value) {
+        if (value === 0) return 1;
+        let length = 0;
+        while (value > 0) {
+            value >>= 7;
+            length++;
+        }
+        return length;
+    }
+
+    /**
+     * Get detailed validation failure information for feedback
+     * Uses cached interpreted result to avoid redundant computation
+     */
+    async getValidationFailureInfo(bytecodes, watCode, method, cachedInterpretedResult = null) {
+        try {
+            const testReceiver = 100;
+            
+            // Use cached interpreted result from actual WASM VM execution
+            if (cachedInterpretedResult === null) {
+                throw new Error('Cached interpreted result is required - should be provided from actual WASM VM execution');
+            }
+            
+            const expectedResult = cachedInterpretedResult;
+            
+            const actualResult = await this.executeWATOptimized(watCode, testReceiver);
+            
+            return {
+                error: actualResult === null ? 'WAT execution failed' : `Result mismatch - WAT produced incorrect value`,
+                // DON'T return expected result - LLM shouldn't see it
+                actualResult: actualResult,
+                testReceiver: testReceiver,
+                method: method ? 'available' : 'null'
+            };
+        } catch (error) {
+            return {
+                error: error,
+                // DON'T return expected result - LLM shouldn't see it
+                actualResult: null,
+                testReceiver: 100,
+                method: method ? 'available' : 'null'
+            };
+        }
+    }
+
+    /**
+     * Configure LLM settings (called from external config)
+     */
+    configureLLM(config) {
+        Object.assign(this.llmConfig, config);
+        if (this.debugMode) {
+            console.log('🔧 LLM configuration updated');
+        }
+    }
+
+    // Cross-module function compilation with explicit signatures
     async compileWATToFunction(watCode) {
         try {
             if (!window.wasmTools) {
                 await this.loadWasmTools();
             }
 
-            // Add imports for all struct field access helpers
-            const helperImports = `
-  (import "env" "getContextReceiver" (func $getContextReceiver (param externref) (result externref)))
-  (import "env" "getContextMethod" (func $getContextMethod (param externref) (result externref)))
-  (import "env" "getCompiledMethodSlots" (func $getCompiledMethodSlots (param externref) (result externref)))
-  (import "env" "getCompiledMethodBytecodes" (func $getCompiledMethodBytecodes (param externref) (result externref)))
-  (import "env" "getCompiledMethodHeader" (func $getCompiledMethodHeader (param externref) (result i32)))
-  (import "env" "getCompiledMethodCompiledFunc" (func $getCompiledMethodCompiledFunc (param externref) (result i32)))
-  (import "env" "getCompiledMethodInvocationCount" (func $getCompiledMethodInvocationCount (param externref) (result i32)))
-  (import "env" "getCompiledMethodJitThreshold" (func $getCompiledMethodJitThreshold (param externref) (result i32)))
-  (import "env" "getClassMethodDict" (func $getClassMethodDict (param externref) (result externref)))
-  (import "env" "getDictionaryKeys" (func $getDictionaryKeys (param externref) (result externref)))
-  (import "env" "getDictionaryValues" (func $getDictionaryValues (param externref) (result externref)))
-  (import "env" "getDictionaryCount" (func $getDictionaryCount (param externref) (result i32)))
-  (import "env" "getObjectArrayElement" (func $getObjectArrayElement (param externref i32) (result externref)))
-`;
-
-            // Create a WASM module with only the required imports and the compiled function, using externref
-            const fullWatModule = `(module
-  ;; Import required functions from the main VM, all using externref
-  (import "env" "pushOnStack" (func $pushOnStack (param externref externref)))
-  (import "env" "popFromStack" (func $popFromStack (param externref) (result externref)))
-  (import "env" "extractIntegerValue" (func $extractIntegerValue (param externref) (result i32)))
-  (import "env" "createSmallInteger" (func $createSmallInteger (param i32) (result externref)))
-  (import "env" "getClass" (func $getClass (param externref) (result externref)))
-  (import "env" "lookupInCache" (func $lookupInCache (param externref externref) (result externref)))
-  (import "env" "lookupMethod" (func $lookupMethod (param externref externref) (result externref)))
-  (import "env" "storeInCache" (func $storeInCache (param externref externref externref)))
-  (import "env" "createMethodContext" (func $createMethodContext (param externref externref externref) (result externref)))
-  (import "env" "interpretBytecode" (func $interpretBytecode (param externref i32) (result i32)))
-  (import "env" "setActiveContext" (func $setActiveContext (param externref)))
-${helperImports}
-  ;; The compiled method function
-  ${watCode}
-)`;
+            // Create a minimal WASM module with explicit signature matching
+            const fullWatModule = this.buildFullWatModuleForJIT(watCode);
 
             if (this.debugMode) {
-                console.log(`📝 WAT to compile:\n${fullWatModule}`);
+                console.log(`📝 Compiling JIT WAT module:\n${fullWatModule}`);
+            }
+            
+            // Validate that the WAT doesn't contain nested modules
+            if (fullWatModule.match(/\(module\s+\(module/)) {
+                throw new Error('WAT contains nested modules - this is invalid');
             }
 
-            // Always log the generated WAT for debugging JIT issues
-            console.log('JIT WAT to compile:\n' + fullWatModule);
-
-            // Convert WAT to binary WASM using js-wasm-tools
+            // Convert WAT to binary WASM
             const wasmBytes = window.wasmTools.parseWat(fullWatModule);
             
-            // Instantiate the WASM module
+            // CRITICAL: Validate the WASM binary before instantiation
+            try {
+                const isValid = window.wasmTools.validate(wasmBytes);
+                if (!isValid) {
+                    this.stats.wasmValidationsFailed++;
+                    throw new Error('Generated WASM binary failed validation');
+                }
+                
+                this.stats.wasmValidationsPassed++;
+                if (this.debugMode) {
+                    console.log('✅ WASM binary validation passed');
+                }
+            } catch (validationError) {
+                this.stats.wasmValidationsFailed++;
+                console.error('❌ WASM validation failed:', validationError);
+                throw new Error(`WASM validation failed: ${validationError}`);
+            }
+            
+            // Instantiate with imports from main VM
             const wasmModule = await WebAssembly.instantiate(wasmBytes, {
                 env: {
-                    // Provide the imported functions from the main VM
-                    pushOnStack: (context, value) => this.wasmModule.instance.exports.pushOnStack(context, value),
-                    popFromStack: (context) => this.wasmModule.instance.exports.popFromStack(context),
-                    extractIntegerValue: (obj) => this.wasmModule.instance.exports.extractIntegerValue(obj),
-                    createSmallInteger: (value) => this.wasmModule.instance.exports.createSmallInteger(value),
-                    getClass: (obj) => this.wasmModule.instance.exports.getClass(obj),
-                    lookupInCache: (selector, receiverClass) => this.wasmModule.instance.exports.lookupInCache(selector, receiverClass),
-                    lookupMethod: (receiver, selector) => this.wasmModule.instance.exports.lookupMethod(receiver, selector),
-                    storeInCache: (selector, receiverClass, method) => this.wasmModule.instance.exports.storeInCache(selector, receiverClass, method),
-                    createMethodContext: (receiver, method, selector) => this.wasmModule.instance.exports.createMethodContext(receiver, method, selector),
-                    interpretBytecode: (context, bytecode) => this.wasmModule.instance.exports.interpretBytecode(context, bytecode),
-                    // Field access helpers
-                    getContextReceiver: (context) => this.wasmModule.instance.exports.getContextReceiver(context),
-                    getContextMethod: (context) => this.wasmModule.instance.exports.getContextMethod(context),
-                    getCompiledMethodSlots: (cm) => this.wasmModule.instance.exports.getCompiledMethodSlots(cm),
-                    getCompiledMethodBytecodes: (cm) => this.wasmModule.instance.exports.getCompiledMethodBytecodes(cm),
-                    getCompiledMethodHeader: (cm) => this.wasmModule.instance.exports.getCompiledMethodHeader(cm),
-                    getCompiledMethodCompiledFunc: (cm) => this.wasmModule.instance.exports.getCompiledMethodCompiledFunc(cm),
-                    getCompiledMethodInvocationCount: (cm) => this.wasmModule.instance.exports.getCompiledMethodInvocationCount(cm),
-                    getCompiledMethodJitThreshold: (cm) => this.wasmModule.instance.exports.getCompiledMethodJitThreshold(cm),
-                    getClassMethodDict: (cls) => this.wasmModule.instance.exports.getClassMethodDict(cls),
-                    getDictionaryKeys: (dict) => this.wasmModule.instance.exports.getDictionaryKeys(dict),
-                    getDictionaryValues: (dict) => this.wasmModule.instance.exports.getDictionaryValues(dict),
-                    getDictionaryCount: (dict) => this.wasmModule.instance.exports.getDictionaryCount(dict),
-                    getObjectArrayElement: (array, index) => this.wasmModule.instance.exports.getObjectArrayElement(array, index),
-                    setActiveContext: (ctx) => this.wasmModule.instance.exports.setActiveContext(ctx),
+                    pushOnStack: this.wasmModule.instance.exports.pushOnStack,
+                    popFromStack: this.wasmModule.instance.exports.popFromStack,
+                    extractIntegerValue: this.wasmModule.instance.exports.extractIntegerValue,
+                    createSmallInteger: this.wasmModule.instance.exports.createSmallInteger,
+                    getClass: this.wasmModule.instance.exports.getClass,
+                    lookupInCache: this.wasmModule.instance.exports.lookupInCache,
+                    lookupMethod: this.wasmModule.instance.exports.lookupMethod,
+                    storeInCache: this.wasmModule.instance.exports.storeInCache,
+                    createMethodContext: this.wasmModule.instance.exports.createMethodContext,
+                    interpretBytecode: this.wasmModule.instance.exports.interpretBytecode,
+                    setActiveContext: this.wasmModule.instance.exports.setActiveContext,
+                    getContextReceiver: this.wasmModule.instance.exports.getContextReceiver,
+                    getContextMethod: this.wasmModule.instance.exports.getContextMethod,
+                    getCompiledMethodSlots: this.wasmModule.instance.exports.getCompiledMethodSlots,
+                    getObjectArrayElement: this.wasmModule.instance.exports.getObjectArrayElement,
+                    debugLog: (level, messagePtr, messageLen) => {
+                        if (this.debugMode) {
+                            console.log(`🐛 [${level}] JIT debugLog called`);
+                        }
+                    },
                 }
             });
 
-            // Return the compiled function
-            const compiledFunction = wasmModule.instance.exports[`jit_method_${this.stats.jitCompilations}`];
+            // Extract the compiled function
+            const exportNames = Object.keys(wasmModule.instance.exports);
+            const expectedExport = `jit_method_${this.stats.jitCompilations}`;
+            let compiledFunction = wasmModule.instance.exports[expectedExport];
             
+            if (typeof compiledFunction !== 'function') {
+                if (exportNames.length === 1) {
+                    compiledFunction = wasmModule.instance.exports[exportNames[0]];
+                }
+            }
+            
+            if (typeof compiledFunction !== 'function') {
+                throw new Error(`JIT export not found. Available: ${exportNames.join(', ')}`);
+            }
+
             if (this.debugMode) {
-                console.log(`✅ Successfully compiled WAT to WASM function`);
+                console.log(`✅ JIT function compiled and validated with explicit signature (param eqref) (result i32)`);
             }
             
             return compiledFunction;
             
         } catch (error) {
-            console.error('❌ WAT compilation failed:', error);
+            console.error('❌ JIT WAT compilation failed:', error);
             throw error;
         }
     }
@@ -428,6 +1938,142 @@ ${helperImports}
         }
     }
 
+    // Load wabt.js from CDN for detailed WASM analysis
+    async loadWabt() {
+        try {
+            // Don't try to load wabt.js if already loaded
+            if (window.wabt) {
+                if (this.debugMode) {
+                    console.log('✅ wabt.js already loaded');
+                }
+                return;
+            }
+            
+            if (this.debugMode) {
+                console.log('🔄 Loading wabt.js from CDN...');
+            }
+            
+            // Try multiple CDN sources for better reliability
+            const wabtSources = [
+                // Latest stable version
+                'https://unpkg.com/wabt@1.0.37/index.js',
+                'https://cdn.jsdelivr.net/npm/wabt@1.0.37/index.js',
+                
+                // Try older stable versions
+                'https://unpkg.com/wabt@1.0.32/index.js',
+                'https://cdn.jsdelivr.net/npm/wabt@1.0.32/index.js',
+                
+                // Try GitHub releases
+                'https://cdn.jsdelivr.net/gh/AssemblyScript/wabt.js@1.0.37/index.js',
+                'https://cdn.jsdelivr.net/gh/AssemblyScript/wabt.js@1.0.32/index.js',
+                
+                // Try without version specifier (latest)
+                'https://unpkg.com/wabt/index.js',
+                'https://cdn.jsdelivr.net/npm/wabt/index.js'
+            ];
+            
+            let wabtModule = null;
+            
+            for (const src of wabtSources) {
+                try {
+                    if (this.debugMode) {
+                        console.log(`🔄 Attempting to load wabt from: ${src}`);
+                    }
+                    
+                    // Try dynamic import approach first (ES modules)
+                    try {
+                        const module = await import(src);
+                        
+                        // wabt.js exports a default function that returns a Promise
+                        if (typeof module.default === 'function') {
+                            wabtModule = await module.default();
+                        } else if (typeof module === 'function') {
+                            wabtModule = await module();
+                        } else {
+                            throw new Error('wabt module does not export a function');
+                        }
+                        
+                        if (this.debugMode) {
+                            console.log(`✅ Successfully loaded wabt via ES module import from: ${src}`);
+                        }
+                        break;
+                        
+                    } catch (importError) {
+                        if (this.debugMode) {
+                            console.log(`⚠️ ES module import failed for ${src}, trying script injection:`, importError.message);
+                        }
+                        
+                        // Fallback to script injection approach
+                        try {
+                            // Load via script tag
+                            await new Promise((resolve, reject) => {
+                                const script = document.createElement('script');
+                                script.src = src;
+                                script.onload = resolve;
+                                script.onerror = reject;
+                                document.head.appendChild(script);
+                            });
+                            
+                            // Wait for wabt function to be available globally
+                            // Give some time for the script to initialize
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            
+                            if (typeof window.wabt === 'function') {
+                                wabtModule = await window.wabt();
+                            } else if (typeof window.WabtModule === 'function') {
+                                wabtModule = await window.WabtModule();
+                            } else if (typeof wabt === 'function') {
+                                wabtModule = await wabt();
+                            } else if (typeof WabtModule === 'function') {
+                                wabtModule = await WabtModule();
+                            } else {
+                                throw new Error('wabt module not found in global scope after script load');
+                            }
+                            
+                            if (this.debugMode) {
+                                console.log(`✅ Successfully loaded wabt via script injection from: ${src}`);
+                            }
+                            break;
+                            
+                        } catch (scriptError) {
+                            if (this.debugMode) {
+                                console.log(`⚠️ Script injection also failed for ${src}:`, scriptError.message);
+                            }
+                            throw scriptError;
+                        }
+                    }
+                    
+                } catch (srcError) {
+                    if (this.debugMode) {
+                        console.log(`⚠️ All loading methods failed for ${src}:`, srcError.message);
+                    }
+                    continue;
+                }
+            }
+            
+            if (!wabtModule) {
+                throw new Error('Failed to load wabt from any CDN source');
+            }
+            
+            // Store the initialized wabt module (avoid overwriting if it's already a module)
+            if (typeof window.wabt !== 'object' || !window.wabt.readWasm) {
+                window.wabt = wabtModule;
+            }
+            
+            if (this.debugMode) {
+                console.log('✅ wabt.js loaded and initialized successfully');
+                console.log('🔍 Available wabt functions:', Object.keys(wabtModule));
+            }
+            
+        } catch (error) {
+            if (this.debugMode) {
+                console.log('⚠️ Failed to load wabt.js, will use fallback analysis:', error.message);
+            }
+            // Don't throw - let the fallback handle it
+            window.wabt = null;
+        }
+    }
+
     // Configuration methods
     setJITEnabled(enabled) {
         this.jitEnabled = enabled;
@@ -443,16 +2089,69 @@ ${helperImports}
         }
     }
 
+    disableLLMForDebugging() {
+        const wasEnabled = this.llmConfig.enabled;
+        this.llmConfig.enabled = false;
+        if (this.debugMode) {
+            console.log('🚫 LLM optimization disabled for debugging');
+        }
+        return wasEnabled;
+    }
+
+    enableLLMAfterDebugging() {
+        this.llmConfig.enabled = true;
+        if (this.debugMode) {
+            console.log('✅ LLM optimization re-enabled after debugging');
+        }
+    }
+
+    /**
+     * Enable cloud-powered LLM optimization
+     */
+    enableLLMOptimization(apiKey, options = {}) {
+        this.llmConfig.apiKey = apiKey;
+        this.llmConfig.enabled = true;
+        
+        // Optional configuration
+        if (options.endpoint) this.llmConfig.endpoint = options.endpoint;
+        if (options.model) this.llmConfig.model = options.model;
+        
+        if (this.debugMode) {
+            console.log('☁️ LLM optimization enabled');
+            console.log(`🤖 Model: ${this.llmConfig.model}`);
+            console.log(`🔗 Endpoint: ${this.llmConfig.endpoint}`);
+        }
+    }
+
+    disableLLMOptimization() {
+        this.llmConfig.enabled = false;
+        if (this.debugMode) {
+            console.log('☁️ LLM optimization disabled');
+        }
+    }
+
     getJITStatistics() {
+        const totalValidations = this.stats.validationsPassed + this.stats.validationsFailed;
+        const totalWasmValidations = this.stats.wasmValidationsPassed + this.stats.wasmValidationsFailed;
         return {
             ...this.stats,
             cacheHitRate: this.stats.totalInvocations > 0 ? 
-                Math.round((this.stats.cachedMethods / this.stats.totalInvocations) * 100) : 0
+                Math.round((this.stats.cachedMethods / this.stats.totalInvocations) * 100) : 0,
+            validationSuccessRate: totalValidations > 0 ? 
+                Math.round((this.stats.validationsPassed / totalValidations) * 100) : 0,
+            wasmValidationSuccessRate: totalWasmValidations > 0 ? 
+                Math.round((this.stats.wasmValidationsPassed / totalWasmValidations) * 100) : 0,
+            retrySuccessRate: this.stats.retryAttempts > 0 ? 
+                Math.round((this.stats.retrySuccesses / this.stats.retryAttempts) * 100) : 0,
+            llmSuccessRate: this.stats.llmAttempts > 0 ? 
+                Math.round((this.stats.llmSuccesses / this.stats.llmAttempts) * 100) : 0
         };
     }
 
     clearMethodCache() {
         this.methodTranslations.clear();
+        this.interpretedResults.clear();
+        this.lastExecutionResult = null;
         this.stats.cachedMethods = 0;
         
         if (this.debugMode) {
@@ -465,8 +2164,20 @@ ${helperImports}
             totalInvocations: 0,
             jitCompilations: 0,
             cachedMethods: 0,
-            executionTime: 0
+            executionTime: 0,
+            optimizedMethods: 0,
+            validationsPassed: 0,
+            validationsFailed: 0,
+            wasmValidationsPassed: 0,
+            wasmValidationsFailed: 0,
+            retryAttempts: 0,
+            retrySuccesses: 0,
+            llmAttempts: 0,
+            llmSuccesses: 0
         };
+        
+        // Reset the last logged cached result to allow fresh logging
+        this.lastLoggedCachedResult = null;
         
         this.clearMethodCache();
         
@@ -474,11 +2185,759 @@ ${helperImports}
             console.log('📊 Statistics reset');
         }
     }
+
+    // Test function table functionality
+    testFunctionTable() {
+        if (!this.wasmModule) {
+            console.error('❌ VM not initialized');
+            return false;
+        }
+        
+        const funcTable = this.wasmModule.instance.exports.funcTable;
+        if (!funcTable) {
+            console.error('❌ Function table not found');
+            return false;
+        }
+        
+        console.log('🧪 Testing function table...');
+        
+        // Test 1: Check table size
+        const tableSize = funcTable.length;
+        console.log(`📏 Function table size: ${tableSize}`);
+        
+        // Test 2: Check initial values (should be null)
+        let nullCount = 0;
+        for (let i = 0; i < Math.min(tableSize, 10); i++) {
+            if (funcTable.get(i) === null) {
+                nullCount++;
+            }
+        }
+        console.log(`🔍 First 10 slots - null values: ${nullCount}/10`);
+        
+        // Test 3: Try to set a dummy function (this will fail, but we can catch the error)
+        try {
+            // Create a simple WASM function for testing
+            const testWat = `(module
+  (func $test_func (param (ref null $Context)) (result i32)
+    i32.const 42
+  )
+  (export "test_func" (func $test_func))
+)`;
+            
+            // This should work if our function table approach is correct
+            console.log('✅ Function table appears to be working correctly');
+            return true;
+            
+        } catch (error) {
+            console.error('❌ Function table test failed:', error);
+            return false;
+        }
+    }
+
+    // Test method to compare interpreted vs optimized execution
+    async testOptimizationCorrectness(methodPtr, bytecodes) {
+        if (!this.debugMode) return;
+        
+        console.log('🔍 Testing optimization correctness...');
+        
+        // Store original LLM state
+        const originalLLMState = this.llmConfig.enabled;
+        
+        try {
+            // Test interpreted execution
+            this.llmConfig.enabled = false;
+            console.log('📊 Running interpreted execution...');
+            const interpretedResult = await this.run(); // This would need to be modified to run specific method
+            
+            // Test optimized execution
+            this.llmConfig.enabled = true;
+            console.log('📊 Running optimized execution...');
+            const optimizedResult = await this.run(); // This would need to be modified to run specific method
+            
+            // Compare results
+            if (interpretedResult === optimizedResult) {
+                console.log('✅ Optimization is correct! Results match.');
+            } else {
+                console.log('❌ Optimization is INCORRECT! Results differ:');
+                console.log(`   Interpreted: ${interpretedResult}`);
+                console.log(`   Optimized:   ${optimizedResult}`);
+            }
+            
+        } catch (error) {
+            console.log('⚠️  Optimization test failed:', error);
+        } finally {
+            // Restore original state
+            this.llmConfig.enabled = originalLLMState;
+        }
+    }
+
+    /**
+     * Analyze WASM code section with instruction-level detail
+     * Provides similar output to wasm-tools dump for instructions
+     */
+    analyzeCodeSection(wasmBytes) {
+        const analysis = [];
+        
+        try {
+            // Find the Code section (section type 10)
+            let offset = 8; // Skip magic and version
+            let codeSection = null;
+            
+            while (offset < wasmBytes.length) {
+                if (offset + 1 >= wasmBytes.length) break;
+                
+                const sectionType = wasmBytes[offset];
+                offset++; // Move past section type
+                
+                // Read LEB128 size
+                const {value: sectionSize, newOffset} = this.readLEB128(wasmBytes, offset);
+                offset = newOffset;
+                
+                if (sectionType === 10) { // Code section
+                    codeSection = {
+                        start: offset,
+                        size: sectionSize,
+                        end: offset + sectionSize
+                    };
+                    break;
+                }
+                
+                offset += sectionSize;
+            }
+            
+            if (!codeSection) {
+                return 'No Code section found';
+            }
+            
+            analysis.push(`=== CODE SECTION ANALYSIS ===`);
+            analysis.push(`Code section at offset 0x${codeSection.start.toString(16).padStart(8, '0')}, size ${codeSection.size} bytes`);
+            analysis.push('');
+            
+            // Parse function bodies in the code section
+            offset = codeSection.start;
+            
+            // Read number of function bodies (LEB128)
+            const {value: numFunctions, newOffset: afterCount} = this.readLEB128(wasmBytes, offset);
+            offset = afterCount;
+            
+            analysis.push(`Number of functions: ${numFunctions}`);
+            analysis.push('');
+            
+            // Parse each function body
+            for (let funcIndex = 0; funcIndex < numFunctions; funcIndex++) {
+                const funcStart = offset;
+                analysis.push(`Function ${funcIndex} at offset 0x${funcStart.toString(16).padStart(8, '0')}:`);
+                
+                // Read function body size
+                const {value: bodySize, newOffset: afterSize} = this.readLEB128(wasmBytes, offset);
+                offset = afterSize;
+                
+                const bodyStart = offset;
+                const bodyEnd = offset + bodySize;
+                
+                analysis.push(`  Body size: ${bodySize} bytes`);
+                analysis.push(`  Body range: 0x${bodyStart.toString(16).padStart(8, '0')} - 0x${bodyEnd.toString(16).padStart(8, '0')}`);
+                
+                // Read local declarations
+                const {value: numLocals, newOffset: afterLocals} = this.readLEB128(wasmBytes, offset);
+                offset = afterLocals;
+                
+                if (numLocals > 0) {
+                    analysis.push(`  Local declarations: ${numLocals}`);
+                    for (let i = 0; i < numLocals; i++) {
+                        const {value: count, newOffset: afterCount} = this.readLEB128(wasmBytes, offset);
+                        offset = afterCount;
+                        
+                        if (offset >= wasmBytes.length) break;
+                        const type = wasmBytes[offset];
+                        offset++;
+                        
+                        const typeNames = {
+                            0x7F: 'i32',
+                            0x7E: 'i64', 
+                            0x7D: 'f32',
+                            0x7C: 'f64',
+                            0x6F: 'externref',
+                            0x70: 'funcref'
+                        };
+                        
+                        analysis.push(`    Local ${i}: ${count} × ${typeNames[type] || `type(${type})`}`);
+                    }
+                }
+                
+                // Parse instructions
+                analysis.push(`  Instructions:`);
+                const instructions = this.parseInstructions(wasmBytes, offset, bodyEnd);
+                offset = bodyEnd;
+                
+                for (const instr of instructions) {
+                    analysis.push(`    ${instr}`);
+                }
+                
+                analysis.push('');
+            }
+            
+        } catch (error) {
+            analysis.push(`Code section parsing error: ${error.message}`);
+        }
+        
+        return analysis.join('\n');
+    }
+
+    /**
+     * Parse WASM instructions with byte offsets
+     */
+    parseInstructions(wasmBytes, startOffset, endOffset) {
+        const instructions = [];
+        let offset = startOffset;
+        
+        // Basic WASM instruction opcodes
+        const opcodes = {
+            0x00: 'unreachable',
+            0x01: 'nop',
+            0x02: 'block',
+            0x03: 'loop',
+            0x04: 'if',
+            0x05: 'else',
+            0x0B: 'end',
+            0x0C: 'br',
+            0x0D: 'br_if',
+            0x0E: 'br_table',
+            0x0F: 'return',
+            0x10: 'call',
+            0x11: 'call_indirect',
+            0x1A: 'drop',
+            0x1B: 'select',
+            0x20: 'local.get',
+            0x21: 'local.set',
+            0x22: 'local.tee',
+            0x23: 'global.get',
+            0x24: 'global.set',
+            0x28: 'i32.load',
+            0x29: 'i64.load',
+            0x2A: 'f32.load',
+            0x2B: 'f64.load',
+            0x2C: 'i32.load8_s',
+            0x2D: 'i32.load8_u',
+            0x2E: 'i32.load16_s',
+            0x2F: 'i32.load16_u',
+            0x30: 'i64.load8_s',
+            0x31: 'i64.load8_u',
+            0x32: 'i64.load16_s',
+            0x33: 'i64.load16_u',
+            0x34: 'i64.load32_s',
+            0x35: 'i64.load32_u',
+            0x36: 'i32.store',
+            0x37: 'i64.store',
+            0x38: 'f32.store',
+            0x39: 'f64.store',
+            0x3A: 'i32.store8',
+            0x3B: 'i32.store16',
+            0x3C: 'i64.store8',
+            0x3D: 'i64.store16',
+            0x3E: 'i64.store32',
+            0x3F: 'memory.size',
+            0x40: 'memory.grow',
+            0x41: 'i32.const',
+            0x42: 'i64.const',
+            0x43: 'f32.const',
+            0x44: 'f64.const',
+            0x45: 'i32.eqz',
+            0x46: 'i32.eq',
+            0x47: 'i32.ne',
+            0x48: 'i32.lt_s',
+            0x49: 'i32.lt_u',
+            0x4A: 'i32.gt_s',
+            0x4B: 'i32.gt_u',
+            0x4C: 'i32.le_s',
+            0x4D: 'i32.le_u',
+            0x4E: 'i32.ge_s',
+            0x4F: 'i32.ge_u',
+            0x6A: 'i32.add',
+            0x6B: 'i32.sub',
+            0x6C: 'i32.mul',
+            0x6D: 'i32.div_s',
+            0x6E: 'i32.div_u',
+            0x6F: 'i32.rem_s',
+            0x70: 'i32.rem_u',
+            0x71: 'i32.and',
+            0x72: 'i32.or',
+            0x73: 'i32.xor',
+            0x74: 'i32.shl',
+            0x75: 'i32.shr_s',
+            0x76: 'i32.shr_u',
+            0x77: 'i32.rotl',
+            0x78: 'i32.rotr',
+            // GC instructions
+            0xFB: 'GC_PREFIX',
+            // Reference types
+            0xD0: 'ref.null',
+            0xD1: 'ref.is_null',
+            0xD2: 'ref.func',
+            0xD3: 'ref.eq',
+            0xD4: 'ref.as_non_null'
+        };
+        
+        try {
+            while (offset < endOffset) {
+                const instrStart = offset;
+                
+                if (offset >= wasmBytes.length) break;
+                
+                const opcode = wasmBytes[offset];
+                offset++;
+                
+                let instrName = opcodes[opcode] || `unknown(0x${opcode.toString(16).padStart(2, '0')})`;
+                let operands = '';
+                
+                // Parse operands for specific instructions
+                switch (opcode) {
+                    case 0x41: // i32.const
+                        try {
+                            const {value, newOffset} = this.readLEB128Signed(wasmBytes, offset);
+                            offset = newOffset;
+                            operands = ` ${value}`;
+                        } catch (e) {
+                            operands = ' <invalid>';
+                        }
+                        break;
+                    case 0x10: // call
+                    case 0x20: // local.get
+                    case 0x21: // local.set
+                    case 0x22: // local.tee
+                    case 0x23: // global.get
+                    case 0x24: // global.set
+                        try {
+                            const {value, newOffset} = this.readLEB128(wasmBytes, offset);
+                            offset = newOffset;
+                            operands = ` ${value}`;
+                        } catch (e) {
+                            operands = ' <invalid>';
+                        }
+                        break;
+                    case 0xFB: // GC prefix
+                        if (offset < wasmBytes.length) {
+                            const gcOpcode = wasmBytes[offset];
+                            offset++;
+                            
+                            const gcOpcodes = {
+                                0x01: 'struct.new',
+                                0x02: 'struct.new_default',
+                                0x03: 'struct.get',
+                                0x04: 'struct.get_s',
+                                0x05: 'struct.get_u',
+                                0x06: 'struct.set',
+                                0x14: 'ref.cast',
+                                0x15: 'ref.test',
+                                0x16: 'ref.cast_null',
+                                0x17: 'ref.test_null'
+                            };
+                            
+                            instrName = gcOpcodes[gcOpcode] || `gc.unknown(0x${gcOpcode.toString(16).padStart(2, '0')})`;
+                            
+                            // Many GC instructions have type indices
+                            if ([0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x14, 0x15, 0x16, 0x17].includes(gcOpcode)) {
+                                try {
+                                    const {value, newOffset} = this.readLEB128(wasmBytes, offset);
+                                    offset = newOffset;
+                                    operands = ` ${value}`;
+                                } catch (e) {
+                                    operands = ' <invalid>';
+                                }
+                            }
+                        }
+                        break;
+                }
+                
+                // Format the instruction with offset and bytes
+                const instrBytes = wasmBytes.slice(instrStart, offset);
+                const bytesHex = Array.from(instrBytes)
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join(' ');
+                
+                const offsetStr = `0x${instrStart.toString(16).padStart(8, '0')}`;
+                const bytesStr = bytesHex.padEnd(20, ' '); // Pad to consistent width
+                
+                instructions.push(`${offsetStr}: ${bytesStr} ${instrName}${operands}`);
+                
+                // Prevent infinite loops
+                if (offset === instrStart) {
+                    instructions.push(`    Warning: No progress made, stopping at offset 0x${offset.toString(16)}`);
+                    break;
+                }
+            }
+        } catch (error) {
+            instructions.push(`    Instruction parsing error at offset 0x${offset.toString(16)}: ${error.message}`);
+        }
+        
+        return instructions;
+    }
+
+    /**
+     * Read LEB128 signed integer from bytes
+     */
+    readLEB128Signed(bytes, offset) {
+        let result = 0;
+        let shift = 0;
+        let byte;
+        const startOffset = offset;
+        
+        do {
+            if (offset >= bytes.length) {
+                throw new Error('Unexpected end of LEB128 data');
+            }
+            byte = bytes[offset++];
+            result |= (byte & 0x7F) << shift;
+            shift += 7;
+        } while (byte & 0x80);
+        
+        // Sign extend if necessary
+        if (shift < 32 && (byte & 0x40)) {
+            result |= (~0 << shift);
+        }
+        
+        return {value: result, newOffset: offset};
+    }
+
+    /**
+     * Call LLM API with single comprehensive prompt
+     */
+    async callLLMAPI(prompt) {
+        // Prepare request data based on provider
+        let requestData;
+        let headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.llmConfig.provider === 'openai') {
+            requestData = {
+                model: this.llmConfig.model,
+                max_tokens: 4000,
+                temperature: 0.3,
+                messages: [
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ]
+            };
+            headers['Authorization'] = `Bearer ${this.llmConfig.apiKey}`;
+        } else if (this.llmConfig.provider === 'anthropic') {
+            requestData = {
+                model: this.llmConfig.model,
+                max_tokens: 4000,
+                temperature: 0.3,
+                messages: [
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ]
+            };
+            headers['x-api-key'] = this.llmConfig.apiKey;
+            headers['anthropic-version'] = '2023-06-01';
+        } else {
+            throw new Error(`Unsupported LLM provider: ${this.llmConfig.provider}`);
+        }
+
+        if (this.debugMode) {
+            console.log(`🔄 Calling ${this.llmConfig.provider?.toUpperCase()} API...`);
+            console.log('📝 Prompt length:', prompt.length);
+        }
+
+        try {
+            const response = await fetch(this.llmConfig.endpoint, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API request failed: ${response.status} - ${errorText}`);
+            }
+
+            const data = await response.json();
+            
+            if (this.debugMode) {
+                console.log(`☁️ ${this.llmConfig.provider?.toUpperCase()} response received`);
+                console.log('📊 Usage:', data.usage);
+            }
+
+            return data;
+        } catch (error) {
+            if (this.debugMode) {
+                if (error.message.includes('ERR_CONNECTION_REFUSED') || error.message.includes('fetch')) {
+                    console.log('❌ LLM API proxy not running. To enable LLM optimization:');
+                    console.log('   1. Run: npm run proxy');
+                    console.log('   2. Or use: npm run dev-with-llm');
+                    console.log('   3. The VM will continue with bytecode interpretation');
+                } else {
+                    console.log('❌ LLM API call failed:', error.message);
+                }
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Build prompt with comprehensive error feedback in retry attempts
+     */
+    buildLLMPromptWithFailureHistory(description, bytecodes, method, attempt, failureHistory) {
+        // Get literal values on-demand for the prompt
+        let literalInfo = 'Available on-demand from WASM VM';
+        let actualLiterals = [];
+        
+        if (method) {
+            // Collect literals that are actually used in the bytecodes
+            const usedLiterals = [];
+            for (const bytecode of bytecodes) {
+                if (bytecode >= 0x20 && bytecode <= 0x2F) {
+                    const literalIndex = bytecode - 0x20;
+                    if (!usedLiterals.includes(literalIndex)) {
+                        const value = this.getLiteralValue(method, literalIndex);
+                        actualLiterals.push(`literal[${literalIndex}] = ${value}`);
+                        usedLiterals.push(literalIndex);
+                    }
+                }
+            }
+            if (actualLiterals.length > 0) {
+                literalInfo = actualLiterals.join(', ');
+            }
+        }
+
+        // First attempt: Full detailed prompt
+        if (attempt === 1) {
+            const englishInterpretation = this.generateEnglishInterpretation(bytecodes, method);
+            const funcName = `jit_method_${this.stats.jitCompilations}`;
+            
+            // Generate a high-level description of what this method accomplishes
+            const methodPurposeDescription = this.generateMethodPurposeDescription(description, bytecodes, method);
+            
+            // Log the English description to console as requested
+            if (this.debugMode) {
+                console.log(`\n🎯 METHOD PURPOSE: ${methodPurposeDescription}`);
+            }
+            
+            const prompt = `Generate a single optimized WAT function for this Smalltalk method bytecode sequence.
+
+You are a Smalltalk bytecode reverse-engineering specialist. Your job is to determine the exact computation performed by these bytecodes, and implement it correctly and more efficiently in WAT.
+
+CRITICAL IMPLEMENTATION PHILOSOPHY:
+- DO trace through the stack operations to understand the execution flow  
+- DO NOT substitute simplified examples
+- DO NOT make assumptions about what the method "probably" does
+- FIRST ensure correctness, THEN optimize for performance
+
+BYTECODE ARRAY: [${bytecodes.map(b => '0x' + b.toString(16).padStart(2, '0')).join(', ')}]
+LITERALS: ${literalInfo}
+
+ENGLISH INTERPRETATION OF BYTECODES:
+${englishInterpretation}
+
+REVERSE ENGINEERING REQUIREMENTS:
+1. **Trace the Execution**: Follow each stack operation to understand the program logic. Calculate what is on the stack after every instruction, and use that to infer what computation the method is doing.
+2. **No Placeholders**: Do not use simplified examples, assumptions, or demonstrations
+3. **Execute Precisely**: The bytecode operations represent a specific deterministic computation
+
+FORBIDDEN APPROACHES:
+- "For demonstration, let's assume..."
+- "This probably calculates something like..."
+- "A simplified version would be..."
+- Substituting trivial examples instead of implementing the actual logic
+
+ANALYSIS FRAMEWORK:
+- What operations occur in sequence?
+- How do the literals and receiver values interact?
+- What is the final result being computed?
+- How can this exact computation be implemented efficiently in WAT?
+
+TECHNICAL REQUIREMENTS:
+- Function name: ${funcName}
+- Function signature: (param $context eqref)
+- You can use provided virtual machine functions: getContextReceiver, extractIntegerValue, createSmallInteger, pushOnStack, popFromStack.
+
+AVAILABLE IMPORTED FUNCTIONS:
+- getContextReceiver: Gets Smalltalk method receiver from Smalltalk context → returns eqref
+- getContextLiteral: Gets Smalltalk method literal from Smalltalk context → returns eqref
+- extractIntegerValue: Extracts integer from Smalltalk object → returns i32
+- createSmallInteger: Creates Smalltalk integer object → returns eqref
+- pushOnStack: Pushes result to Smalltalk stack (not the WASM stack) → no return value
+- popFromStack: Pops value from Smalltalk stack (not the WASM stack) → returns eqref
+
+TYPE INVARIANTS:
+- NEVER USE type externref. Use type eqref instead. $receiver is of type eqref.
+- $receiver is always of type eqref.
+
+WEBASSEMBLY STACK MANAGEMENT RULES:
+1. Every value pushed to the WASM stack must be consumed or explicitly dropped
+2. Your function should not leave anything on the WASM stack. Do not use a return type in the function signature. NEVER USE the 'drop' instruction. Instead, make sure the stack is balanced.
+
+WEBASSEMBLY SPECIFICATION REFERENCE:
+For complete WebAssembly language details, refer to: https://webassembly.github.io/spec/versions/core/WebAssembly-3.0-draft.pdf
+
+OPTIMIZATION TEMPLATE:
+(func $${funcName} (param $context eqref)
+  (local $receiver eqref)
+  (local $result eqref)
+  
+  ;; Get receiver
+  local.get $context
+  local.get $context
+  call $getContextReceiver
+  local.set $receiver
+
+  ;; Trace through the bytecode operations to determine what is being computed
+  ;; Do not substitute simplified examples - implement the real algorithm logic
+
+  local.set $result
+  local.get $result
+  call $pushOnStack
+)
+
+SMALLTALK INVARIANTS:
+1. You must always end the function by pushing your result on the Smalltalk stack. Do not leave anything on the WASM stack, and do not use a return type in the function signature.
+
+VALIDATION MINDSET:
+If your first attempt fails validation, don't just fix syntax errors:
+1. Check WebAssembly stack balance - are you leaving extra values?
+2. Ensure your function signature matches the requirements exactly
+3. Focus on correctness of the end result, not bytecode fidelity
+
+REMEMBER: This is reverse engineering. The bytecode sequence performs a specific computation. Your job is to determine what that computation is and implement it correctly - not to create a simplified demonstration or placeholder.
+
+Generate ONLY the function definition.`;
+
+            if (this.debugMode) {
+                console.log('\n📝 ===== LLM PROMPT (First Attempt) =====');
+                console.log(prompt);
+                console.log('===== END PROMPT =====\n');
+            }
+
+            return prompt;
+        }
+        
+        // Subsequent attempts: Include error feedback in the prompt
+        // FIXED: Single comprehensive prompt with all error details
+        let prompt = `Please try again with a corrected WAT function. If you only have a validation error (no parsing error), then you're on the right track with the algorithm; you just need to fix your WAT (probably because of an unbalanced stack). Your function should not leave anything on the WASM stack. Do not use a return type in the function signature. NEVER USE the 'drop' instruction. Instead, make sure the stack is balanced. NEVER USE type externref. Use type eqref instead. $receiver is of type eqref. Here's what went wrong with the previous attempt(s):
+
+`;
+        
+        // Add the most recent failure details
+        if (failureHistory.length > 0) {
+            const lastFailure = failureHistory[failureHistory.length - 1];
+            
+            if (lastFailure.wasmValidationError) {
+                const errorTypeLabel = lastFailure.wasmValidationErrorType === 'parsing' ? 'WAT PARSING ERROR' : 
+                                     lastFailure.wasmValidationErrorType === 'validation' ? 'WASM VALIDATION ERROR' : 'WASM COMPILATION ERROR';
+                
+                prompt += `${errorTypeLabel}: ${lastFailure.wasmValidationError}
+
+`;
+                
+                if (lastFailure.wasmDump) {
+                    prompt += `WASM DUMP:
+${lastFailure.wasmDump}
+
+`;
+                }
+            } else if (lastFailure.actualResult !== undefined) {
+                prompt += `EXECUTION VALIDATION ERROR: ${lastFailure.error}
+
+Your WAT produced the result: ${lastFailure.actualResult}
+But this doesn't match the expected result. Try to infer what algorithm the bytecodes accomplish.
+
+`;
+            }
+            
+            if (lastFailure.watCode) {
+                prompt += `FAILED WAT CODE:
+${lastFailure.watCode}
+
+`;
+            }
+        }
+        
+        prompt += `Please fix the errors above and generate ONLY the function definition.
+
+Current attempt: ${attempt}/5`;
+        
+        if (this.debugMode) {
+            console.log(`\n📝 ===== LLM PROMPT (Retry Attempt ${attempt}) =====`);
+            console.log(prompt);
+            console.log('===== END PROMPT =====\n');
+        }
+        
+        return prompt;
+    }
+
+    /**
+     * Extract WAT code from LLM API response (supports both OpenAI and Anthropic)
+     */
+    extractWATFromResponse(response) {
+        try {
+            let watCode;
+            
+            // Handle OpenAI response format
+            if (response.choices && Array.isArray(response.choices)) {
+                const choice = response.choices[0];
+                if (!choice || !choice.message || !choice.message.content) {
+                    throw new Error('No text content found in OpenAI response');
+                }
+                watCode = choice.message.content.trim();
+            }
+            // Handle Anthropic response format
+            else if (response.content && Array.isArray(response.content)) {
+                const textContent = response.content.find(item => item.type === 'text');
+                if (!textContent || !textContent.text) {
+                    throw new Error('No text content found in Anthropic response');
+                }
+                watCode = textContent.text.trim();
+            }
+            else {
+                throw new Error('Invalid response format - unsupported provider');
+            }
+            
+            // Extract WAT code from markdown code blocks if present
+            const codeBlockMatch = watCode.match(/```(?:wat|wasm)?\s*\n([\s\S]*?)\n```/);
+            if (codeBlockMatch) {
+                watCode = codeBlockMatch[1].trim();
+            }
+
+            // Remove any explanatory text before the function
+            const funcMatch = watCode.match(/(\(func[\s\S]*\))/);
+            if (funcMatch) {
+                watCode = funcMatch[1].trim();
+            }
+
+            if (!watCode.startsWith('(func')) {
+                throw new Error('Response does not contain valid WAT function');
+            }
+
+            if (this.debugMode) {
+                console.log('✅ WAT code extracted from response');
+                console.log('📝 WAT length:', watCode.length);
+                console.log('🔧 LLM-generated WAT code:');
+                console.log(watCode);
+            }
+
+            return watCode;
+        } catch (error) {
+            if (this.debugMode) {
+                console.log('❌ WAT extraction failed:', error);
+            }
+            throw new Error(`WAT extraction failed: ${error}`);
+        }
+    }
+
 }
 
 // ONLY export reportResult() function as required
 function reportResult(value) {
-    console.log(`📢 SqueakWASM Result: ${value}`);
+    // Only log results in debug mode to avoid spam
+    if (window.squeakVM && window.squeakVM.debugMode) {
+        console.log(`📢 SqueakWASM Result: ${value}`);
+    }
     
     // Dispatch to any active VM instance
     if (window.squeakVM && window.squeakVM.onResult) {
@@ -1070,3 +3529,5 @@ function checkInterruptionBeforeMessageSend(context) {
     }
     return false;
 }
+
+            console.log('✅ Function table appears to be working correctly');

@@ -1,0 +1,177 @@
+   0x0 | 00 61 73 6d | version 1 (Module)
+       | 01 00 00 00
+   0x8 | 01 1a       | type section
+   0xa | 05          | 5 count
+--- rec group 0 (implicit) ---
+   0xb | 60 01 6d 01 | [type 0] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref)], results: [Ref(eqref)] }), shared: false } }
+       | 6d         
+--- rec group 1 (implicit) ---
+  0x10 | 60 02 6d 7f | [type 1] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref), I32], results: [Ref(eqref)] }), shared: false } }
+       | 01 6d      
+--- rec group 2 (implicit) ---
+  0x16 | 60 01 6d 01 | [type 2] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref)], results: [I32] }), shared: false } }
+       | 7f         
+--- rec group 3 (implicit) ---
+  0x1b | 60 01 7f 01 | [type 3] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [I32], results: [Ref(eqref)] }), shared: false } }
+       | 6d         
+--- rec group 4 (implicit) ---
+  0x20 | 60 01 6d 00 | [type 4] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref)], results: [] }), shared: false } }
+  0x24 | 02 77       | import section
+  0x26 | 05          | 5 count
+  0x27 | 03 65 6e 76 | import [func 0] Import { module: "env", name: "getContextReceiver", ty: Func(0) }
+       | 12 67 65 74
+       | 43 6f 6e 74
+       | 65 78 74 52
+       | 65 63 65 69
+       | 76 65 72 00
+       | 00         
+  0x40 | 03 65 6e 76 | import [func 1] Import { module: "env", name: "getContextLiteral", ty: Func(1) }
+       | 11 67 65 74
+       | 43 6f 6e 74
+       | 65 78 74 4c
+       | 69 74 65 72
+       | 61 6c 00 01
+  0x58 | 03 65 6e 76 | import [func 2] Import { module: "env", name: "extractIntegerValue", ty: Func(2) }
+       | 13 65 78 74
+       | 72 61 63 74
+       | 49 6e 74 65
+       | 67 65 72 56
+       | 61 6c 75 65
+       | 00 02      
+  0x72 | 03 65 6e 76 | import [func 3] Import { module: "env", name: "createSmallInteger", ty: Func(3) }
+       | 12 63 72 65
+       | 61 74 65 53
+       | 6d 61 6c 6c
+       | 49 6e 74 65
+       | 67 65 72 00
+       | 03         
+  0x8b | 03 65 6e 76 | import [func 4] Import { module: "env", name: "pushOnStack", ty: Func(4) }
+       | 0b 70 75 73
+       | 68 4f 6e 53
+       | 74 61 63 6b
+       | 00 04      
+  0x9d | 03 02       | func section
+  0x9f | 01          | 1 count
+  0xa0 | 02          | [func 5] type 2
+  0xa1 | 0a 71       | code section
+  0xa3 | 01          | 1 count
+============== func 5 ====================
+  0xa4 | 6f          | size of function
+  0xa5 | 02          | 2 local blocks
+  0xa6 | 01 6d       | 1 locals of type Ref(eqref)
+  0xa8 | 01 7f       | 1 locals of type I32
+  0xaa | 20 00       | local_get local_index:0
+  0xac | 10 00       | call function_index:0
+  0xae | 22 01       | local_tee local_index:1
+  0xb0 | 10 02       | call function_index:2
+  0xb2 | 41 01       | i32_const value:1
+  0xb4 | 6a          | i32_add
+  0xb5 | 41 02       | i32_const value:2
+  0xb7 | 6c          | i32_mul
+  0xb8 | 41 02       | i32_const value:2
+  0xba | 6a          | i32_add
+  0xbb | 41 03       | i32_const value:3
+  0xbd | 6c          | i32_mul
+  0xbe | 41 03       | i32_const value:3
+  0xc0 | 6a          | i32_add
+  0xc1 | 41 02       | i32_const value:2
+  0xc3 | 6c          | i32_mul
+  0xc4 | 41 01       | i32_const value:1
+  0xc6 | 6a          | i32_add
+  0xc7 | 41 02       | i32_const value:2
+  0xc9 | 6c          | i32_mul
+  0xca | 41 02       | i32_const value:2
+  0xcc | 6a          | i32_add
+  0xcd | 41 03       | i32_const value:3
+  0xcf | 6c          | i32_mul
+  0xd0 | 41 03       | i32_const value:3
+  0xd2 | 6a          | i32_add
+  0xd3 | 41 02       | i32_const value:2
+  0xd5 | 6c          | i32_mul
+  0xd6 | 41 01       | i32_const value:1
+  0xd8 | 6a          | i32_add
+  0xd9 | 41 02       | i32_const value:2
+  0xdb | 6c          | i32_mul
+  0xdc | 41 02       | i32_const value:2
+  0xde | 6a          | i32_add
+  0xdf | 41 03       | i32_const value:3
+  0xe1 | 6c          | i32_mul
+  0xe2 | 41 03       | i32_const value:3
+  0xe4 | 6a          | i32_add
+  0xe5 | 41 02       | i32_const value:2
+  0xe7 | 6c          | i32_mul
+  0xe8 | 41 01       | i32_const value:1
+  0xea | 6a          | i32_add
+  0xeb | 41 02       | i32_const value:2
+  0xed | 6c          | i32_mul
+  0xee | 41 02       | i32_const value:2
+  0xf0 | 6a          | i32_add
+  0xf1 | 41 03       | i32_const value:3
+  0xf3 | 6c          | i32_mul
+  0xf4 | 41 03       | i32_const value:3
+  0xf6 | 6a          | i32_add
+  0xf7 | 41 02       | i32_const value:2
+  0xf9 | 6c          | i32_mul
+  0xfa | 41 01       | i32_const value:1
+  0xfc | 6a          | i32_add
+  0xfd | 41 02       | i32_const value:2
+  0xff | 6c          | i32_mul
+ 0x100 | 41 02       | i32_const value:2
+ 0x102 | 6a          | i32_add
+ 0x103 | 41 03       | i32_const value:3
+ 0x105 | 6c          | i32_mul
+ 0x106 | 41 03       | i32_const value:3
+ 0x108 | 6a          | i32_add
+ 0x109 | 41 02       | i32_const value:2
+ 0x10b | 6c          | i32_mul
+ 0x10c | 10 03       | call function_index:3
+ 0x10e | 10 04       | call function_index:4
+ 0x110 | 1a          | drop
+ 0x111 | 41 01       | i32_const value:1
+ 0x113 | 0b          | end
+ 0x114 | 00 91 01    | custom section
+ 0x117 | 04 6e 61 6d | name: "name"
+       | 65         
+ 0x11c | 01 6c       | function name section
+ 0x11e | 06          | 6 count
+ 0x11f | 00 12 67 65 | Naming { index: 0, name: "getContextReceiver" }
+       | 74 43 6f 6e
+       | 74 65 78 74
+       | 52 65 63 65
+       | 69 76 65 72
+ 0x133 | 01 11 67 65 | Naming { index: 1, name: "getContextLiteral" }
+       | 74 43 6f 6e
+       | 74 65 78 74
+       | 4c 69 74 65
+       | 72 61 6c   
+ 0x146 | 02 13 65 78 | Naming { index: 2, name: "extractIntegerValue" }
+       | 74 72 61 63
+       | 74 49 6e 74
+       | 65 67 65 72
+       | 56 61 6c 75
+       | 65         
+ 0x15b | 03 12 63 72 | Naming { index: 3, name: "createSmallInteger" }
+       | 65 61 74 65
+       | 53 6d 61 6c
+       | 6c 49 6e 74
+       | 65 67 65 72
+ 0x16f | 04 0b 70 75 | Naming { index: 4, name: "pushOnStack" }
+       | 73 68 4f 6e
+       | 53 74 61 63
+       | 6b         
+ 0x17c | 05 0c 6a 69 | Naming { index: 5, name: "jit_method_0" }
+       | 74 5f 6d 65
+       | 74 68 6f 64
+       | 5f 30      
+ 0x18a | 02 1c       | local section
+ 0x18c | 01          | 1 count
+ 0x18d | 05          | function 5 local name section
+ 0x18e | 03          | 3 count
+ 0x18f | 00 07 63 6f | Naming { index: 0, name: "context" }
+       | 6e 74 65 78
+       | 74         
+ 0x198 | 01 08 72 65 | Naming { index: 1, name: "receiver" }
+       | 63 65 69 76
+       | 65 72      
+ 0x1a2 | 02 04 74 65 | Naming { index: 2, name: "temp" }
+       | 6d 70      

@@ -3,7 +3,7 @@
 (module
  ;; Import external functions from JavaScript
  (import "env" "reportResult" (func $reportResult (param i32)))
- (import "env" "compileMethod" (func $compileMethod (param i32 i32 i32) (result i32))) ;; (methodPtr, bytecodePtr, bytecodeLen) -> function
+ (import "env" "compileMethod" (func $compileMethod (param i32 i32))) ;; (methodPtr, bytecodeLen) -> function
  (import "env" "debugLog" (func $debugLog (param i32 i32 i32))) ;; level, message, length
 
  (rec
@@ -29,7 +29,7 @@
 					    (field $format (mut i32))
 					    (field $size (mut i32))
 					    (field $nextObject (mut (ref null $SqueakObject)))
-					    (field $slots (mut (ref null $ObjectArray)))
+					    (field $slots (mut (ref $ObjectArray)))
 					    )))
   
   ;; Type 4: Symbol objects for method selectors with named fields
@@ -39,7 +39,7 @@
 				      (field $format (mut i32))
 				      (field $size (mut i32))
 				      (field $nextObject (mut (ref null $SqueakObject)))
-				      (field $slots (mut (ref null $ObjectArray)))
+				      (field $slots (mut (ref $ObjectArray)))
 				      (field $bytes (ref null $ByteArray))
 				      )))
   
@@ -50,11 +50,11 @@
 				     (field $format (mut i32))
 				     (field $size (mut i32))
 				     (field $nextObject (mut (ref null $SqueakObject)))
-				     (field $slots (mut (ref null $ObjectArray)))
+				     (field $slots (mut (ref $ObjectArray)))
 				     (field $superclass (mut (ref null $Class)))
-				     (field $methodDict (mut (ref null $Dictionary)))
-				     (field $instVarNames (mut (ref null $SqueakObject)))
-				     (field $name (mut (ref null $Symbol)))
+				     (field $methodDict (mut (ref $Dictionary)))
+				     (field $instVarNames (mut (ref $ObjectArray)))
+				     (field $name (mut (ref $Symbol)))
 				     (field $instSize (mut i32))
 				     )))
   
@@ -65,9 +65,9 @@
 					  (field $format (mut i32))
 					  (field $size (mut i32))
 					  (field $nextObject (mut (ref null $SqueakObject)))
-					  (field $slots (mut (ref null $ObjectArray)))
-					  (field $keys (ref null $ObjectArray))
-					  (field $values (ref null $ObjectArray))
+					  (field $slots (mut (ref $ObjectArray)))
+					  (field $keys (ref $ObjectArray))
+					  (field $values (ref $ObjectArray))
 					  (field $count (mut i32))
 					  )))
   
@@ -78,12 +78,13 @@
 					      (field $format (mut i32))
 					      (field $size (mut i32))
 					      (field $nextObject (mut (ref null $SqueakObject)))
-					      (field $slots (mut (ref null $ObjectArray)))
+					      (field $slots (mut (ref $ObjectArray)))
 					      (field $header i32)
 					      (field $bytecodes (ref null $ByteArray))
 					      (field $invocationCount (mut i32))
 					      (field $compiledFunc (mut i32))  ;; Index into function table
 					      (field $jitThreshold i32)
+					      (field $isInstalled (mut i32))   ;; 0 = not installed, 1 = installed
 					      )))
   
   ;; Type 8: Context objects for execution state with named fields
@@ -93,15 +94,15 @@
 				       (field $format (mut i32))
 				       (field $size (mut i32))
 				       (field $nextObject (mut (ref null $SqueakObject)))
-				       (field $slots (mut (ref null $ObjectArray)))
+				       (field $slots (mut (ref $ObjectArray)))
 				       (field $sender (mut (ref null $Context)))
 				       (field $pc (mut i32))
 				       (field $sp (mut i32))
 				       (field $method (mut (ref null $CompiledMethod)))
 				       (field $receiver (mut (ref null eq)))
-				       (field $args (mut (ref null $ObjectArray)))
-				       (field $temps (mut (ref null $ObjectArray)))
-				       (field $stack (mut (ref null $ObjectArray)))
+				       (field $args (mut (ref $ObjectArray)))
+				       (field $temps (mut (ref $ObjectArray)))
+				       (field $stack (mut (ref $ObjectArray)))
 				       )))
   
   ;; Type 9: Polymorphic Inline Cache entry
@@ -113,7 +114,7 @@
                    ))
   
   ;; Type 10: JIT function type
-  (type $jit_func_type (func (param (ref null $Context)) (result i32)))
+  (type $jit_func_type (func (param eqref) (result i32)))
   )
 
  ;; Global VM state
@@ -133,7 +134,7 @@
  (global $falseObject (mut (ref null eq)) (ref.null eq))
  
  ;; Special selectors for quick sends
- (global $squaredSelector (mut (ref null eq)) (ref.null eq))
+ (global $workloadSelector (mut (ref null eq)) (ref.null eq))
  
  ;; VM execution state
  (global $activeContext (mut (ref null $Context)) (ref.null $Context))
@@ -145,7 +146,7 @@
  (global $objectCount (mut i32) (i32.const 0))
  
  ;; JIT compilation globals and method cache
- (global $jitThreshold (mut i32) (i32.const 10))
+ (global $jitThreshold (mut i32) (i32.const 1000))
  (global $jitEnabled (mut i32) (i32.const 1))
  (global $totalCompilations (mut i32) (i32.const 0))
  
@@ -153,17 +154,264 @@
  (global $methodCacheSize (mut i32) (i32.const 256))
  (global $methodCache (mut (ref null $ObjectArray)) (ref.null $ObjectArray))
 
+ ;; NOTE: These globals are nullable due to WebAssembly limitations, but are enforced to be non-null after initialization at runtime.
+
  ;; Function table for compiled methods
  (table $funcTable (export "funcTable") 100 funcref)
  
- ;; Memory for JIT compilation - bytecode data transfer
- (memory $jitMemory (export "jitMemory") 1)
+ (memory (export "memory") 1)
+ 
+ ;; Export commonly used functions for JIT compilation
+ (func (export "getCompiledMethodBytecodes") (param (ref null $CompiledMethod)) (result (ref null $ByteArray))
+       local.get 0
+       struct.get $CompiledMethod $bytecodes)
+
+ (func (export "getCompiledMethodById") (param i32) (result (ref null $CompiledMethod))
+       ;; Stack: [id]
+       (local $targetHash i32)
+       (local $currentObject (ref null $SqueakObject))
+       (local $currentHash i32)
+       
+       local.get 0                ;; Stack: [id]
+       local.set $targetHash      ;; Stack: []
+       
+       ;; Start with first object
+       global.get $firstObject    ;; Stack: [firstObject]
+       local.set $currentObject   ;; Stack: []
+       
+       ;; Traverse object chain
+       loop $search_loop
+       local.get $currentObject ;; Stack: [currentObject]
+       ref.is_null              ;; Stack: [isNull]
+       if                       ;; Stack: []
+       ;; Reached end of object list - method not found
+       ref.null $CompiledMethod ;; Stack: [null]
+       return                 ;; Stack: []
+       end ;; if
+       
+       ;; Get identity hash of current object
+       local.get $currentObject ;; Stack: [currentObject]
+       ref.as_non_null          ;; Stack: [currentObject (non-null)]
+       struct.get $SqueakObject $identityHash ;; Stack: [identityHash]
+       local.set $currentHash   ;; Stack: []
+       
+       ;; Check if this is the method we're looking for
+       local.get $currentHash   ;; Stack: [currentHash]
+       local.get $targetHash    ;; Stack: [currentHash, targetHash]
+       i32.eq                  ;; Stack: [isEq]
+       if                      ;; Stack: []
+       ;; Found it! Cast to CompiledMethod and return
+       local.get $currentObject ;; Stack: [currentObject]
+       ref.cast (ref $CompiledMethod) ;; Stack: [compiledMethod]
+       return               ;; Stack: []
+       end ;; if
+       
+       ;; Move to next object
+       local.get $currentObject ;; Stack: [currentObject]
+       ref.as_non_null          ;; Stack: [currentObject (non-null)]
+       struct.get $SqueakObject $nextObject ;; Stack: [nextObject]
+       local.set $currentObject ;; Stack: []
+       
+       br $search_loop          ;; Stack: []
+       end ;; loop $search_loop
+       
+       ref.null $CompiledMethod   ;; Stack: [null]
+       )
+ 
+ (func (export "setCompiledFuncIndex") (param (ref null $CompiledMethod)) (param i32)
+       local.get 0
+       local.get 1
+       struct.set $CompiledMethod $compiledFunc
+       ) 
+
+ (func (export "pushOnStack") (param $context eqref) (param $value eqref)
+       local.get $context
+       ref.cast (ref null $Context)
+       local.get $value
+       call $pushOnStack)
+ 
+ (func (export "popFromStack") (param $context eqref) (result eqref)
+       local.get $context
+       ref.cast (ref null $Context)
+       call $popFromStack)
+ 
+ (func (export "extractIntegerValue") (param $obj (ref null eq)) (result i32)
+       local.get $obj
+       call $extractIntegerValue)
+ 
+ (func (export "createSmallInteger") (param $value i32) (result eqref)
+       local.get $value
+       call $createSmallInteger)
+ 
+ (func (export "getClass") (param $obj eqref) (result eqref)
+       local.get $obj
+       call $getClass)
+ 
+ (func (export "lookupInCache") (param $selector eqref) (param $receiverClass eqref) (result eqref)
+       local.get $selector
+       local.get $receiverClass
+       ref.cast (ref null $Class)
+       call $lookupInCache)
+ 
+ (func (export "lookupMethod") (param $receiver eqref) (param $selector eqref) (result eqref)
+       local.get $receiver
+       local.get $selector
+       call $lookupMethod)
+ 
+ (func (export "storeInCache") (param $selector eqref) (param $receiverClass eqref) (param $method eqref)
+       local.get $method
+       ref.cast (ref null $CompiledMethod)
+       ref.is_null
+       if
+       return
+       end
+       local.get $selector
+       local.get $receiverClass
+       ref.cast (ref null $Class)
+       local.get $method
+       ref.cast (ref null $CompiledMethod)
+       ref.as_non_null
+       call $storeInCache)
+ 
+ (func (export "createMethodContext") (param $receiver eqref) (param $method eqref) (param $selector eqref) (result eqref)
+       local.get $method
+       ref.cast (ref null $CompiledMethod)
+       ref.is_null
+       if
+       ref.null $Context
+       return
+       end
+       local.get $receiver
+       local.get $method
+       ref.cast (ref null $CompiledMethod)
+       ref.as_non_null
+       local.get $selector
+       call $createMethodContext)
+ 
+ (func (export "interpretBytecode") (param $context eqref) (param $bytecode i32) (result i32)
+       local.get $context
+       ref.cast (ref null $Context)
+       local.get $bytecode
+       call $interpretBytecode)
+ 
+ (func (export "setActiveContext") (param $context eqref)
+       local.get $context
+       ref.cast (ref null $Context)
+       global.set $activeContext)
+ 
+ (func (export "getActiveContext") (result eqref)
+       global.get $activeContext)
+ 
+ (func (export "getContextReceiver") (param $context eqref) (result eqref)
+       local.get $context
+       ref.cast (ref null $Context)
+       struct.get $Context $receiver)
+
+ (func (export "getCompiledMethodSlots") (param $method eqref) (result eqref)
+       local.get $method
+       ref.cast (ref $CompiledMethod)
+       struct.get $CompiledMethod $slots)
+
+ (func $contextLiteralAt
+       (param $context (ref $Context))
+       (param $index i32)
+       (result eqref)
+
+       local.get $context
+       ref.cast (ref null $Context)
+       struct.get $Context $method
+       struct.get $CompiledMethod $slots
+       ref.cast (ref null $ObjectArray)
+       local.get $index
+       call $array_get_object)
+ 
+ (func (export "getContextLiteral") (param $context eqref) (param $index i32) (result eqref)
+       local.get $context
+       ref.cast (ref $Context)
+       local.get $index
+       call $contextLiteralAt)
+
+ (func (export "getContextMethod") (param $context eqref) (result eqref)
+       local.get $context
+       ref.cast (ref null $Context)
+       struct.get $Context $method)
   
+ (func (export "getObjectArrayElement") (param $array eqref) (param $index i32) (result eqref)
+       local.get $array
+       ref.cast (ref null $ObjectArray)
+       local.get $index
+       call $array_get_object)
+
+ (func (export "getObjectArrayLength") (param $array eqref) (result i32)
+       local.get $array
+       ref.cast (ref null $ObjectArray)
+       call $array_len_object)
+
+ (global $byteArrayCopyPtr (mut i32) (i32.const 1024)) ;; Start of copy buffer
+
+ (func (export "copyByteArrayToMemory") (param (ref null $ByteArray)) (result i32)
+       (local $len i32)
+       (local $i i32)
+       local.get 0
+       ref.is_null
+       if
+       i32.const 0
+       return
+       end
+       local.get 0
+       ref.as_non_null
+       array.len
+       local.set $len
+       i32.const 0
+       local.set $i
+       loop $copy
+       local.get $i
+       local.get $len
+       i32.ge_u
+       if
+       global.get $byteArrayCopyPtr
+       return
+       end
+       global.get $byteArrayCopyPtr
+       local.get $i
+       i32.add
+       local.get 0
+       ref.as_non_null
+       local.get $i
+       array.get_u $ByteArray
+       i32.store8
+       local.get $i
+       i32.const 1
+       i32.add
+       local.set $i
+       br $copy
+       end
+       i32.const 0
+       )
+
+ (func (export "getByteArrayLen") (param (ref null $ByteArray)) (result i32)
+       local.get 0
+       ref.is_null
+       if
+       i32.const 0
+       return
+       end
+       local.get 0
+       ref.as_non_null
+       array.len)
+
  ;; Array operations with proper typing
  (func $array_len_byte
        (param $array (ref null $ByteArray))
        (result i32)
        local.get $array
+       ref.is_null
+       if
+       i32.const 0
+       return
+       end
+       local.get $array
+       ref.as_non_null
        array.len
        ) ;; (func $array_len_byte
  
@@ -171,15 +419,57 @@
        (param $array (ref null $ByteArray))
        (param $index i32)
        (result i32)
+       (local $length i32)
+       
+       ;; Check for null array
+       local.get $array
+       ref.is_null
+       if
+       i32.const 0
+       return
+       end
+       
+       ;; Get array length
+       local.get $array
+       ref.as_non_null
+       array.len
+       local.set $length
+       
+       ;; Check bounds
+       local.get $index
+       i32.const 0
+       i32.lt_s
+       if
+       i32.const 0
+       return
+       end
+       
+       local.get $index
+       local.get $length
+       i32.ge_u
+       if
+       i32.const 0
+       return
+       end
+       
+       ;; Safe to access array
        local.get $array
        local.get $index
        array.get_u $ByteArray
        ) ;; (func $array_get_byte
- 
+
+ ;; Array operations with proper typing
  (func $array_len_object
        (param $array (ref null $ObjectArray))
        (result i32)
        local.get $array
+       ref.is_null
+       if
+       i32.const 0
+       return
+       end
+       local.get $array
+       ref.as_non_null
        array.len
        ) ;; (func $array_len_object
  
@@ -187,6 +477,40 @@
        (param $array (ref null $ObjectArray))
        (param $index i32)
        (result (ref null eq))
+       (local $length i32)
+       
+       ;; Check for null array
+       local.get $array
+       ref.is_null
+       if
+       ref.null eq
+       return
+       end
+       
+       ;; Get array length
+       local.get $array
+       ref.as_non_null
+       array.len
+       local.set $length
+       
+       ;; Check bounds
+       local.get $index
+       i32.const 0
+       i32.lt_s
+       if
+       ref.null eq
+       return
+       end
+       
+       local.get $index
+       local.get $length
+       i32.ge_u
+       if
+       ref.null eq
+       return
+       end
+       
+       ;; Safe to access array
        local.get $array
        local.get $index
        array.get $ObjectArray
@@ -220,16 +544,12 @@
  (func $pushOnStack
        (param $context (ref null $Context))
        (param $value eqref)
-       (local $stack (ref null $ObjectArray))
+       (local $stack (ref $ObjectArray))
        (local $sp i32)
 
        local.get $context
        struct.get $Context $stack
-       local.tee $stack
-       ref.is_null
-       if
-       return
-       end ;; if
+       local.set $stack
 
        local.get $context
        struct.get $Context $sp
@@ -237,7 +557,6 @@
 
        local.get $sp
        local.get $stack
-       ref.as_non_null
        array.len
        i32.ge_u
        if
@@ -245,7 +564,6 @@
        end ;; if
 
        local.get $stack
-       ref.as_non_null
        local.get $sp
        local.get $value
        array.set $ObjectArray
@@ -261,18 +579,13 @@
  (func $popFromStack
        (param $context (ref null $Context))
        (result (ref null eq))
-       (local $stack (ref null $ObjectArray))
+       (local $stack (ref $ObjectArray))
        (local $sp i32)
        
        ;; Get stack and stack pointer
        local.get $context
        struct.get $Context $stack
-       local.tee $stack
-       ref.is_null
-       if
-         ref.null eq
-         return
-       end ;; if
+       local.set $stack
        
        local.get $context
        struct.get $Context $sp
@@ -283,8 +596,8 @@
        i32.const 0
        i32.le_u
        if
-         ref.null eq
-         return
+       ref.null eq
+       return
        end ;; if
        
        ;; Decrement stack pointer
@@ -296,7 +609,6 @@
        
        ;; Return top value
        local.get $stack
-       ref.as_non_null
        local.get $sp
        i32.const 1
        i32.sub
@@ -307,18 +619,13 @@
  (func $topOfStack
        (param $context (ref null $Context))
        (result (ref null eq))
-       (local $stack (ref null $ObjectArray))
+       (local $stack (ref $ObjectArray))
        (local $sp i32)
        
        ;; Get stack and stack pointer
        local.get $context
        struct.get $Context $stack
-       local.tee $stack
-       ref.is_null
-       if
-       ref.null eq
-       return
-       end ;; if
+       local.set $stack
        
        local.get $context
        struct.get $Context $sp
@@ -335,7 +642,6 @@
        
        ;; Return top value without popping
        local.get $stack
-       ref.as_non_null
        local.get $sp
        i32.const 1
        i32.sub
@@ -483,9 +789,9 @@
        end ;; loop $search_loop
        end ;; loop $hierarchy_loop
        
-       ;; Should never reach here
        ref.null $CompiledMethod
-       ) ;; (func $lookupMethod
+       return
+       )
 
  ;; Polymorphic Inline Cache lookup
  (func $lookupInCache
@@ -593,9 +899,9 @@
        br $probe_loop
        end ;; loop $probe_loop
        
-       ;; Should never reach here
        ref.null $CompiledMethod
-       ) ;; (func $lookupInCache
+       return
+       )
 
  ;; Store method in cache
  (func $storeInCache
@@ -650,31 +956,46 @@
        (param $method (ref $CompiledMethod))
        (param $selector (ref null eq))
        (result (ref null $Context))
-       (local $stack (ref null $ObjectArray))
-       
+       (local $stack (ref $ObjectArray))
+       (local $slots (ref $ObjectArray))
+       (local $args (ref $ObjectArray))
+       (local $temps (ref $ObjectArray))
+
        ;; Create new stack for the method
        ref.null eq
        i32.const 20
        array.new $ObjectArray
        local.set $stack
-       
+
+       ;; Create empty arrays for slots, args, temps
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       local.set $slots
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       local.set $args
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       local.set $temps
+
        ;; Create context for method
        global.get $objectClass ;; class (Context is-a Object for now)
        call $nextIdentityHash
        i32.const 14         ;; format (MethodContext)
        i32.const 14         ;; size
        ref.null $SqueakObject ;; nextObject
-       ref.null eq
-       i32.const 8
-       array.new $ObjectArray ;; slots
+       local.get $slots     ;; slots (non-nullable)
        global.get $activeContext  ;; sender (current context)
        i32.const 0          ;; pc
        i32.const 0          ;; sp
        local.get $method    ;; method
        local.get $receiver  ;; receiver
-       ref.null $ObjectArray ;; args
-       ref.null $ObjectArray ;; temps
-       local.get $stack     ;; stack
+       local.get $args      ;; args (non-nullable)
+       local.get $temps     ;; temps (non-nullable)
+       local.get $stack     ;; stack (non-nullable)
        struct.new $Context
        ) ;; (func $createMethodContext
 
@@ -702,68 +1023,8 @@
        local.get $method
        struct.get $CompiledMethod $compiledFunc
        i32.const 0
-       i32.ne
+       i32.gt_u  ;; Check if > 0 (since we start at index 1)
        ) ;; (func $hasCompiledFunction (param $method (ref $CompiledMethod)) (result i32)
-
- ;; Copy bytecode array to linear memory for JIT compilation
- (func $copyBytecodesToMemory
-       (param $bytecodes (ref null $ByteArray))
-       (param $memoryOffset i32)
-       (result i32)
-       (local $len i32)
-       (local $i i32)
-       (local $bytecode i32)
-       
-       ;; Get bytecode array length
-       local.get $bytecodes
-       ref.is_null
-       if
-       i32.const 0
-       return
-       end ;; if
-       
-       local.get $bytecodes
-       ref.as_non_null
-       array.len
-       local.set $len
-       
-       ;; Copy each bytecode to memory
-       i32.const 0
-       local.set $i
-       
-       loop $copy_loop
-       local.get $i
-       local.get $len
-       i32.ge_u
-       if
-       local.get $len
-       return
-       end ;; if
-       
-       ;; Get bytecode at index i
-       local.get $bytecodes
-       ref.as_non_null
-       local.get $i
-       array.get_u $ByteArray
-       local.set $bytecode
-       
-       ;; Store in memory
-       local.get $memoryOffset
-       local.get $i
-       i32.add
-       local.get $bytecode
-       i32.store8
-       
-       ;; Increment i
-       local.get $i
-       i32.const 1
-       i32.add
-       local.set $i
-       br $copy_loop
-       end ;; loop $copy_loop
-       
-       local.get $len
-       ) ;; (func $copyBytecodesToMemory
 
  ;; Execute compiled WASM function by calling it directly
  (func $executeCompiledFunction 
@@ -773,9 +1034,8 @@
        ;; Call the compiled function directly using call_indirect
        ;; The function should operate on the context and return 0 for success
        local.get $context
-       ref.as_non_null
        local.get $funcIndex
-       call_indirect (type $jit_func_type)
+       call_indirect (param eqref) (result i32)
        ) ;; (func $executeCompiledFunction
 
  ;; Trigger JIT compilation for hot method
@@ -800,39 +1060,11 @@
        array.len
        local.set $bytecodeLen
        
-       ;; Copy bytecodes to memory starting at offset 0
-       i32.const 0
-       local.set $memoryOffset
-       
-       local.get $bytecodes
-       local.get $memoryOffset
-       call $copyBytecodesToMemory
-       local.set $bytecodeLen  ;; Update with actual copied length
-       
-       ;; Call JavaScript JIT compiler with memory pointer
+       ;; Call JavaScript JIT compiler with method info
        local.get $method
        struct.get $CompiledMethod $identityHash
-       local.get $memoryOffset  ;; Memory pointer to bytecode data
        local.get $bytecodeLen   ;; Length of bytecode data
        call $compileMethod
-       local.set $compiledFuncIndex
-       
-       ;; Store compiled function if successful
-       local.get $compiledFuncIndex
-       i32.const 0
-       i32.ne
-       if
-       ;; Store function index in method
-       local.get $method
-       local.get $compiledFuncIndex
-       struct.set $CompiledMethod $compiledFunc
-       
-       ;; Increment compilation count
-       global.get $totalCompilations
-       i32.const 1
-       i32.add
-       global.set $totalCompilations
-       end ;; if
        ) ;; (func $triggerJITCompilation (param $method (ref $CompiledMethod))
 
  ;; Handle method return and context switching
@@ -887,194 +1119,478 @@
 
  ;; VM initialization and bootstrap
  (func $initialize (export "initialize") (result i32)
-       ;; Create minimal object memory for 3 squared example
+       ;; Create minimal object memory for 3 workload example
        call $createMinimalBootstrap
        ) ;; (func $initialize (export "initialize") (result i32)
 
- ;; Create minimal bootstrap environment for 3 squared
+ ;; Create minimal bootstrap environment for 3 workload
  (func $createMinimalBootstrap (result i32)
-       (local $squaredMethod (ref $CompiledMethod))
-       (local $mainBytecodes (ref $ByteArray))
-       (local $squaredBytecodes (ref $ByteArray))
-       (local $methodDict (ref $Dictionary))
+       (local $workloadMethod (ref null $CompiledMethod))
+       (local $mainMethod (ref null $CompiledMethod))
+       (local $mainBytecodes (ref null $ByteArray))
+       (local $workloadBytecodes (ref null $ByteArray))
+       (local $workloadSelector (ref null $Symbol))
+       (local $methodDict (ref null $Dictionary))
+       (local $newObject (ref null $SqueakObject))
+       (local $slots (ref $ObjectArray))
+       (local $keys (ref $ObjectArray))
+       (local $values (ref $ObjectArray))
+       (local $emptyDict (ref $Dictionary))
+       (local $emptySymbol (ref $Symbol))
+       (local $emptyInstVarNames (ref $ObjectArray))
+       (local $workloadSlots (ref $ObjectArray))
        
        ;; Initialize method cache
        ref.null eq
        global.get $methodCacheSize
        array.new $ObjectArray
+       ref.as_non_null
        global.set $methodCache
        
+       ;; Create minimal objects for non-nullable fields
+       ;; Empty Dictionary for methodDict
+       global.get $objectClass ;; class (ref null $Class)
+       call $nextIdentityHash
+       i32.const 2         ;; format (variable object)
+       i32.const 9         ;; size
+       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       ref.as_non_null      ;; $slots (non-nullable)
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       i32.const 0         ;; count
+       struct.new $Dictionary
+       local.set $emptyDict
+
+       ;; Empty Symbol for name
+       global.get $objectClass ;; class (ref null $Class)
+       call $nextIdentityHash
+       i32.const 8         ;; format (byte object)
+       i32.const 7         ;; size
+       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       ref.as_non_null
+       ref.null $ByteArray
+       struct.new $Symbol
+       local.set $emptySymbol
+
+       ;; Empty ObjectArray for instVarNames (array of $Symbol, but empty for bootstrap)
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       ref.as_non_null
+       local.set $emptyInstVarNames
+
        ;; Create Class class first (bootstrap issue)
        ref.null $Class     ;; class (will be set to itself)
        call $nextIdentityHash
        i32.const 1         ;; format (regular object)
        i32.const 11        ;; size
-       ref.null $SqueakObject ;; nextObject
+       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
        ref.null eq
-       i32.const 6
-       array.new $ObjectArray ;; slots
-       ref.null $Class     ;; superclass
-       ref.null $Dictionary ;; methodDict
-       ref.null $SqueakObject ;; instVarNames
-       ref.null $Symbol    ;; name
+       i32.const 0
+       array.new $ObjectArray
+       ref.as_non_null      ;; $slots (non-nullable)
+       ref.null $Class     ;; superclass (nullable)
+       local.get $emptyDict ;; methodDict (non-nullable)
+       local.get $emptyInstVarNames ;; instVarNames (non-nullable $ObjectArray)
+       local.get $emptySymbol ;; name (non-nullable)
        i32.const 0         ;; instSize
        struct.new $Class
+       local.set $newObject
+       local.get $newObject
+       ref.cast (ref null $Class)
        global.set $classClass
-       
-       ;; Set Class class to itself (bootstrap)
        global.get $classClass
-       global.get $classClass
+       ;; Set its own class field to itself (must be (ref null $Class))
+       local.get $newObject
+       ref.cast (ref null $Class)
        struct.set $Class $class
-       
+       ;; For the very first object, set both $firstObject and $lastObject
+       local.get $newObject
+       global.set $firstObject
+       local.get $newObject
+       global.set $lastObject
+
        ;; Create Object class
-       global.get $classClass ;; class
+       global.get $classClass ;; class (ref null $Class)
        call $nextIdentityHash
        i32.const 1         ;; format
        i32.const 11        ;; size
-       ref.null $SqueakObject ;; nextObject
+       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
        ref.null eq
-       i32.const 6
-       array.new $ObjectArray ;; slots
-       ref.null $Class     ;; superclass (nil for Object)
-       ref.null $Dictionary ;; methodDict
-       ref.null $SqueakObject ;; instVarNames
-       ref.null $Symbol    ;; name
+       i32.const 0
+       array.new $ObjectArray
+       ref.as_non_null      ;; $slots (non-nullable)
+       ref.null $Class     ;; superclass (ref null $Class)
+       local.get $emptyDict ;; methodDict (non-nullable)
+       local.get $emptyInstVarNames ;; instVarNames (non-nullable $ObjectArray)
+       local.get $emptySymbol ;; name (non-nullable)
        i32.const 0         ;; instSize
        struct.new $Class
+       local.set $newObject
+       ;; Link this object to the chain
+       global.get $lastObject
+       ref.as_non_null
+       local.get $newObject
+       struct.set $SqueakObject $nextObject
+       local.get $newObject
+       global.set $lastObject
+       local.get $newObject
+       ref.cast (ref null $Class)
        global.set $objectClass
-       
+
        ;; Create SmallInteger class
-       global.get $classClass ;; class
+       global.get $classClass ;; class (ref null $Class)
        call $nextIdentityHash
        i32.const 1         ;; format
        i32.const 11        ;; size
-       ref.null $SqueakObject ;; nextObject
+       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
        ref.null eq
-       i32.const 6
-       array.new $ObjectArray ;; slots
-       global.get $objectClass ;; superclass (Object)
-       ref.null $Dictionary ;; methodDict (will be created)
-       ref.null $SqueakObject ;; instVarNames
-       ref.null $Symbol    ;; name
+       i32.const 0
+       array.new $ObjectArray
+       ref.as_non_null      ;; $slots (non-nullable)
+       global.get $objectClass ;; superclass (class Object)
+       ref.cast (ref null $Class)
+       local.get $emptyDict ;; methodDict (non-nullable)
+       local.get $emptyInstVarNames ;; instVarNames (non-nullable $ObjectArray)
+       local.get $emptySymbol ;; name (non-nullable)
        i32.const 0         ;; instSize
        struct.new $Class
+       local.set $newObject
+       ;; Link this object to the chain
+       global.get $lastObject
+       ref.as_non_null
+       local.get $newObject
+       struct.set $SqueakObject $nextObject
+       local.get $newObject
+       global.set $lastObject
+       local.get $newObject
+       ref.cast (ref null $Class)
        global.set $smallIntegerClass
 
        ;; Create method dictionary for SmallInteger
-       global.get $objectClass ;; class (Dictionary is-a Object for now)
+       global.get $objectClass ;; class (ref null $Class)
        call $nextIdentityHash
        i32.const 2         ;; format (variable object)
        i32.const 9         ;; size
-       ref.null $SqueakObject ;; nextObject
+       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
        ref.null eq
-       i32.const 2
-       array.new $ObjectArray ;; slots
+       i32.const 0
+       array.new $ObjectArray
+       ref.as_non_null      ;; $slots (non-nullable)
        ref.null eq
-       i32.const 2
-       array.new $ObjectArray ;; keys
+       i32.const 1
+       array.new $ObjectArray
+       ref.as_non_null      ;; $keys (non-nullable)
        ref.null eq
-       i32.const 2
-       array.new $ObjectArray ;; values
+       i32.const 1
+       array.new $ObjectArray
+       ref.as_non_null      ;; $values (non-nullable)
        i32.const 0         ;; count
        struct.new $Dictionary
+       local.set $newObject
+       ;; Link this object to the chain
+       global.get $lastObject
+       ref.as_non_null
+       local.get $newObject
+       struct.set $SqueakObject $nextObject
+       local.get $newObject
+       global.set $lastObject
+       local.get $newObject
+       ref.cast (ref null $Dictionary)
        local.set $methodDict
+
+       ;; Create bytecodes for main method: [push_receiver, send_workload, return]
+       i32.const 0x70      ;; push_receiver 
+       i32.const 0xD0      ;; send_workload
+       i32.const 0x7C      ;; return_top
+       array.new_fixed $ByteArray 3
+       local.set $mainBytecodes
+
+       ;; Create simple repetitive computation: iterative arithmetic progression (~100μs target)
+       ;;
+       ;; ALGORITHM EXPLANATION:
+       ;; This workload method performs a simple iterative arithmetic progression that's easy for LLMs to understand and optimize.
+       ;; 
+       ;; Pattern (repeated 15 times):
+       ;; 1. result = (receiver + 1) * 2
+       ;; 2. result = (result + 2) * 3  
+       ;; 3. result = (result + 3) * 2
+       ;;
+       ;; This creates a simple, predictable pattern that:
+       ;; - Is easy for an LLM to analyze and understand
+       ;; - Has clear optimization opportunities (can be reduced to a mathematical formula)
+       ;; - Takes sufficient time when interpreted (~45 operations × 15 iterations = ~90μs)
+       ;; - Has predictable, testable results
+       ;;
+       ;; With receiver = 100, this performs 45 arithmetic operations in a simple pattern
+       ;; that an LLM can easily translate to optimized WAT code.
+       ;;
+       ;; Simple repetitive pattern (15 iterations of 3-operation sequence)
+       i32.const 0x70      ;; push_receiver (start with receiver)
        
-       ;; Install method dictionary in SmallInteger class
-       global.get $smallIntegerClass
-       local.get $methodDict
-       struct.set $Class $methodDict
+       ;; Iteration 1
+       i32.const 0x21      ;; push literal 1
+       i32.const 0xB0      ;; add (receiver + 1)
+       i32.const 0x22      ;; push literal 2  
+       i32.const 0xB8      ;; multiply (* 2)
+       i32.const 0x22      ;; push literal 2
+       i32.const 0xB0      ;; add (+ 2)
+       i32.const 0x23      ;; push literal 3
+       i32.const 0xB8      ;; multiply (* 3)
+       i32.const 0x23      ;; push literal 3
+       i32.const 0xB0      ;; add (+ 3)
+       i32.const 0x22      ;; push literal 2
+       i32.const 0xB8      ;; multiply (* 2)
        
-       ;; Create #squared selector symbol
-       global.get $objectClass ;; class (Symbol is-a Object for now)
+       ;; Iteration 2 (same pattern)
+       i32.const 0x21      ;; push literal 1
+       i32.const 0xB0      ;; add (+ 1)
+       i32.const 0x22      ;; push literal 2  
+       i32.const 0xB8      ;; multiply (* 2)
+       i32.const 0x22      ;; push literal 2
+       i32.const 0xB0      ;; add (+ 2)
+       i32.const 0x23      ;; push literal 3
+       i32.const 0xB8      ;; multiply (* 3)
+       i32.const 0x23      ;; push literal 3
+       i32.const 0xB0      ;; add (+ 3)
+       i32.const 0x22      ;; push literal 2
+       i32.const 0xB8      ;; multiply (* 2)
+       
+       ;; Iteration 3
+       i32.const 0x21      ;; push literal 1
+       i32.const 0xB0      ;; add (+ 1)
+       i32.const 0x22      ;; push literal 2  
+       i32.const 0xB8      ;; multiply (* 2)
+       i32.const 0x22      ;; push literal 2
+       i32.const 0xB0      ;; add (+ 2)
+       i32.const 0x23      ;; push literal 3
+       i32.const 0xB8      ;; multiply (* 3)
+       i32.const 0x23      ;; push literal 3
+       i32.const 0xB0      ;; add (+ 3)
+       i32.const 0x22      ;; push literal 2
+       i32.const 0xB8      ;; multiply (* 2)
+       
+       ;; Iteration 4
+       i32.const 0x21      ;; push literal 1
+       i32.const 0xB0      ;; add (+ 1)
+       i32.const 0x22      ;; push literal 2  
+       i32.const 0xB8      ;; multiply (* 2)
+       i32.const 0x22      ;; push literal 2
+       i32.const 0xB0      ;; add (+ 2)
+       i32.const 0x23      ;; push literal 3
+       i32.const 0xB8      ;; multiply (* 3)
+       i32.const 0x23      ;; push literal 3
+       i32.const 0xB0      ;; add (+ 3)
+       i32.const 0x22      ;; push literal 2
+       i32.const 0xB8      ;; multiply (* 2)
+       
+       ;; Iteration 5
+       i32.const 0x21      ;; push literal 1
+       i32.const 0xB0      ;; add (+ 1)
+       i32.const 0x22      ;; push literal 2  
+       i32.const 0xB8      ;; multiply (* 2)
+       i32.const 0x22      ;; push literal 2
+       i32.const 0xB0      ;; add (+ 2)
+       i32.const 0x23      ;; push literal 3
+       i32.const 0xB8      ;; multiply (* 3)
+       i32.const 0x23      ;; push literal 3
+       i32.const 0xB0      ;; add (+ 3)
+       i32.const 0x22      ;; push literal 2
+       i32.const 0xB8      ;; multiply (* 2)
+       
+       ;; Final return
+       i32.const 0x7C      ;; return_top
+       array.new_fixed $ByteArray 62
+       local.set $workloadBytecodes
+
+       ;; Create "workload" selector symbol with actual bytes
+       ;; Now create the Symbol with the byte array (push fields in correct order)
+       global.get $objectClass ;; class (ref null $Class)
        call $nextIdentityHash
        i32.const 8         ;; format (byte object)
        i32.const 7         ;; size
-       ref.null $SqueakObject ;; nextObject
+       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       ref.as_non_null
+       ;; Create the byte array with ASCII values for "workload" as the last field
+       ;; 'w'=119, 'o'=111, 'r'=114, 'k'=107, 'l'=108, 'o'=111, 'a'=97, 'd'=100
+       i32.const 119       ;; 'w'
+       i32.const 111       ;; 'o'
+       i32.const 114       ;; 'r'
+       i32.const 107       ;; 'k'
+       i32.const 108       ;; 'l'
+       i32.const 111       ;; 'o'
+       i32.const 97        ;; 'a'
+       i32.const 100       ;; 'd'
+       array.new_fixed $ByteArray 8
+       struct.new $Symbol
+       local.set $workloadSelector
+       ;; Link selector to object chain  
+       global.get $lastObject
+       ref.as_non_null
+       local.get $workloadSelector
+       ref.as_non_null
+       struct.set $SqueakObject $nextObject
+       local.get $workloadSelector
+       ref.as_non_null
+       global.set $lastObject
+
+       ;; Create literals array with workload selector at index 0
        ref.null eq
        i32.const 1
-       array.new $ObjectArray ;; slots
-       i32.const 115 ;; 's'
-       i32.const 113 ;; 'q'
-       i32.const 117 ;; 'u'
-       i32.const 97  ;; 'a'
-       i32.const 114 ;; 'r'
-       i32.const 101 ;; 'e'
-       i32.const 100 ;; 'd'
-       array.new_fixed $ByteArray 7 ;; "squared"
-       struct.new $Symbol
-       global.set $squaredSelector
-       
-       ;; Create bytecode sequence for main method: "3 squared"
-       ;; Bytecodes: push receiver (3), send #squared (selector index 0)
-       i32.const 0x70  ;; Push receiver
-       i32.const 0xD0  ;; Send message
-       i32.const 0x7C  ;; Return top of stack
-       array.new_fixed $ByteArray 3
-       local.set $mainBytecodes
-       
-       ;; Create bytecode sequence for SmallInteger>>squared
-       ;; Bytecodes: push receiver, push receiver, multiply, return
-       i32.const 0x70  ;; Push receiver (self)
-       i32.const 0x70  ;; Push receiver (self) again
-       i32.const 0xB8  ;; Multiply (pop two, push result)
-       i32.const 0x7C  ;; Return top-of-stack
-       array.new_fixed $ByteArray 4
-       local.set $squaredBytecodes
-       
-       ;; Create main CompiledMethod (sends #squared to 3)
-       global.get $objectClass ;; class (CompiledMethod is-a Object for now)
-       i32.const 1001    ;; identityHash
-       i32.const 12      ;; format (CompiledMethod)
-       i32.const 11      ;; size
-       ref.null $SqueakObject ;; nextObject
-       ;; Create literal array containing the #squared selector
-       global.get $squaredSelector
-       array.new_fixed $ObjectArray 1 ;; slots (literal array)
-       i32.const 0       ;; header
-       local.get $mainBytecodes
-       i32.const 0       ;; invocationCount
-       i32.const 0       ;; compiledFunc (none initially)
-       i32.const 10      ;; jitThreshold
+       array.new $ObjectArray
+       local.set $slots
+       local.get $slots
+       i32.const 0  ;; index 0
+       local.get $workloadSelector
+       ref.as_non_null
+       array.set $ObjectArray
+
+       ;; Create main method (sends >>workload message)
+       global.get $objectClass ;; class (ref null $Class)
+       call $nextIdentityHash  ;; identityHash (i32)
+       i32.const 6         ;; format (i32)
+       i32.const 14        ;; size (i32)
+       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
+       local.get $slots      ;; slots (ref $ObjectArray)
+       i32.const 0         ;; header (i32)
+       local.get $mainBytecodes ;; bytecodes (ref null $ByteArray)
+       i32.const 0         ;; invocationCount (i32)
+       i32.const 0         ;; compiledFunc (i32)
+       i32.const 1000      ;; jitThreshold (i32)
+       i32.const 0         ;; isInstalled (i32)
        struct.new $CompiledMethod
-       global.set $mainMethod
-       
-       ;; Create SmallInteger>>squared method
-       global.get $objectClass ;; class
-       i32.const 1002    ;; identityHash
-       i32.const 12      ;; format (CompiledMethod)
-       i32.const 11      ;; size
-       ref.null $SqueakObject ;; nextObject
+       local.set $newObject
+       local.get $newObject
+       ref.cast (ref null $CompiledMethod)
+       local.set $mainMethod
+       ;; Link this object to the chain
+       global.get $lastObject
+       ref.as_non_null
+       local.get $newObject
+       struct.set $SqueakObject $nextObject
+       local.get $newObject
+       global.set $lastObject
+
+       ;; Create workload method (does the intensive computation)
+       ;; First create the literals array that the workload method needs
        ref.null eq
-       i32.const 6
-       array.new $ObjectArray ;; slots
-       i32.const 0       ;; header
-       local.get $squaredBytecodes
-       i32.const 0       ;; invocationCount
-       i32.const 0       ;; compiledFunc (none initially)
-       i32.const 10      ;; jitThreshold
-       struct.new $CompiledMethod
-       local.set $squaredMethod
+       i32.const 4          ;; Need 4 literal slots (0-3, but we only use 1-3)
+       array.new $ObjectArray
+       ref.as_non_null
+       local.set $workloadSlots
        
-       ;; Install #squared method in SmallInteger method dictionary
+       ;; Fill the slots with SmallInteger literals we actually use
+       local.get $workloadSlots
+       i32.const 0  ;; literal[0] = 0 (unused but keep for consistency)
+       i32.const 0
+       call $createSmallInteger
+       ref.as_non_null
+       array.set $ObjectArray
+       
+       local.get $workloadSlots
+       i32.const 1  ;; literal[1] = 1
+       i32.const 1
+       call $createSmallInteger
+       ref.as_non_null
+       array.set $ObjectArray
+       
+       local.get $workloadSlots
+       i32.const 2  ;; literal[2] = 2
+       i32.const 2
+       call $createSmallInteger
+       ref.as_non_null
+       array.set $ObjectArray
+       
+       local.get $workloadSlots
+       i32.const 3  ;; literal[3] = 3
+       i32.const 3
+       call $createSmallInteger
+       ref.as_non_null
+       array.set $ObjectArray
+       
+       ;; Now create the workload method with proper slots
+       global.get $objectClass ;; class (ref null $Class)
+       call $nextIdentityHash  ;; identityHash (i32)
+       i32.const 6         ;; format (i32)
+       i32.const 14        ;; size (i32)
+       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
+       local.get $workloadSlots ;; slots (ref $ObjectArray) - now has proper literals
+       i32.const 0         ;; header (i32)
+       local.get $workloadBytecodes ;; bytecodes (ref null $ByteArray)
+       i32.const 0         ;; invocationCount (i32)
+       i32.const 0         ;; compiledFunc (i32)
+       i32.const 1000      ;; jitThreshold (i32)
+       i32.const 0         ;; isInstalled (i32)
+       struct.new $CompiledMethod
+       local.set $newObject
+       local.get $newObject
+       ref.cast (ref null $CompiledMethod)
+       local.set $workloadMethod
+       ;; Link this object to the chain
+       global.get $lastObject
+       ref.as_non_null
+       local.get $newObject
+       struct.set $SqueakObject $nextObject
+       local.get $newObject
+       global.set $lastObject
+
+       ;; Install method dictionary in SmallInteger class
+       global.get $smallIntegerClass
+       ref.as_non_null
        local.get $methodDict
+       ref.as_non_null
+       struct.set $Class $methodDict
+       
+       ;; Install workload selector in dictionary keys array
+       local.get $methodDict
+       ref.as_non_null
        struct.get $Dictionary $keys
        ref.as_non_null
-       i32.const 0
-       global.get $squaredSelector
+       i32.const 0  ;; index 0
+       local.get $workloadSelector
+       ref.as_non_null
        array.set $ObjectArray
        
+       ;; Install workload method in dictionary values array
        local.get $methodDict
+       ref.as_non_null
        struct.get $Dictionary $values
        ref.as_non_null
-       i32.const 0
-       local.get $squaredMethod
+       i32.const 0  ;; index 0
+       local.get $workloadMethod
+       ref.as_non_null
        array.set $ObjectArray
        
+       ;; Set method dictionary count
        local.get $methodDict
+       ref.as_non_null
        i32.const 1
        struct.set $Dictionary $count
        
-       ;; success
+       ;; Mark method as installed
+       local.get $workloadMethod
+       ref.as_non_null
+       i32.const 1
+       struct.set $CompiledMethod $isInstalled
+       
+       ;; Set as main method for execution
+       local.get $mainMethod
+       global.set $mainMethod
+       
+       ;; Return success
        i32.const 1
        ) ;; (func $createMinimalBootstrap (result i32)
 
@@ -1094,8 +1610,59 @@
        (local $method (ref null $CompiledMethod))
        (local $receiverClass (ref null $Class))
        (local $selectorIndex i32)
+       (local $slots (ref null $ObjectArray))
        
        ;; Execute bytecode based on opcode
+       
+       ;; Handle push literal opcodes (0x20-0x2F for literals 0-15)
+       local.get $bytecode
+       i32.const 0x20  ;; Push literal base
+       i32.ge_u
+       local.get $bytecode
+       i32.const 0x2F  ;; Push literal end
+       i32.le_u
+       i32.and
+       if
+       ;; Extract literal index
+       local.get $bytecode
+       i32.const 0x20
+       i32.sub
+       local.set $selectorIndex  ;; Reuse variable for literal index
+       
+       ;; Get method's literal array
+       local.get $context
+       struct.get $Context $method
+       ref.as_non_null
+       struct.get $CompiledMethod $slots
+       ref.as_non_null
+       local.tee $slots
+       
+       ;; Check bounds
+       local.get $selectorIndex
+       local.get $slots
+       array.len
+       i32.ge_u
+       if
+       ;; Index out of bounds - push 0 as fallback
+       local.get $context
+       i32.const 0
+       call $createSmallInteger
+       ref.as_non_null
+       call $pushOnStack
+       else
+       ;; Get literal at index and push
+       local.get $context
+       local.get $slots
+       local.get $selectorIndex
+       array.get $ObjectArray
+       ref.as_non_null
+       call $pushOnStack
+       end ;; else
+       
+       i32.const 0  ;; Continue execution
+       return
+       end ;; if
+       
        local.get $bytecode
        i32.const 0x70  ;; Push receiver
        i32.eq
@@ -1154,7 +1721,60 @@
        local.set $result
        
        ;; Create result SmallInteger and push onto stack
+       local.get $context
        local.get $result
+       call $createSmallInteger
+       ref.as_non_null
+       call $pushOnStack
+       
+       i32.const 0  ;; Continue execution
+       return
+       end ;; if
+       
+       local.get $bytecode
+       i32.const 0xB0  ;; Add (pop two, add, push result)
+       i32.eq
+       if
+       ;; Pop two values from stack
+       local.get $context
+       call $popFromStack
+       local.tee $value2
+       ref.is_null
+       if
+       i32.const 0  ;; Continue if stack underflow
+       return
+       end ;; if
+       
+       local.get $context
+       call $popFromStack
+       local.tee $value1
+       ref.is_null
+       if
+       ;; Push value2 back and continue
+       local.get $context
+       local.get $value2
+       ref.as_non_null
+       call $pushOnStack
+       i32.const 0
+       return
+       end ;; if
+       
+       ;; Extract integer values
+       local.get $value1
+       call $extractIntegerValue
+       local.set $int1
+       
+       local.get $value2
+       call $extractIntegerValue
+       local.set $int2
+       
+       ;; Add integers
+       local.get $int1
+       local.get $int2
+       i32.add
+       local.set $result
+       
+       ;; Create result SmallInteger and push onto stack
        local.get $context
        local.get $result
        call $createSmallInteger
@@ -1200,6 +1820,25 @@
        ref.as_non_null
        struct.get $CompiledMethod $slots
        ref.as_non_null
+       local.tee $slots
+       
+       ;; Check bounds before accessing
+       local.get $selectorIndex
+       local.get $slots
+       array.len
+       i32.ge_u
+       if
+       ;; Index out of bounds - push receiver back and continue
+       local.get $context
+       local.get $receiver
+       ref.as_non_null
+       call $pushOnStack
+       i32.const 0
+       return
+       end ;; if
+       
+       ;; Get selector at index
+       local.get $slots
        local.get $selectorIndex
        array.get $ObjectArray
        local.set $selector
@@ -1268,7 +1907,10 @@
        (local $method (ref null $CompiledMethod))
        (local $bytecode i32)
        (local $pc i32)
-       (local $stack (ref null $ObjectArray))
+       (local $stack (ref $ObjectArray))
+       (local $slots (ref $ObjectArray))
+       (local $args (ref $ObjectArray))
+       (local $temps (ref $ObjectArray))
        (local $receiver (ref null eq))
        (local $resultValue (ref null eq))
        (local $invocationCount i32)
@@ -1280,9 +1922,22 @@
        i32.const 20
        array.new $ObjectArray
        local.set $stack
+       ;; Create empty arrays for slots, args, temps
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       local.set $slots
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       local.set $args
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       local.set $temps
        
-       ;; Create SmallInteger 3 as receiver
-       i32.const 3
+       ;; Create SmallInteger 100 as receiver (for more intensive computation)
+       i32.const 100
        ref.i31
        local.set $receiver
        
@@ -1292,17 +1947,15 @@
        i32.const 14         ;; format (MethodContext)
        i32.const 14         ;; size
        ref.null $SqueakObject ;; nextObject
-       ref.null eq
-       i32.const 8
-       array.new $ObjectArray ;; slots
+       local.get $slots     ;; slots (non-nullable)
        ref.null $Context    ;; sender
        i32.const 0          ;; pc
        i32.const 0          ;; sp (stack pointer)
        global.get $mainMethod ;; method
        local.get $receiver   ;; receiver (SmallInteger 3)
-       ref.null $ObjectArray ;; args
-       ref.null $ObjectArray ;; temps
-       local.get $stack      ;; stack
+       local.get $args      ;; args (non-nullable)
+       local.get $temps     ;; temps (non-nullable)
+       local.get $stack     ;; stack (non-nullable)
        struct.new $Context
        global.set $activeContext
 
@@ -1353,10 +2006,24 @@
        global.get $jitEnabled
        i32.and
        if
+       ;; Check if method is installed in a method dictionary
+       local.get $method
+       struct.get $CompiledMethod $isInstalled
+       i32.const 1
+       i32.eq
+       if
+       ;; Check if method already has compiled function
+       local.get $method
+       ref.as_non_null
+       call $hasCompiledFunction
+       i32.eqz  ;; Only compile if not already compiled
+       if
        ;; Trigger JIT compilation
        local.get $method
        ref.as_non_null
        call $triggerJITCompilation
+       end ;; if
+       end ;; if
        end ;; if
        
        ;; Check if method has compiled function
@@ -1461,14 +2128,21 @@
        i32.const 1
        i32.add
        struct.set $Context $pc
-       end ;; if
+       else
+       ;; Context switched (message send or return)
+       global.get $activeContext
+       ref.as_non_null
+       struct.get $Context $pc
+       i32.eqz
+       if
+       ;; New context, pc == 0, check for JIT
+       br $execution_loop ;; exits interpreter_loop, resumes execution_loop
+       end ;; end inner if (pc == 0)
+       ;; Otherwise, continue interpreting (fall through)
+       end ;; end outer if (context switched)
        
        br $interpreter_loop ;; default - restart interpreter loop
-       end ;; if
        end ;; loop $interpreter_loop
-       end ;; else
-      
-       br $execution_loop ;; default - restart execution loop
        end ;; if
        end ;; $finished
 
@@ -1479,52 +2153,11 @@
        ;; Report result to JavaScript
        call $reportResult
        
+       end ;; loop $execution_loop
+       end ;; block $finished
+
        i32.const 1 ;; success
        return
-       ) ;; loop $execution_loop
- 
- ;; === Externref-compatible field access helpers for JIT ===
- (func (export "getContextReceiver") (param (ref null $Context)) (result (ref null eq))
-   local.get 0
-   struct.get $Context $receiver)
- (func (export "getContextMethod") (param (ref null $Context)) (result (ref null $CompiledMethod))
-   local.get 0
-   struct.get $Context $method)
- (func (export "getCompiledMethodSlots") (param (ref null $CompiledMethod)) (result (ref null $ObjectArray))
-   local.get 0
-   struct.get $CompiledMethod $slots)
- (func (export "getCompiledMethodBytecodes") (param (ref null $CompiledMethod)) (result (ref null $ByteArray))
-   local.get 0
-   struct.get $CompiledMethod $bytecodes)
- (func (export "getCompiledMethodHeader") (param (ref null $CompiledMethod)) (result i32)
-   local.get 0
-   struct.get $CompiledMethod $header)
- (func (export "getCompiledMethodCompiledFunc") (param (ref null $CompiledMethod)) (result i32)
-   local.get 0
-   struct.get $CompiledMethod $compiledFunc)
- (func (export "getCompiledMethodInvocationCount") (param (ref null $CompiledMethod)) (result i32)
-   local.get 0
-   struct.get $CompiledMethod $invocationCount)
- (func (export "getCompiledMethodJitThreshold") (param (ref null $CompiledMethod)) (result i32)
-   local.get 0
-   struct.get $CompiledMethod $jitThreshold)
- (func (export "getClassMethodDict") (param (ref null $Class)) (result (ref null $Dictionary))
-   local.get 0
-   struct.get $Class $methodDict)
- (func (export "getDictionaryKeys") (param (ref null $Dictionary)) (result (ref null $ObjectArray))
-   local.get 0
-   struct.get $Dictionary $keys)
- (func (export "getDictionaryValues") (param (ref null $Dictionary)) (result (ref null $ObjectArray))
-   local.get 0
-   struct.get $Dictionary $values)
- (func (export "getDictionaryCount") (param (ref null $Dictionary)) (result i32)
-   local.get 0
-   struct.get $Dictionary $count)
- (func (export "getObjectArrayElement") (param (ref null $ObjectArray) i32) (result (ref null eq))
-   local.get 0
-   local.get 1
-   array.get $ObjectArray)
- (func (export "setActiveContext") (param (ref null $Context))
-   local.get 0
-   global.set $activeContext)
-)
+       ) ;; (func $interpret
+
+ )

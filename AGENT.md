@@ -1,5 +1,22 @@
 # AGENT.md
 
+# AGENT INSTRUCTIONS
+
+## Cursor Workflow: Proceed Without Asking, Always Rebuild After Code Changes
+
+When a code analysis or fix is needed, the agent should proceed directly with the analysis and code change, without asking the user for permission first. Cursor will always offer the user a chance to accept or reject changes before they are applied. Do not ask "should I proceed?"... just do the work.
+
+When you've changed code, always rebuild.
+
+## Using Python
+
+This system's python executable is 'python3', not 'python'.
+
+## WASM Types
+
+The common supertype of Smalltalk objects here is eqref. We never use externref in this project.
+If you're going to analyze a WASM module, do it precisely with wasm-tools (parse, validate, dump).
+
 ## Stack-Oriented Analysis Checklist
 
 When asked to analyze stack usage or redundant stack patterns (e.g., `local.tee` followed by `local.get`), and only when asked, always:
@@ -21,10 +38,3 @@ When asked to analyze stack usage or redundant stack patterns (e.g., `local.tee`
 
 ---
 
-## Cursor Workflow: Proceed Without Asking
-
-When a code analysis or fix is needed, the agent should proceed directly with the analysis and code change, without asking the user for permission first. Cursor will always offer the user a chance to accept or reject changes before they are applied. Do not ask "should I proceed?"—just do the work.
-
-# AGENT INSTRUCTIONS
-
-**IMPORTANT: Never ask the user whether to proceed with a change. Always suggest and implement the change directly. Cursor provides a UI for accepting or rejecting suggestions, so your job is to proactively make improvements and fixes without waiting for user confirmation.** 

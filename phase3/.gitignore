@@ -1,0 +1,24 @@
+# API Keys - NEVER commit these!
+keys
+
+# Build artifacts
+dist/
+
+# IDE/Editor files
+.vscode/
+*.code-workspace
+.DS_Store
+
+# Backup files
+*~
+*.bak
+
+# Node modules (if any)
+node_modules/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Log files
+*.log 

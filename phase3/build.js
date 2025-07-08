@@ -162,6 +162,29 @@ function main() {
         allSuccess = false;
     }
 
+    // Copy .htaccess file for cross-origin isolation (high-resolution timers)
+    const htaccessSrc = '.htaccess';
+    const htaccessDest = path.join(outputDir, '.htaccess');
+    
+    if (!copyFile(htaccessSrc, htaccessDest)) {
+        console.error(`✗ Failed to copy .htaccess - cross-origin isolation will not work`);
+        allSuccess = false;
+    }
+
+    // Copy keys file for LLM API access (if it exists)
+    const keysSrc = 'keys';
+    const keysDest = path.join(outputDir, 'keys');
+    
+    if (fs.existsSync(keysSrc)) {
+        if (!copyFile(keysSrc, keysDest)) {
+            console.error(`✗ Failed to copy keys file - LLM optimization will not work`);
+            // Don't fail the build for missing keys - it's optional
+        }
+    } else {
+        console.log(`⚠️ Keys file not found - LLM optimization will be disabled`);
+                        console.log(`💡 Create a 'keys' file with: openai=sk-proj-... or anthropic=sk-ant-api03-...`);
+    }
+
     // Create package info
     const packageInfo = {
         name: 'squeakwasm-phase3',
@@ -174,15 +197,17 @@ function main() {
             'JIT compilation statistics',
             'Performance monitoring',
             'Debug mode support',
-            'Enhanced 3 squared example with translated methods',
+            'Enhanced 3 workload example with translated methods',
             'Proper UTF-8 character encoding for emoji and symbols',
-            'Runtime JIT enable/disable controls'
+            'Runtime JIT enable/disable controls',
+            'Cross-origin isolation for 5μs timer resolution'
         ],
         buildDate: new Date().toISOString(),
         files: {
             wasm: watFiles.map(f => f.replace('.wat', '.wasm')),
             javascript: jsFiles,
-            test: 'test.html'
+            test: 'test.html',
+            config: '.htaccess'
         }
     };
 
@@ -198,8 +223,8 @@ function main() {
         console.log('\nTo test the JIT compilation:');
         console.log('1. Start a web server: python -m http.server 8000');
         console.log('2. Open: http://localhost:8000/dist/test.html');
-        console.log('3. Click "Run (3 squared) with JIT" to execute the basic example');
-        console.log('4. Use "Run Multiple Times" to trigger JIT compilation (threshold: 10 invocations)');
+        console.log('3. Click "Run (3 workload) with JIT" to execute the basic example');
+        console.log('4. Use "Run Multiple Times" to trigger JIT compilation (threshold: 1000 invocations)');
         console.log('\nPhase 3 Features:');
         console.log('• ⚡ Bytecode-to-WASM translation during execution');
         console.log('• 📊 JIT compilation statistics and monitoring');
@@ -207,6 +232,7 @@ function main() {
         console.log('• 🐛 Debug mode for detailed compilation logs');
         console.log('• 🚀 Performance improvements for hot methods');
         console.log('• 🎨 Proper UTF-8 character display for all emoji and symbols');
+        console.log('• ⏱️ Cross-origin isolation for 5μs timer resolution');
     } else {
         console.log('\n❌ Build completed with errors');
         process.exit(1);
