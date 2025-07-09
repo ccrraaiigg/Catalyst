@@ -1,0 +1,106 @@
+(module
+  (type (;0;) (func (param eqref) (result eqref)))
+  (type (;1;) (func (param eqref i32) (result eqref)))
+  (type (;2;) (func (param eqref) (result i32)))
+  (type (;3;) (func (param i32) (result eqref)))
+  (type (;4;) (func (param eqref)))
+  (import "env" "getContextReceiver" (func $getContextReceiver (;0;) (type 0)))
+  (import "env" "getContextLiteral" (func $getContextLiteral (;1;) (type 1)))
+  (import "env" "extractIntegerValue" (func $extractIntegerValue (;2;) (type 2)))
+  (import "env" "createSmallInteger" (func $createSmallInteger (;3;) (type 3)))
+  (import "env" "pushOnStack" (func $pushOnStack (;4;) (type 4)))
+  (export "jit_method_0" (func $jit_method_0))
+  (func $jit_method_0 (;5;) (type 2) (param $context eqref) (result i32)
+    (local $receiver_int i32) (local $lit1_int i32) (local $lit2_int i32) (local $lit3_int i32) (local $result i32)
+    local.get $context
+    call $getContextReceiver
+    call $extractIntegerValue
+    local.set $receiver_int
+    i32.const 1
+    call $getContextLiteral
+    call $extractIntegerValue
+    local.set $lit1_int
+    i32.const 2
+    call $getContextLiteral
+    call $extractIntegerValue
+    local.set $lit2_int
+    i32.const 3
+    call $getContextLiteral
+    call $extractIntegerValue
+    local.set $lit3_int
+    local.get $receiver_int
+    local.get $lit1_int
+    i32.add
+    local.get $lit2_int
+    i32.mul
+    local.get $lit2_int
+    i32.add
+    local.get $lit3_int
+    i32.mul
+    local.get $lit3_int
+    i32.add
+    local.get $lit2_int
+    i32.mul
+    local.set $result
+    local.get $result
+    local.get $lit1_int
+    i32.add
+    local.get $lit2_int
+    i32.mul
+    local.get $lit2_int
+    i32.add
+    local.get $lit3_int
+    i32.mul
+    local.get $lit3_int
+    i32.add
+    local.get $lit2_int
+    i32.mul
+    local.set $result
+    local.get $result
+    local.get $lit1_int
+    i32.add
+    local.get $lit2_int
+    i32.mul
+    local.get $lit2_int
+    i32.add
+    local.get $lit3_int
+    i32.mul
+    local.get $lit3_int
+    i32.add
+    local.get $lit2_int
+    i32.mul
+    local.set $result
+    local.get $result
+    local.get $lit1_int
+    i32.add
+    local.get $lit2_int
+    i32.mul
+    local.get $lit2_int
+    i32.add
+    local.get $lit3_int
+    i32.mul
+    local.get $lit3_int
+    i32.add
+    local.get $lit2_int
+    i32.mul
+    local.set $result
+    local.get $result
+    local.get $lit1_int
+    i32.add
+    local.get $lit2_int
+    i32.mul
+    local.get $lit2_int
+    i32.add
+    local.get $lit3_int
+    i32.mul
+    local.get $lit3_int
+    i32.add
+    local.get $lit2_int
+    i32.mul
+    local.set $result
+    local.get $result
+    call $createSmallInteger
+    call $pushOnStack
+    i32.const 1
+  )
+)

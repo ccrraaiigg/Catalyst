@@ -1321,7 +1321,7 @@
        ;; ALGORITHM EXPLANATION:
        ;; This workload method performs a simple iterative arithmetic progression that's easy for LLMs to understand and optimize.
        ;; 
-       ;; Pattern (repeated 15 times):
+       ;; Pattern (repeated 5 times):
        ;; 1. result = (receiver + 1) * 2
        ;; 2. result = (result + 2) * 3  
        ;; 3. result = (result + 3) * 2

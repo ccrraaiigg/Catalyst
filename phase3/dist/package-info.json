@@ -14,7 +14,7 @@
     "Runtime JIT enable/disable controls",
     "Cross-origin isolation for 5μs timer resolution"
   ],
-  "buildDate": "2025-07-08T21:53:36.074Z",
+  "buildDate": "2025-07-09T04:31:25.875Z",
   "files": {
     "wasm": [
       "squeak-vm-core.wasm"

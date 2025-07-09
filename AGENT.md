@@ -2,9 +2,9 @@
 
 # AGENT INSTRUCTIONS
 
-## Cursor Workflow: Proceed Without Asking, Always Rebuild After Code Changes
+## Cursor Workflow: Never Fake Anything. Otherwise, Proceed Without Asking, Always Rebuild After Code Changes
 
-When a code analysis or fix is needed, the agent should proceed directly with the analysis and code change, without asking the user for permission first. Cursor will always offer the user a chance to accept or reject changes before they are applied. Do not ask "should I proceed?"... just do the work.
+Never fake anything. If you find yourself in a situation where there is information missing, DO NOT guess, "mock", or simulate (e.g., DO NOT create Smalltalk method contexts. Only the real VM can do that.) Instead, STOP and ask the user for clarification. Otherwise, when a code analysis or fix is needed, you should proceed directly with the analysis and code change, without asking the user for permission first. Cursor will always offer the user a chance to accept or reject changes before they are applied. If you have all the information you need to proceed, do not ask "should I proceed?"... just do the work.
 
 When you've changed code, always rebuild.
 

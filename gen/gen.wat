@@ -6,85 +6,112 @@
   (import "env" "pushOnStack" (func $pushOnStack (param eqref)))
   
   (func $jit_method_0 (param $context eqref) (result i32)
-  (local $receiver eqref)
-  (local $receiverInt i32)
-  (local $temp i32)
+  (local $receiver_int i32)
+  (local $lit1_int i32)
+  (local $lit2_int i32)
+  (local $lit3_int i32)
+  (local $result i32)
   
-  ;; Get receiver and convert to int
-  local.get $context
-  call $getContextReceiver
-  local.tee $receiver
-  call $extractIntegerValue
-  local.set $receiverInt
+  ;; Extract integer values from receiver and literals
+  (local.set $receiver_int 
+    (call $extractIntegerValue 
+      (call $getContextReceiver (local.get $context))))
   
-  ;; Calculate ((((receiver + 1) * 2 + 2) * 3 + 3) * 2 + 1) * 2...
-  ;; repeated 5 times
-  local.get $receiverInt
-  i32.const 1
-  i32.add
-  i32.const 2
-  i32.mul
-  i32.const 2
-  i32.add
-  i32.const 3
-  i32.mul
-  i32.const 3
-  i32.add
-  i32.const 2
-  i32.mul
-  i32.const 1
-  i32.add
-  i32.const 2
-  i32.mul
-  i32.const 2
-  i32.add
-  i32.const 3
-  i32.mul
-  i32.const 3
-  i32.add
-  i32.const 2
-  i32.mul
-  i32.const 1
-  i32.add
-  i32.const 2
-  i32.mul
-  i32.const 2
-  i32.add
-  i32.const 3
-  i32.mul
-  i32.const 3
-  i32.add
-  i32.const 2
-  i32.mul
-  i32.const 1
-  i32.add
-  i32.const 2
-  i32.mul
-  i32.const 2
-  i32.add
-  i32.const 3
-  i32.mul
-  i32.const 3
-  i32.add
-  i32.const 2
-  i32.mul
-  i32.const 1
-  i32.add
-  i32.const 2
-  i32.mul
-  i32.const 2
-  i32.add
-  i32.const 3
-  i32.mul
-  i32.const 3
-  i32.add
-  i32.const 2
-  i32.mul
-  
-  ;; Convert result back to Smalltalk integer and push to stack
-  call $createSmallInteger
-  call $pushOnStack
+  (local.set $lit1_int
+    (call $extractIntegerValue
+      (call $getContextLiteral (i32.const 1))))
+      
+  (local.set $lit2_int
+    (call $extractIntegerValue
+      (call $getContextLiteral (i32.const 2))))
+      
+  (local.set $lit3_int
+    (call $extractIntegerValue
+      (call $getContextLiteral (i32.const 3))))
 
+  ;; Compute ((((receiver + lit1) * lit2 + lit2) * lit3 + lit3) * lit2)
+  (local.set $result
+    (i32.mul
+      (i32.add
+        (i32.mul
+          (i32.add
+            (i32.mul
+              (i32.add
+                (local.get $receiver_int)
+                (local.get $lit1_int))
+              (local.get $lit2_int))
+            (local.get $lit2_int))
+          (local.get $lit3_int))
+        (local.get $lit3_int))
+      (local.get $lit2_int)))
+
+  ;; Do it 4 more times
+  (local.set $result
+    (i32.mul
+      (i32.add
+        (i32.mul
+          (i32.add
+            (i32.mul
+              (i32.add
+                (local.get $result)
+                (local.get $lit1_int))
+              (local.get $lit2_int))
+            (local.get $lit2_int))
+          (local.get $lit3_int))
+        (local.get $lit3_int))
+      (local.get $lit2_int)))
+
+  (local.set $result
+    (i32.mul
+      (i32.add
+        (i32.mul
+          (i32.add
+            (i32.mul
+              (i32.add
+                (local.get $result)
+                (local.get $lit1_int))
+              (local.get $lit2_int))
+            (local.get $lit2_int))
+          (local.get $lit3_int))
+        (local.get $lit3_int))
+      (local.get $lit2_int)))
+
+  (local.set $result
+    (i32.mul
+      (i32.add
+        (i32.mul
+          (i32.add
+            (i32.mul
+              (i32.add
+                (local.get $result)
+                (local.get $lit1_int))
+              (local.get $lit2_int))
+            (local.get $lit2_int))
+          (local.get $lit3_int))
+        (local.get $lit3_int))
+      (local.get $lit2_int)))
+
+  (local.set $result
+    (i32.mul
+      (i32.add
+        (i32.mul
+          (i32.add
+            (i32.mul
+              (i32.add
+                (local.get $result)
+                (local.get $lit1_int))
+              (local.get $lit2_int))
+            (local.get $lit2_int))
+          (local.get $lit3_int))
+        (local.get $lit3_int))
+      (local.get $lit2_int)))
+
+  ;; Push final result as a SmallInteger
+  (call $pushOnStack
+    (call $createSmallInteger
+      (local.get $result)))
   i32.const 1
 )
+  
+  (export "jit_method_0" (func $jit_method_0))
 )

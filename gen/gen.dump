@@ -53,125 +53,162 @@
   0x9d | 03 02       | func section
   0x9f | 01          | 1 count
   0xa0 | 02          | [func 5] type 2
-  0xa1 | 0a 71       | code section
+  0xa1 | 07 10       | export section
   0xa3 | 01          | 1 count
+  0xa4 | 0c 6a 69 74 | export Export { name: "jit_method_0", kind: Func, index: 5 }
+       | 5f 6d 65 74
+       | 68 6f 64 5f
+       | 30 00 05   
+  0xb3 | 0a 9d 01    | code section
+  0xb6 | 01          | 1 count
 ============== func 5 ====================
-  0xa4 | 6f          | size of function
-  0xa5 | 02          | 2 local blocks
-  0xa6 | 01 6d       | 1 locals of type Ref(eqref)
-  0xa8 | 01 7f       | 1 locals of type I32
-  0xaa | 20 00       | local_get local_index:0
-  0xac | 10 00       | call function_index:0
-  0xae | 22 01       | local_tee local_index:1
-  0xb0 | 10 02       | call function_index:2
-  0xb2 | 41 01       | i32_const value:1
-  0xb4 | 6a          | i32_add
-  0xb5 | 41 02       | i32_const value:2
-  0xb7 | 6c          | i32_mul
-  0xb8 | 41 02       | i32_const value:2
-  0xba | 6a          | i32_add
-  0xbb | 41 03       | i32_const value:3
-  0xbd | 6c          | i32_mul
-  0xbe | 41 03       | i32_const value:3
-  0xc0 | 6a          | i32_add
-  0xc1 | 41 02       | i32_const value:2
-  0xc3 | 6c          | i32_mul
+  0xb7 | 9a 01       | size of function
+  0xb9 | 01          | 1 local blocks
+  0xba | 05 7f       | 5 locals of type I32
+  0xbc | 20 00       | local_get local_index:0
+  0xbe | 10 00       | call function_index:0
+  0xc0 | 10 02       | call function_index:2
+  0xc2 | 21 01       | local_set local_index:1
   0xc4 | 41 01       | i32_const value:1
-  0xc6 | 6a          | i32_add
-  0xc7 | 41 02       | i32_const value:2
-  0xc9 | 6c          | i32_mul
-  0xca | 41 02       | i32_const value:2
-  0xcc | 6a          | i32_add
-  0xcd | 41 03       | i32_const value:3
-  0xcf | 6c          | i32_mul
-  0xd0 | 41 03       | i32_const value:3
-  0xd2 | 6a          | i32_add
-  0xd3 | 41 02       | i32_const value:2
-  0xd5 | 6c          | i32_mul
-  0xd6 | 41 01       | i32_const value:1
-  0xd8 | 6a          | i32_add
-  0xd9 | 41 02       | i32_const value:2
-  0xdb | 6c          | i32_mul
-  0xdc | 41 02       | i32_const value:2
-  0xde | 6a          | i32_add
-  0xdf | 41 03       | i32_const value:3
-  0xe1 | 6c          | i32_mul
-  0xe2 | 41 03       | i32_const value:3
-  0xe4 | 6a          | i32_add
-  0xe5 | 41 02       | i32_const value:2
-  0xe7 | 6c          | i32_mul
-  0xe8 | 41 01       | i32_const value:1
-  0xea | 6a          | i32_add
-  0xeb | 41 02       | i32_const value:2
-  0xed | 6c          | i32_mul
-  0xee | 41 02       | i32_const value:2
-  0xf0 | 6a          | i32_add
-  0xf1 | 41 03       | i32_const value:3
-  0xf3 | 6c          | i32_mul
-  0xf4 | 41 03       | i32_const value:3
+  0xc6 | 10 01       | call function_index:1
+  0xc8 | 10 02       | call function_index:2
+  0xca | 21 02       | local_set local_index:2
+  0xcc | 41 02       | i32_const value:2
+  0xce | 10 01       | call function_index:1
+  0xd0 | 10 02       | call function_index:2
+  0xd2 | 21 03       | local_set local_index:3
+  0xd4 | 41 03       | i32_const value:3
+  0xd6 | 10 01       | call function_index:1
+  0xd8 | 10 02       | call function_index:2
+  0xda | 21 04       | local_set local_index:4
+  0xdc | 20 01       | local_get local_index:1
+  0xde | 20 02       | local_get local_index:2
+  0xe0 | 6a          | i32_add
+  0xe1 | 20 03       | local_get local_index:3
+  0xe3 | 6c          | i32_mul
+  0xe4 | 20 03       | local_get local_index:3
+  0xe6 | 6a          | i32_add
+  0xe7 | 20 04       | local_get local_index:4
+  0xe9 | 6c          | i32_mul
+  0xea | 20 04       | local_get local_index:4
+  0xec | 6a          | i32_add
+  0xed | 20 03       | local_get local_index:3
+  0xef | 6c          | i32_mul
+  0xf0 | 21 05       | local_set local_index:5
+  0xf2 | 20 05       | local_get local_index:5
+  0xf4 | 20 02       | local_get local_index:2
   0xf6 | 6a          | i32_add
-  0xf7 | 41 02       | i32_const value:2
+  0xf7 | 20 03       | local_get local_index:3
   0xf9 | 6c          | i32_mul
-  0xfa | 41 01       | i32_const value:1
+  0xfa | 20 03       | local_get local_index:3
   0xfc | 6a          | i32_add
-  0xfd | 41 02       | i32_const value:2
+  0xfd | 20 04       | local_get local_index:4
   0xff | 6c          | i32_mul
- 0x100 | 41 02       | i32_const value:2
+ 0x100 | 20 04       | local_get local_index:4
  0x102 | 6a          | i32_add
- 0x103 | 41 03       | i32_const value:3
+ 0x103 | 20 03       | local_get local_index:3
  0x105 | 6c          | i32_mul
- 0x106 | 41 03       | i32_const value:3
- 0x108 | 6a          | i32_add
- 0x109 | 41 02       | i32_const value:2
- 0x10b | 6c          | i32_mul
- 0x10c | 10 03       | call function_index:3
- 0x10e | 10 04       | call function_index:4
- 0x110 | 1a          | drop
- 0x111 | 41 01       | i32_const value:1
- 0x113 | 0b          | end
- 0x114 | 00 91 01    | custom section
- 0x117 | 04 6e 61 6d | name: "name"
+ 0x106 | 21 05       | local_set local_index:5
+ 0x108 | 20 05       | local_get local_index:5
+ 0x10a | 20 02       | local_get local_index:2
+ 0x10c | 6a          | i32_add
+ 0x10d | 20 03       | local_get local_index:3
+ 0x10f | 6c          | i32_mul
+ 0x110 | 20 03       | local_get local_index:3
+ 0x112 | 6a          | i32_add
+ 0x113 | 20 04       | local_get local_index:4
+ 0x115 | 6c          | i32_mul
+ 0x116 | 20 04       | local_get local_index:4
+ 0x118 | 6a          | i32_add
+ 0x119 | 20 03       | local_get local_index:3
+ 0x11b | 6c          | i32_mul
+ 0x11c | 21 05       | local_set local_index:5
+ 0x11e | 20 05       | local_get local_index:5
+ 0x120 | 20 02       | local_get local_index:2
+ 0x122 | 6a          | i32_add
+ 0x123 | 20 03       | local_get local_index:3
+ 0x125 | 6c          | i32_mul
+ 0x126 | 20 03       | local_get local_index:3
+ 0x128 | 6a          | i32_add
+ 0x129 | 20 04       | local_get local_index:4
+ 0x12b | 6c          | i32_mul
+ 0x12c | 20 04       | local_get local_index:4
+ 0x12e | 6a          | i32_add
+ 0x12f | 20 03       | local_get local_index:3
+ 0x131 | 6c          | i32_mul
+ 0x132 | 21 05       | local_set local_index:5
+ 0x134 | 20 05       | local_get local_index:5
+ 0x136 | 20 02       | local_get local_index:2
+ 0x138 | 6a          | i32_add
+ 0x139 | 20 03       | local_get local_index:3
+ 0x13b | 6c          | i32_mul
+ 0x13c | 20 03       | local_get local_index:3
+ 0x13e | 6a          | i32_add
+ 0x13f | 20 04       | local_get local_index:4
+ 0x141 | 6c          | i32_mul
+ 0x142 | 20 04       | local_get local_index:4
+ 0x144 | 6a          | i32_add
+ 0x145 | 20 03       | local_get local_index:3
+ 0x147 | 6c          | i32_mul
+ 0x148 | 21 05       | local_set local_index:5
+ 0x14a | 20 05       | local_get local_index:5
+ 0x14c | 10 03       | call function_index:3
+ 0x14e | 10 04       | call function_index:4
+ 0x150 | 41 01       | i32_const value:1
+ 0x152 | 0b          | end
+ 0x153 | 00 b5 01    | custom section
+ 0x156 | 04 6e 61 6d | name: "name"
        | 65         
- 0x11c | 01 6c       | function name section
- 0x11e | 06          | 6 count
- 0x11f | 00 12 67 65 | Naming { index: 0, name: "getContextReceiver" }
+ 0x15b | 01 6c       | function name section
+ 0x15d | 06          | 6 count
+ 0x15e | 00 12 67 65 | Naming { index: 0, name: "getContextReceiver" }
        | 74 43 6f 6e
        | 74 65 78 74
        | 52 65 63 65
        | 69 76 65 72
- 0x133 | 01 11 67 65 | Naming { index: 1, name: "getContextLiteral" }
+ 0x172 | 01 11 67 65 | Naming { index: 1, name: "getContextLiteral" }
        | 74 43 6f 6e
        | 74 65 78 74
        | 4c 69 74 65
        | 72 61 6c   
- 0x146 | 02 13 65 78 | Naming { index: 2, name: "extractIntegerValue" }
+ 0x185 | 02 13 65 78 | Naming { index: 2, name: "extractIntegerValue" }
        | 74 72 61 63
        | 74 49 6e 74
        | 65 67 65 72
        | 56 61 6c 75
        | 65         
- 0x15b | 03 12 63 72 | Naming { index: 3, name: "createSmallInteger" }
+ 0x19a | 03 12 63 72 | Naming { index: 3, name: "createSmallInteger" }
        | 65 61 74 65
        | 53 6d 61 6c
        | 6c 49 6e 74
        | 65 67 65 72
- 0x16f | 04 0b 70 75 | Naming { index: 4, name: "pushOnStack" }
+ 0x1ae | 04 0b 70 75 | Naming { index: 4, name: "pushOnStack" }
        | 73 68 4f 6e
        | 53 74 61 63
        | 6b         
- 0x17c | 05 0c 6a 69 | Naming { index: 5, name: "jit_method_0" }
+ 0x1bb | 05 0c 6a 69 | Naming { index: 5, name: "jit_method_0" }
        | 74 5f 6d 65
        | 74 68 6f 64
        | 5f 30      
- 0x18a | 02 1c       | local section
- 0x18c | 01          | 1 count
- 0x18d | 05          | function 5 local name section
- 0x18e | 03          | 3 count
- 0x18f | 00 07 63 6f | Naming { index: 0, name: "context" }
+ 0x1c9 | 02 40       | local section
+ 0x1cb | 01          | 1 count
+ 0x1cc | 05          | function 5 local name section
+ 0x1cd | 06          | 6 count
+ 0x1ce | 00 07 63 6f | Naming { index: 0, name: "context" }
        | 6e 74 65 78
        | 74         
- 0x198 | 01 08 72 65 | Naming { index: 1, name: "receiver" }
+ 0x1d7 | 01 0c 72 65 | Naming { index: 1, name: "receiver_int" }
        | 63 65 69 76
-       | 65 72      
- 0x1a2 | 02 04 74 65 | Naming { index: 2, name: "temp" }
-       | 6d 70      
+       | 65 72 5f 69
+       | 6e 74      
+ 0x1e5 | 02 08 6c 69 | Naming { index: 2, name: "lit1_int" }
+       | 74 31 5f 69
+       | 6e 74      
+ 0x1ef | 03 08 6c 69 | Naming { index: 3, name: "lit2_int" }
+       | 74 32 5f 69
+       | 6e 74      
+ 0x1f9 | 04 08 6c 69 | Naming { index: 4, name: "lit3_int" }
+       | 74 33 5f 69
+       | 6e 74      
+ 0x203 | 05 06 72 65 | Naming { index: 5, name: "result" }
+       | 73 75 6c 74
