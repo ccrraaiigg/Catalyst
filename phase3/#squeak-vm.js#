@@ -36,7 +36,6 @@ class SqueakVM {
 	// Track if WAT module has been logged this run.
         this.watModuleLoggedThisRun = false
 
-	
         this.initializeSemanticAnalyzer()}
 
     initialize() {
@@ -53,56 +52,33 @@ class SqueakVM {
 			// Only log results in debug mode, to avoid console spam.
 			if (this.debugMode) console.log(`🎯 VM Result: ${value}`)},
                 
-                translateMethod: (method) => {
-                    // No return value needed, just trigger async translation if needed.
-                    if (!this.translationEnabled) return
+                    translateMethod: (method, class, selector) => {
+			// No return value needed, just trigger async translation if desired.
+			if (!this.translationEnabled) return
 
-                    if (!this.methodTranslations.get(method)) {
                         this.translateMethodToWASM(method, bytecodeLen).then(() => {
                             // Translation complete - function now available in function table.
-                            if (this.debugMode) {
-                                console.log(`🔥 Translation complete for method ${method}.`)
-                            }
-                        })
-                    }
-                },
+                            if (this.debugMode) console.log(`🔥 Translation complete for method ${method}.`)})},
                 
-                // Debug output
-                debugLog: (level, messagePtr, messageLen) => {
-                    if (this.debugMode) {
-                        const message = this.readWASMString(messagePtr, messageLen)
-                        console.log(`🐛 [${level}] ${message}`)
-                    }
-                },
-            }
-        }
-        ).then(wasmModule => {
-            this.coreWASMModule = wasmModule
+                    debugLog: (level, message, messageLength) => {
+			if (this.debugMode) {
+                            const message = this.readWASMString(message, messageLength)
+                            console.log(`🐛 [${level}] ${message}`)}}}}
+	).then(wasmModule => {
+	    this.coreWASMModule = wasmModule
 	    this.coreWASMExports = this.coreWASMModule.instance.exports
-	    
             this.vm = this.coreWASMExports.initialize()
 
-            if (!this.vm) {
-                throw new Error('WASM VM initialization failed')
-            }
+            if (!this.vm) throw new Error('WASM VM initialization failed')
             console.log('✅ SqueakWASM VM initialized successfully')
             
-            // Load API keys from secure file (wait for completion)
+            // Load API keys from secure file (wait for completion).
             return this.loadAPIKeys().then(() => {
-                if (this.debugMode) {
-                    console.log('🎯 VM initialization complete with LLM configuration')
-                }
-            }).catch(error => {
-                if (this.debugMode) {
-                    console.log('⚠️ API keys not loaded:', error)
-                    console.log('🔄 VM will use mock LLM mode when enabled')
-                }
-            })
-        }).catch(error => {
-            console.error('❌ Failed to load WASM module:', error)
-            throw error
-        })
-    }
+                if (this.debugMode) console.log('🎯 VM initialization complete with LLM configuration')}).catch(error => {
+                    if (this.debugMode) console.log('⚠️ API keys not loaded:', error)})}
+	      ).catch(error => {
+		  console.error('❌ Failed to load WASM module:', error)
+		  throw error})}
 
     /**
      * Load API keys from secure file (not in source code!)
