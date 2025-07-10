@@ -126,14 +126,14 @@
   ;; type 11: virtual machine
   (type $VirtualMachine (struct
 	     (field $activeContext (mut (ref $Context)))
-	     (field $jitEnabled (mut i32) (i32.const 1))
+	     (field $jitEnabled (mut i32))
 	     (field $methodCache (mut (ref $ObjectArray)))
-	     (field $functionTableBaseIndex (mut i32) (i32.const 0))
+	     (field $functionTableBaseIndex (mut i32))
 
 	     ;; object memory management
-	     (field $nextIdentityHash (mut i32) (i32.const 1000))
+	     (field $nextIdentityHash (mut i32))
 	     (field $firstObject (mut (ref $SqueakObject)))
-	     (field $lastObject (mut (ref $SqueakObject)))))
+	     (field $lastObject (mut (ref $SqueakObject))))))
 
   ;; global VM state
   ;;
@@ -170,7 +170,7 @@
   
   ;; exported utilities for method translation in JS
   (func (export "compiledMethodBytecodes")
-	(param $vm $VirtualMachine)
+	(param $vm (ref $VirtualMachine))
 	(param (ref null $CompiledMethod))
 	(result (ref null $ByteArray))
 	
@@ -178,10 +178,10 @@
 	struct.get $CompiledMethod $bytecodes)
 
   (func (export "methodWithID")
+	(param $vm (ref $VirtualMachine))
 	(param i32)
 	(result (ref null $CompiledMethod))
 
-	;; Stack: [id]
 	(local $targetHash i32)
 	(local $currentObject (ref null $SqueakObject))
 	(local $currentHash i32)
@@ -191,7 +191,7 @@
 	
 	;; Start with first object
 	local.get $vm
-	struct.get $firstObject    ;; Stack: [firstObject]
+	struct.get $VirtualMachine $firstObject    ;; Stack: [firstObject]
 	local.set $currentObject   ;; Stack: []
 	
 	;; Traverse object chain
@@ -333,7 +333,7 @@
   
   (func (export "getActiveContext") (param $vm eqref) (result eqref)
 	local.get $vm
-	struct.get $activeContext)
+	struct.get $VirtualMachine $activeContext)
   
   (func (export "getContextReceiver") (param $context eqref) (result eqref)
 	local.get $context
@@ -1273,7 +1273,7 @@
 	struct.set $VirtualMachine $firstObject
 	local.get $newObject
 	local.get $vm
-	struct.set $lastObject
+	struct.set $VirtualMachine $lastObject
 
 	;; Create Object class
 	global.get $classClass ;; class (ref null $Class)
@@ -1293,8 +1293,8 @@
 	struct.new $Class
 	local.set $newObject
 	;; Link this object to the chain
-	global.get $lastObject
-	ref.as_non_null
+	local.get $vm
+	struct.get $VirtualMachine $lastObject
 	local.get $newObject
 	struct.set $SqueakObject $nextObject
 	local.get $newObject
