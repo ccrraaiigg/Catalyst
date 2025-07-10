@@ -330,7 +330,7 @@ class WATFolder {
     const ifLine = lines[i].trim();
     const baseIndent = lines[i].match(/^(\s*)/)[1];
     
-    // Extract everything after 'if' - could be condition or type signature
+    // Extract everything after 'if' - could be condition, type signature, or nothing
     const afterIf = ifLine.substring(2).trim(); // Remove 'if'
     
     i++; // Move past the 'if' line
@@ -345,10 +345,13 @@ class WATFolder {
       const line = lines[i];
       const trimmed = line.trim();
       
+      // Handle 'end' with comments like "end ;; if"
+      const isEndLine = trimmed === 'end' || trimmed.startsWith('end ;;') || trimmed.startsWith('end;');
+      
       // Track nesting level for nested control structures
       if (this.isIfStart(trimmed) || this.isLoopStart(trimmed) || this.isBlockStart(trimmed)) {
         nestLevel++;
-      } else if (trimmed === 'end') {
+      } else if (isEndLine) {
         if (nestLevel === 0) {
           // This is our closing 'end'
           break;
@@ -375,8 +378,16 @@ class WATFolder {
       folded += ` ${afterIf}`;
     }
     
-    // Add then clause if there's a body
-    if (thenBody.length > 0) {
+    // For bare 'if' statements (no condition), we need to handle the stack-based condition
+    if (!afterIf && thenBody.length > 0) {
+      // Look for the condition in the preceding lines or body
+      folded += '\n' + baseIndent + '  (then';
+      for (const bodyLine of thenBody) {
+        folded += '\n' + baseIndent + '    ' + bodyLine.trim();
+      }
+      folded += '\n' + baseIndent + '  )';
+    } else if (thenBody.length > 0) {
+      // Normal if with condition
       folded += '\n' + baseIndent + '  (then';
       for (const bodyLine of thenBody) {
         folded += '\n' + baseIndent + '    ' + bodyLine.trim();
@@ -406,9 +417,8 @@ class WATFolder {
     const loopLine = lines[i].trim();
     const baseIndent = lines[i].match(/^(\s*)/)[1];
     
-    // Extract loop label if present
-    const labelMatch = loopLine.match(/^loop\s+(.*)$/);
-    const label = labelMatch ? labelMatch[1] : '';
+    // Extract loop label if present (e.g., "loop $search_loop")
+    const afterLoop = loopLine.substring(4).trim(); // Remove 'loop'
     
     i++; // Move past the 'loop' line
     
@@ -420,10 +430,13 @@ class WATFolder {
       const line = lines[i];
       const trimmed = line.trim();
       
+      // Handle 'end' with comments like "end ;; loop"
+      const isEndLine = trimmed === 'end' || trimmed.startsWith('end ;;') || trimmed.startsWith('end;');
+      
       // Track nesting level
-      if (trimmed.startsWith('if ') || trimmed.startsWith('loop ') || trimmed.startsWith('block ')) {
+      if (this.isIfStart(trimmed) || this.isLoopStart(trimmed) || this.isBlockStart(trimmed)) {
         nestLevel++;
-      } else if (trimmed === 'end') {
+      } else if (isEndLine) {
         if (nestLevel === 0) {
           break;
         } else {
@@ -437,8 +450,8 @@ class WATFolder {
     
     // Build the folded loop expression
     let folded = '(loop';
-    if (label) {
-      folded += ` ${label}`;
+    if (afterLoop) {
+      folded += ` ${afterLoop}`;
     }
     
     if (body.length > 0) {
@@ -461,8 +474,7 @@ class WATFolder {
     const baseIndent = lines[i].match(/^(\s*)/)[1];
     
     // Extract block label/type if present
-    const labelMatch = blockLine.match(/^block\s+(.*)$/);
-    const label = labelMatch ? labelMatch[1] : '';
+    const afterBlock = blockLine.substring(5).trim(); // Remove 'block'
     
     i++; // Move past the 'block' line
     
@@ -474,10 +486,13 @@ class WATFolder {
       const line = lines[i];
       const trimmed = line.trim();
       
+      // Handle 'end' with comments like "end ;; block"
+      const isEndLine = trimmed === 'end' || trimmed.startsWith('end ;;') || trimmed.startsWith('end;');
+      
       // Track nesting level
-      if (trimmed.startsWith('if ') || trimmed.startsWith('loop ') || trimmed.startsWith('block ')) {
+      if (this.isIfStart(trimmed) || this.isLoopStart(trimmed) || this.isBlockStart(trimmed)) {
         nestLevel++;
-      } else if (trimmed === 'end') {
+      } else if (isEndLine) {
         if (nestLevel === 0) {
           break;
         } else {
@@ -491,8 +506,8 @@ class WATFolder {
     
     // Build the folded block expression
     let folded = '(block';
-    if (label) {
-      folded += ` ${label}`;
+    if (afterBlock) {
+      folded += ` ${afterBlock}`;
     }
     
     if (body.length > 0) {
