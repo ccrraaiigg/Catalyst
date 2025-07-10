@@ -358,7 +358,7 @@ class SqueakVM {
             const optimization = await this.analyzeAndOptimize(
 		Array.from(
 		    new Uint8Array(
-			this.coreWASMExports.memory.buffer,
+			this.coreWASMExports.bytes.buffer,
 			this.coreWASMExports.copyByteArrayToMemory(bytecodesObject),
 			this.coreWASMExports.byteArrayLength(bytecodesObject))),
 		method,
@@ -1291,8 +1291,6 @@ Please fix the errors above and generate ONLY the corrected function definition 
   (import "env" "contextReceiver" (func $contextReceiver (param eqref) (result eqref)))
   (import "env" "contextLiteral" (func $contextLiteral (param eqref) (param i32) (result eqref)))
   (import "env" "contextMethod" (func $contextMethod (param eqref) (result eqref)))
-  (import "env" "methodSlots" (func $methodSlots (param eqref) (result eqref)))
-  (import "env" "objectArrayAt" (func $objectArrayAt (param eqref) (param i32) (result eqref)))
   (import "env" "debugLog" (func $debugLog (param i32)))
   
   ${preparedWatCode}
@@ -1325,8 +1323,6 @@ Please fix the errors above and generate ONLY the corrected function definition 
   (import "env" "contextReceiver" (func $contextReceiver (param eqref) (result eqref)))
   (import "env" "contextLiteral" (func $contextLiteral (param eqref) (param i32) (result eqref)))
   (import "env" "contextMethod" (func $contextMethod (param eqref) (result eqref)))
-  (import "env" "methodSlots" (func $methodSlots (param eqref) (result eqref)))
-  (import "env" "objectArrayAt" (func $objectArrayAt (param eqref) (param i32) (result eqref)))
   (import "env" "debugLog" (func $debugLog (param i32)))
 
    JIT function with EXPLICIT signature - no type references

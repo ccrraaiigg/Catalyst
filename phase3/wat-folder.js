@@ -283,24 +283,40 @@ class WATFolder {
       const trimmed = line.trim();
       const baseIndent = line.match(/^(\s*)/)[1];
       
+      // Skip comment-only lines that happen to contain 'end'
+      if (trimmed.startsWith(';;')) {
+        result.push(line);
+        i++;
+        continue;
+      }
+      
       // Debug: log what we're examining
-      if (this.debugMode) {
+      if (this.debugMode && trimmed) {
         console.log(`Line ${i}: "${trimmed}"`);
       }
       
-      // Handle structured control flow - be more flexible with whitespace and patterns
+      // Handle structured control flow - be more aggressive about matching
       if (this.isIfStart(trimmed)) {
+        if (this.debugMode) console.log(`  -> Folding IF block starting at line ${i}`);
         const ifBlock = this.foldIfBlock(lines, i);
         result.push(baseIndent + ifBlock.folded);
-        i += ifBlock.linesConsumed;
+        const newIndex = i + ifBlock.linesConsumed;
+        if (this.debugMode) console.log(`  -> IF folded, consumed ${ifBlock.linesConsumed} lines, advancing from ${i} to ${newIndex}`);
+        i = newIndex;
       } else if (this.isLoopStart(trimmed)) {
+        if (this.debugMode) console.log(`  -> Folding LOOP block starting at line ${i}`);
         const loopBlock = this.foldLoopBlock(lines, i);
         result.push(baseIndent + loopBlock.folded);
-        i += loopBlock.linesConsumed;
+        const newIndex = i + loopBlock.linesConsumed;
+        if (this.debugMode) console.log(`  -> LOOP folded, consumed ${loopBlock.linesConsumed} lines, advancing from ${i} to ${newIndex}`);
+        i = newIndex;
       } else if (this.isBlockStart(trimmed)) {
+        if (this.debugMode) console.log(`  -> Folding BLOCK block starting at line ${i}`);
         const blockBlock = this.foldBlockBlock(lines, i);
         result.push(baseIndent + blockBlock.folded);
-        i += blockBlock.linesConsumed;
+        const newIndex = i + blockBlock.linesConsumed;
+        if (this.debugMode) console.log(`  -> BLOCK folded, consumed ${blockBlock.linesConsumed} lines, advancing from ${i} to ${newIndex}`);
+        i = newIndex;
       } else {
         result.push(line);
         i++;
@@ -312,23 +328,30 @@ class WATFolder {
 
   isIfStart(trimmed) {
     // Match: if, if $label, if (result i32), etc., but not (if ...)
-    return /^if(\s|$)/.test(trimmed) && !trimmed.startsWith('(if');
+    // Also handle variations like "if ;; comment"
+    return /^if(\s|$|;;)/.test(trimmed) && !trimmed.startsWith('(if');
   }
 
   isLoopStart(trimmed) {
     // Match: loop, loop $label, loop (result i32), etc., but not (loop ...)
-    return /^loop(\s|$)/.test(trimmed) && !trimmed.startsWith('(loop');
+    // Also handle variations like "loop ;; comment"
+    return /^loop(\s|$|;;)/.test(trimmed) && !trimmed.startsWith('(loop');
   }
 
   isBlockStart(trimmed) {
-    // Match: block, block $label, block (result i32), etc., but not (block ...)
-    return /^block(\s|$)/.test(trimmed) && !trimmed.startsWith('(block');
+    // Match: block, block $label, block (result i32), etc., but not (block ...)  
+    // Also handle variations like "block ;; comment"
+    return /^block(\s|$|;;)/.test(trimmed) && !trimmed.startsWith('(block');
   }
 
   foldIfBlock(lines, startIndex) {
     let i = startIndex;
     const ifLine = lines[i].trim();
     const baseIndent = lines[i].match(/^(\s*)/)[1];
+    
+    if (this.debugMode) {
+      console.log(`    Folding IF: "${ifLine}" at line ${i}`);
+    }
     
     // Extract everything after 'if' - could be condition, type signature, or nothing
     const afterIf = ifLine.substring(2).trim(); // Remove 'if'
@@ -345,18 +368,25 @@ class WATFolder {
       const line = lines[i];
       const trimmed = line.trim();
       
+      if (this.debugMode) {
+        console.log(`    Examining line ${i}: "${trimmed}" (nest level: ${nestLevel})`);
+      }
+      
       // Handle 'end' with comments like "end ;; if"
-      const isEndLine = trimmed === 'end' || trimmed.startsWith('end ;;') || trimmed.startsWith('end;');
+      const isEndLine = trimmed === 'end' || trimmed.startsWith('end ;;') || trimmed.startsWith('end;') || /^end\s+;;/.test(trimmed);
       
       // Track nesting level for nested control structures
       if (this.isIfStart(trimmed) || this.isLoopStart(trimmed) || this.isBlockStart(trimmed)) {
         nestLevel++;
+        if (this.debugMode) console.log(`    Found nested structure, nest level now: ${nestLevel}`);
       } else if (isEndLine) {
         if (nestLevel === 0) {
           // This is our closing 'end'
+          if (this.debugMode) console.log(`    Found our closing end at line ${i}: "${trimmed}"`);
           break;
         } else {
           nestLevel--;
+          if (this.debugMode) console.log(`    Found nested end, nest level now: ${nestLevel}`);
         }
       } else if (trimmed === 'else' && nestLevel === 0) {
         inElse = true;
@@ -364,6 +394,7 @@ class WATFolder {
         continue;
       }
       
+      // Include all lines (including comments) in the body
       if (inElse) {
         elseBody.push(line);
       } else {
@@ -378,16 +409,8 @@ class WATFolder {
       folded += ` ${afterIf}`;
     }
     
-    // For bare 'if' statements (no condition), we need to handle the stack-based condition
-    if (!afterIf && thenBody.length > 0) {
-      // Look for the condition in the preceding lines or body
-      folded += '\n' + baseIndent + '  (then';
-      for (const bodyLine of thenBody) {
-        folded += '\n' + baseIndent + '    ' + bodyLine.trim();
-      }
-      folded += '\n' + baseIndent + '  )';
-    } else if (thenBody.length > 0) {
-      // Normal if with condition
+    // Always add then clause if there's a body (even for bare if statements)
+    if (thenBody.length > 0) {
       folded += '\n' + baseIndent + '  (then';
       for (const bodyLine of thenBody) {
         folded += '\n' + baseIndent + '    ' + bodyLine.trim();
@@ -406,9 +429,15 @@ class WATFolder {
     
     folded += '\n' + baseIndent + ')';
     
+    const linesConsumed = i - startIndex + 1; // +1 to include the 'end' line
+    if (this.debugMode) {
+      console.log(`    IF folded successfully, consumed ${linesConsumed} lines (${startIndex} to ${i})`);
+      console.log(`    Generated folded code: ${folded.substring(0, 100)}...`);
+    }
+    
     return {
       folded: folded.substring(baseIndent.length), // Remove base indent since it will be added back
-      linesConsumed: i - startIndex + 1 // +1 to include the 'end' line
+      linesConsumed: linesConsumed
     };
   }
 
@@ -431,7 +460,7 @@ class WATFolder {
       const trimmed = line.trim();
       
       // Handle 'end' with comments like "end ;; loop"
-      const isEndLine = trimmed === 'end' || trimmed.startsWith('end ;;') || trimmed.startsWith('end;');
+      const isEndLine = trimmed === 'end' || trimmed.startsWith('end ;;') || trimmed.startsWith('end;') || /^end\s+;;/.test(trimmed);
       
       // Track nesting level
       if (this.isIfStart(trimmed) || this.isLoopStart(trimmed) || this.isBlockStart(trimmed)) {
@@ -444,6 +473,7 @@ class WATFolder {
         }
       }
       
+      // Include all lines (including comments) in the body
       body.push(line);
       i++;
     }
@@ -487,7 +517,7 @@ class WATFolder {
       const trimmed = line.trim();
       
       // Handle 'end' with comments like "end ;; block"
-      const isEndLine = trimmed === 'end' || trimmed.startsWith('end ;;') || trimmed.startsWith('end;');
+      const isEndLine = trimmed === 'end' || trimmed.startsWith('end ;;') || trimmed.startsWith('end;') || /^end\s+;;/.test(trimmed);
       
       // Track nesting level
       if (this.isIfStart(trimmed) || this.isLoopStart(trimmed) || this.isBlockStart(trimmed)) {
@@ -500,6 +530,7 @@ class WATFolder {
         }
       }
       
+      // Include all lines (including comments) in the body
       body.push(line);
       i++;
     }
@@ -598,12 +629,24 @@ try {
   console.log(`🎯 Folded syntax should make function signature errors more visible with proper indentation`);
   
   // Quick check for remaining 'end' keywords
-  const endCount = (folded.match(/\bend\b/g) || []).length;
+  const endMatches = folded.match(/\bend\b/g) || [];
+  const endCount = endMatches.length;
   if (endCount > 0) {
-    console.log(`⚠️ Warning: ${endCount} 'end' keywords still remain - may need manual folding`);
-    if (folder.debugMode) {
-      console.log('🐛 Remaining end keywords found - check debug output above');
+    console.log(`⚠️ Warning: ${endCount} 'end' keywords still remain`);
+    
+    if (process.argv.includes('--show-remaining') || folder.debugMode) {
+      console.log('\n📋 Remaining end keywords found in these contexts:');
+      const lines = folded.split('\n');
+      lines.forEach((line, index) => {
+        if (/\bend\b/.test(line)) {
+          console.log(`Line ${index + 1}: ${line.trim()}`);
+        }
+      });
+    } else {
+      console.log('💡 Use --show-remaining flag to see where the remaining end keywords are');
     }
+  } else {
+    console.log('🎉 All end keywords successfully converted to folded syntax!');
   }
   
 } catch (error) {

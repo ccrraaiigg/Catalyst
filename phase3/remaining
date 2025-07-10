@@ -1,0 +1,44 @@
+✅ Successfully converted squeak-vm-core.wat to folded syntax
+📄 Output written to: squeak-vm-core-folded.wat
+🎯 Folded syntax should make function signature errors more visible with proper indentation
+⚠️ Warning: 40 'end' keywords still remain
+
+📋 Remaining end keywords found in these contexts:
+Line 201: ;; Reached end of object list - method not found
+Line 204: end ;; if
+Line 222: end ;; if
+Line 406: end
+Line 721: end ;; if
+Line 734: end ;; if
+Line 747: end ;; if
+Line 759: end ;; if
+Line 779: end ;; if
+Line 795: end ;; if
+Line 800: end ;; loop $search_loop
+Line 854: end ;; if
+Line 867: end ;; if
+Line 894: end ;; if
+Line 1643: (i32.const 0x2F ;; Push literal end)
+Line 1680: end ;; else
+Line 1713: end ;; if
+Line 1726: end ;; if
+Line 1765: end ;; if
+Line 1778: end ;; if
+Line 1825: end ;; if
+Line 1853: end ;; if
+Line 1887: end ;; if
+Line 1894: end ;; if
+Line 1977: end ;; if
+Line 2018: end ;; if
+Line 2019: end ;; if
+Line 2020: end ;; if
+Line 2050: end ;; if
+Line 2073: ;; Check if we've reached end of bytecodes
+Line 2082: end ;; if
+Line 2101: end ;; if
+Line 2126: end ;; end inner if (pc == 0)
+Line 2128: end ;; end outer if (context switched)
+Line 2131: end ;; loop $interpreter_loop
+Line 2132: end ;; if
+Line 2133: end ;; $finished
+Line 2141: end ;; loop $execution_loop

@@ -1,138 +1,158 @@
-;; squeak-vm-core.wat: multiple simultaneous SqueakWASM virtual
+;; catalyst.wat: multiple simultaneous Catalyst Smalltalk virtual
 ;; machines with method translation
 
 (module
  ;; imported external functions from JS
- (import "env" "reportResult" (func $reportResult (param i32)))
+ 
+ (import "env" "reportResult" (
+			       func $reportResult
+			       (param i32)))
 
- ;; method, class, selector; JS installs translated function
- (import "env" "translateMethod" (func $translateMethod (param eqref) (param eqref) (param eqref)))
+ ;; JS translates method and installs translation function
+ (import "env" "translateMethod" (
+				  func $translateMethod
+				  (param eqref)   ;; method
+				  (param eqref)   ;; class
+				  (param eqref))) ;; selector
 
  ;; level, message, length
- (import "env" "debugLog" (func $debugLog (param i32 i32 i32)))
+ (import "env" "debugLog" (
+			   func $debugLog
+			   (param i32)
+			   (param i32)
+			   (param i32)))
 
- ;; types defining classes
+ ;; types defining Smalltalk classes
  ;;
- ;; To start, we only define classes that with functions which must
- ;; exist for the virtual machine to operate.
+ ;; To start, we only define classes with functions which must exist
+ ;; for the virtual machine to operate, and the superclasses of such
+ ;; classes which define instance variables.
  ;;
  ;; Instances of Smalltalk class SmallInteger are of built-in
  ;; reference type i31, each instance of every other class is of a
- ;; user-defined struct type. The common supertype of all those types
- ;; is built-in reference type eqref. The type for arrays of bytes has
- ;; built-in type i8 as its default type.
+ ;; reference type using a user-defined struct type. The common
+ ;; supertype of all those reference types is built-in reference type
+ ;; eqref. The type for arrays of bytes has built-in type i8 as its
+ ;; default type.
  ;; 
  ;; For Smalltalk, we use the terms "slots" and "methods". For WASM,
  ;; we use "fields" and "functions". Smalltalk source is "compiled" to
  ;; a struct of type $CompiledMethod. A $CompiledMethod is
  ;; "translated" to a WASM function.
+ ;; 
+ ;; Nullable fields are only nullable because their initial values
+ ;; aren't always knowable at creation time.
  
  (rec ;; recursive (mutually referential) type definitions
-  ;; type 0: ObjectArray
   (type $ObjectArray (array (mut eqref)))
-  
-  ;; type 1: ByteArray 
   (type $ByteArray (array (mut i8)))
+
+  (type $Object (sub (struct
+		      (field $class (mut null eqref)) ;; $Class or $Metaclass
+		      (field $identityHash (mut i32))
+		      (field $nextObject (mut (ref null $Object)))
+		      )))
   
-  ;; type 2: Base Squeak object
-  (type $SqueakObject (sub (struct 
-			    (field $class (mut (ref $Class)))
-			    (field $identityHash (mut i32))
-			    (field $nextObject (mut (ref null $SqueakObject)))
-			    )))
-  
-  ;; type 3: Variable objects with named fields
-  (type $VariableObject (sub $SqueakObject (struct
-					    (field $class (mut (ref $Class)))
-					    (field $identityHash (mut i32))
-					    (field $nextObject (mut (ref null $SqueakObject)))
-					    (field $slots (mut (ref $ObjectArray)))
-					    )))
-  
-  ;; type 4: Symbol objects for method selectors with named fields
-  (type $Symbol (sub $VariableObject (struct
-				      (field $class (mut (ref $Class)))
+  (type $VariableObject (sub $Object (struct
+				      (field $class (mut null eqref)) ;; $Class or $Metaclass
 				      (field $identityHash (mut i32))
-				      (field $nextObject (mut (ref null $SqueakObject)))
+				      (field $nextObject (mut (ref null $Object)))
+				      (field $slots (mut (ref $ObjectArray)))
+				      )))
+  
+  (type $Symbol (sub $VariableObject (struct
+				      (field $class (mut null eqref)) ;; $Class or $Metaclass
+				      (field $identityHash (mut i32))
+				      (field $nextObject (mut (ref null $Object)))
 				      (field $slots (mut (ref $ObjectArray)))
 				      (field $bytes (ref $ByteArray))
 				      )))
 
-  ;; type 5: Dictionary
   (type $Dictionary (sub $VariableObject (struct
-					  (field $class (mut (ref $Class)))
+					  (field $class (mut null eqref)) ;; $Class or $Metaclass
 					  (field $identityHash (mut i32))
-					  (field $format (mut i32))
-					  (field $size (mut i32))
-					  (field $nextObject (mut (ref null $SqueakObject)))
+					  (field $nextObject (mut (ref null $Object)))
 					  (field $slots (mut (ref $ObjectArray)))
 					  (field $keys (ref $ObjectArray))
 					  (field $values (ref $ObjectArray))
 					  (field $count (mut i32))
 					  )))
- 
-  ;; type 6: Behavior objects with a superclass, method dictionary, and format
+  
   (type $Behavior (sub $VariableObject (struct
-					(field $class (mut (ref $Class)))
+					;; a $Class or $Metaclass
+					(field $class (mut null eqref))
+
 					(field $identityHash (mut i32))
-					(field $nextObject (mut (ref null $SqueakObject)))
+					(field $nextObject (mut (ref null $Object)))
 					(field $slots (mut (ref $ObjectArray)))
-					(field $superclass (mut (ref $ClassDescription)))
+
+					;; a $Class or $Metaclass
+					(field $superclass (mut null eqref))
+
 					(field $methodDictionary (mut (ref $Dictionary)))
 					(field $format (mut i32))
 					)))
 
-  ;; type 7: ClassDescription objects with instance variables and a baseID
   (type $ClassDescription (sub $Behavior (struct
-					(field $class (mut (ref $Class)))
-					(field $identityHash (mut i32))
-					(field $nextObject (mut (ref null $SqueakObject)))
-					(field $slots (mut (ref $ObjectArray)))
-					(field $superclass (mut (ref $ClassDescription)))
-					(field $methodDictionary (mut (ref $Dictionary)))
-					(field $format (mut i32))
-					(field $instanceVariableNames (mut (ref $ObjectArray)))
-					(field $baseID (mut (ref $ByteArray)))
-					)))
+					  ;; a $Class or $Metaclass
+					  (field $class (mut null eqref))
 
-  ;; type 8: Class objects
+					  (field $identityHash (mut i32))
+					  (field $nextObject (mut (ref null $Object)))
+					  (field $slots (mut (ref $ObjectArray)))
+
+					  ;; a $Class or $Metaclass
+					  (field $superclass (mut null eqref))
+
+					  (field $methodDictionary (mut (ref $Dictionary)))
+					  (field $format (mut i32))
+					  (field $instanceVariableNames (mut (ref $ObjectArray)))
+					  (field $baseID (mut (ref $ByteArray)))
+					  )))
+
   (type $Class (sub $ClassDescription (struct
-					(field $class (mut (ref $Class)))
-					(field $identityHash (mut i32))
-					(field $nextObject (mut (ref null $SqueakObject)))
-					(field $slots (mut (ref $ObjectArray)))
-					(field $superclass (mut (ref $ClassDescription)))
-					(field $methodDictionary (mut (ref $Dictionary)))
-					(field $format (mut i32))
-					(field $instanceVariableNames (mut (ref $ObjectArray)))
-					(field $baseID (mut (ref $ByteArray)))
-					(field $subclasses (mut (ref $ObjectArray)))
-					(field $name (mut (ref $Symbol)))
-					(field $classPool (mut (ref $Dictionary)))
-					(field $sharedPools (mut (ref $ObjectArray)))
-				     )))
+				       ;; a $Class or $Metaclass
+				       (field $class (mut null eqref))
 
-  ;; type 9: Metaclass objects
+				       (field $identityHash (mut i32))
+				       (field $nextObject (mut (ref null $Object)))
+				       (field $slots (mut (ref $ObjectArray)))
+
+				       ;; a $Class or $Metaclass
+				       (field $superclass (mut null eqref))
+
+				       (field $methodDictionary (mut (ref $Dictionary)))
+				       (field $format (mut i32))
+				       (field $instanceVariableNames (mut (ref $ObjectArray)))
+				       (field $baseID (mut (ref null $ByteArray)))
+				       (field $subclasses (mut (ref $ObjectArray)))
+				       (field $name (mut (ref $Symbol)))
+				       (field $classPool (mut (ref $Dictionary)))
+				       (field $sharedPools (mut (ref $ObjectArray)))
+				       )))
+
   (type $Metaclass (sub $ClassDescription (struct
-					   (field $class (mut (ref $Class)))
+					   ;; a $Class or $Metaclass
+					   (field $class (mut null eqref))
+
 					   (field $identityHash (mut i32))
-					   (field $nextObject (mut (ref null $SqueakObject)))
+					   (field $nextObject (mut (ref null $Object)))
 					   (field $slots (mut (ref $ObjectArray)))
-					   (field $superclass (mut (ref $ClassDescription)))
+
+					   ;; a $Class or $Metaclass
+					   (field $superclass (mut null eqref))
+
 					   (field $methodDictionary (mut (ref $Dictionary)))
 					   (field $format (mut i32))
 					   (field $instanceVariableNames (mut (ref $ObjectArray)))
 					   (field $baseID (mut (ref $ByteArray)))
 					   (field $thisClass (mut (ref $Class)))
-				     )))
+					   )))
 
-  ;; type 10: CompiledMethod with JIT compilation support and named fields
   (type $CompiledMethod (sub $VariableObject (struct
-					      (field $class (mut (ref $Class)))
+					      (field $class (mut null eqref)) ;; $Class or $Metaclass
 					      (field $identityHash (mut i32))
-					      (field $format (mut i32))
-					      (field $size (mut i32))
-					      (field $nextObject (mut (ref null $SqueakObject)))
+					      (field $nextObject (mut (ref null $Object)))
 					      (field $slots (mut (ref $ObjectArray)))
 					      (field $header i32)
 					      (field $bytecodes (ref $ByteArray))
@@ -144,13 +164,10 @@
 					      (field $isInstalled (mut i32))   
 					      )))
   
-  ;; type 11: Context objects for execution state with named fields
   (type $Context (sub $VariableObject (struct
-				       (field $class (mut (ref $Class)))
+				       (field $class (mut null eqref)) ;; $Class or $Metaclass
 				       (field $identityHash (mut i32))
-				       (field $format (mut i32))
-				       (field $size (mut i32))
-				       (field $nextObject (mut (ref null $SqueakObject)))
+				       (field $nextObject (mut (ref null $Object)))
 				       (field $slots (mut (ref $ObjectArray)))
 				       (field $sender (mut (ref null $Context)))
 				       (field $pc (mut i32))
@@ -162,7 +179,6 @@
 				       (field $stack (mut (ref $ObjectArray)))
 				       )))
   
-  ;; type 12: Polymorphic Inline Cache entry
   (type $PICEntry (struct
                    (field $selector (mut eqref))
                    (field $receiverClass (mut (ref $Class)))
@@ -170,42 +186,29 @@
                    (field $hitCount (mut i32))
                    ))
   
-  ;; type 13: JIT function type
-  (type $jit_func_type (func (param eqref) (result i32)))
-
-  ;; type 14: virtual machine
   (type $VirtualMachine (struct
-			 (field $activeContext (mut (ref $Context)))
+			 ;; created with a null $activeContext; it's set later
+			 (field $activeContext (mut (ref null $Context)))
+
 			 (field $jitEnabled (mut i32))
 			 (field $methodCache (mut (ref $ObjectArray)))
 			 (field $functionTableBaseIndex (mut i32))
 
 			 ;; object memory management
 			 (field $nextIdentityHash (mut i32))
-			 (field $firstObject (mut (ref $SqueakObject)))
-			 (field $lastObject (mut (ref $SqueakObject))))))
 
- ;; global VM state
+			 ;; created with null $firstObject and
+			 ;; $lastObject; they're set later
+			 (field $firstObject (mut (ref null $Object)))
+			 (field $lastObject (mut (ref null $Object))))))
+
+ ;; global state for all virtual machines
  ;;
  ;; NOTE: Globals are nullable due to current WASM limitations, but
- ;; are enforced to be non-null after initialization at runtime.
+ ;; are enforced to be non-null after runtime initialization.
 
- ;; initializers
- (global $objectClass (mut (ref null $Class)) (ref.null $Class))
- (global $classClass (mut (ref null $Class)) (ref.null $Class))
- (global $methodClass (mut (ref null $Class)) (ref.null $Class))
- (global $contextClass (mut (ref null $Class)) (ref.null $Class))
- (global $symbolClass (mut (ref null $Class)) (ref.null $Class))
- (global $smallIntegerClass (mut (ref null $Class)) (ref.null $Class))
- (global $mainMethod (mut (ref null $CompiledMethod)) (ref.null $CompiledMethod))
- 
- ;; essential objects
- (global $nilObject (mut (ref null eq)) (ref.null eq))
- (global $trueObject (mut (ref null eq)) (ref.null eq))
- (global $falseObject (mut (ref null eq)) (ref.null eq))
- 
  ;; special selectors for quick sends
- (global $workloadSelector (mut (ref null eq)) (ref.null eq))
+ (global $workloadSelector (mut null eqref) (ref.null eq))
  
  ;; method translation globals and method lookup cache
  ;; default translation threshold; each method can have its own
@@ -215,13 +218,234 @@
  ;; start of staging bytes
  (global $byteArrayCopyPointer (mut i32) (i32.const 1024))
 
- ;; linear memory for staging bytes as return values to JS. See $copyByteArrayToMemory
- (memory (export "memory") 1)
+ ;; linear memory for staging byte arrays visible to JS. See $copyByteArrayToMemory.
+ (memory (export "bytes") 1)
  
- ;; translated methods function table
+ ;; translated methods function table (the only table in this module)
  (table $functionTable (export "functionTable") 100 funcref)
 
- ;; exported utilities for method translation in JS
+ (func $newDictionary
+       (param $vm (ref $VirtualMachine))
+       (result (ref $Dictionary))
+
+       ref.null eq            ;; $class to be set later, to class Dictionary
+       local.get $vm
+       call $nextIdentityHash ;; $identityHash
+       ref.null $Object       ;; $nextObject to be set later, once there is one
+       ref.null eq            ;; default array element
+       i32.const 0            ;; empty
+       array.new $ObjectArray ;; $slots
+       ref.null eq            ;; default array element
+       i32.const 0            ;; empty
+       array.new $ObjectArray ;; $keys
+       ref.null eq            ;; default array element
+       i32.const 0            ;; empty
+       array.new $ObjectArray ;; $values
+       i32.const 0            ;; $count
+       struct.new $Dictionary
+       )
+
+ ;; Create and answer a virtual machine with an object memory.
+ (func (export "initialize")
+       (result (ref $VirtualMachine))
+       
+       (local $vm (ref $VirtualMachine))
+       (local $classBehavior (ref $Class))
+       (local $classClass (ref $Class))
+       (local $classObject (ref $Class))
+       
+       ;; create virtual machine
+       ref.null $Context            ;; $activeContext to be set later
+       i32.const 1                  ;; jitEnabled
+
+       ;; initialize method cache
+       ref.null eq                  ;; default array element
+       global.get $methodCacheSize
+       array.new $ObjectArray       ;; $methodCache
+
+       i32.const 0                  ;; $functionTableBaseIndex
+       i32.const 1001               ;; $nextIdentityHash
+       ref.null $Object             ;; $firstObject
+       ref.null $Object             ;; $lastObject
+       struct.new $VirtualMachine
+       local.set $vm
+
+       ;; Create class SmallInteger.
+       ;; First create a Metaclass to be the class of class SmallInteger.
+       ;; First create class Class to be the superclass of (SmallInteger class).
+       ;; First create a Metaclass to be the class of class Class.
+       ;; First create class Class to be the superclass of (Class class). We've been here before.
+       ;; First create class Class with a null class, to be set later.
+       ;; First create class Object to be the superclass of class Class.
+       ;; First create a Metaclass to be the class of class Object. We've been here before.
+       ;; First create class Class with a null class and superclass, to be set later.
+       ;; 
+       ;; This is why $class and $superclass of $Class are nullable
+       ;; ($class is also nullable because the class of class
+       ;; Metaclass is also an instance of class Metaclass, and
+       ;; $superclass is also nullable because the superclass of class
+       ;; Object is nil).
+
+       ;; Create class Behavior with a null class and superclass, to be set later.
+
+       ref.null eq                  ;; $class to be set later, to a Metaclass
+       local.get $vm
+       call $nextIdentityHash       ;; $identityHash
+       ref.null $Object             ;; nextObject
+       ref.null eq                  ;; default array element type
+       i32.const 0                  ;; empty
+       array.new $ObjectArray       ;; $slots
+       ref.null eq                  ;; $superclass to be set later, to class Object
+       local.get $vm
+       call $newDictionary          ;; $methodDictionary
+       i32.const 2                  ;; $format
+       ref.null eq                  ;; default array element type
+       i32.const 0                  ;; empty
+       array.new $ObjectArray       ;; $instanceVariableNames
+       ref.null $ByteArray          ;; $baseID to be set later (should be a $UUID)
+       ref.null eq                  ;; default array element type
+       i32.const 0                  ;; empty
+       array.new $ObjectArray       ;; $subclasses
+
+       ;; create name symbol
+       ref.null $Class              ;; $class to be set later, to class Symbol
+       local.get $vm
+       call $nextIdentityHash
+       ref.null $Object             ;; $nextObject
+       ref.null eq                  ;; default array element
+       i32.const 0                  ;; empty
+       array.new $ObjectArray       ;; $slots
+       i32.const 67                 ;; 'C'
+       i32.const 108                ;; 'l'
+       i32.const 97                 ;; 'a'
+       i32.const 115                ;; 's'
+       i32.const 115                ;; 's'
+       array.new_fixed $ByteArray 5
+       struct.new $Symbol
+
+       local.get $vm
+       call $newDictionary          ;; $classPool
+       ref.null eq                  ;; default array element type
+       i32.const 0                  ;; empty
+       array.new $ObjectArray       ;; $sharedPools
+       struct.new $Class
+       local.set $classBehavior
+
+       ;; Create class ClassDescription with a null class, to be set later.
+
+       ;; Create class Metaclass with a null class, to be set later.
+
+       ;; Create class Class with a null class and superclass, to be set later.
+
+       ref.null eq                  ;; $class to be set later, to (Class class)
+       local.get $vm
+       call $nextIdentityHash       ;; $identityHash
+       ref.null $Object             ;; nextObject
+       ref.null eq                  ;; default array element type
+       i32.const 0                  ;; empty
+       array.new $ObjectArray       ;; $slots
+       ref.null eq                  ;; $superclass to be set later
+       local.get $vm
+       call $newDictionary          ;; $methodDictionary
+       i32.const 2                  ;; $format
+       ref.null eq                  ;; default array element type
+       i32.const 0                  ;; empty
+       array.new $ObjectArray       ;; $instanceVariableNames
+       ref.null $ByteArray          ;; $baseID to be set later (should be a $UUID)
+       ref.null eq                  ;; default array element type
+       i32.const 0                  ;; empty
+       array.new $ObjectArray       ;; $subclasses
+
+       ;; create name symbol
+       ref.null $Class              ;; $class to be set later (to class Symbol)
+       local.get $vm
+       call $nextIdentityHash
+       ref.null $Object             ;; $nextObject
+       ref.null eq                  ;; default array element
+       i32.const 0                  ;; empty
+       array.new $ObjectArray       ;; $slots
+       i32.const 67                 ;; 'C'
+       i32.const 108                ;; 'l'
+       i32.const 97                 ;; 'a'
+       i32.const 115                ;; 's'
+       i32.const 115                ;; 's'
+       array.new_fixed $ByteArray 5
+       struct.new $Symbol
+
+       local.get $vm
+       call $newDictionary          ;; $classPool
+       ref.null eq                  ;; default array element type
+       i32.const 0                  ;; empty
+       array.new $ObjectArray       ;; $sharedPools
+       struct.new $Class
+       local.set $classClass
+
+       ;; Create class Object.
+       ;; Create (Object class).
+       
+
+
+       
+       global.get $objectClass    ;; superclass (class Object)
+       local.get $emptyDict ;; methodDictionary (non-nullable)
+       local.get $emptyInstVarNames ;; instanceVariableNames (non-nullable $ObjectArray)
+       local.get $emptySymbol ;; name (non-nullable)
+       i32.const 0         ;; instanceSize
+       struct.new $Class
+       local.set $newObject
+       ;; Link this object to the chain
+       local.get $vm
+       struct.get $VirtualMachine $lastObject
+       ref.as_non_null
+       local.get $newObject
+       struct.set $Object $nextObject
+       local.get $newObject
+       local.get $vm
+       struct.set $VirtualMachine $lastObject
+       local.get $newObject
+       global.set $smallIntegerClass
+
+       ;; Create method dictionary for SmallInteger
+       global.get $objectClass ;; class (ref $Class)
+       call $nextIdentityHash
+       i32.const 2         ;; format (variable object)
+       i32.const 9         ;; size
+       ref.null $Object ;; nextObject (ref null $Object)
+       ref.null eq
+       i32.const 0
+       array.new $ObjectArray
+       ref.as_non_null      ;; $slots (non-nullable)
+       ref.null eq
+       i32.const 1
+       array.new $ObjectArray
+       ref.as_non_null      ;; $keys (non-nullable)
+       ref.null eq
+       i32.const 1
+       array.new $ObjectArray
+       ref.as_non_null      ;; $values (non-nullable)
+       i32.const 0         ;; count
+       struct.new $Dictionary
+       local.set $newObject
+       ;; Link this object to the chain
+       local.get $vm
+       struct.get $VirtualMachine $lastObject
+       ref.as_non_null
+       local.get $newObject
+       struct.set $Object $nextObject
+       local.get $newObject
+       local.get $vm
+       struct.set $VirtualMachine $lastObject
+       local.get $newObject
+       local.set $methodDictionary
+
+
+
+       ;; Create minimal object memory for (3 workload) example.
+       local.get $vm
+       call $createMinimalBootstrap
+       )
+
+ ;; utilities for method translation in JS
  (func (export "compiledMethodBytecodes")
        (param $method eqref)
        (result (ref $ByteArray))
@@ -313,51 +537,26 @@
        ref.cast (ref $Context)
        struct.get $Context $method)
  
- (func (export "objectArrayAt")
-       (param $array eqref)
-       (param $index i32)
-       (result eqref)
-
-       local.get $array
-       ref.cast (ref $ObjectArray)
-       local.get $index
-       call $objectArrayAt)
-
- (func (export "objectArrayLength")
-       (param $array eqref)
-       (result i32)
-
-       local.get $array
-       ref.cast (ref $ObjectArray)
-       array.len
-       ) ;; (func $objectArrayLength
-
- (func (export "byteArrayAt")
+ (func $arrayOkayAt
        (param $array eqref)
        (param $index i32)
        (result i32)
 
-       (local $arrayObject (ref $ByteArray))
        (local $length i32)
-
-       local.get $array
-       ref.cast (ref $ByteArray)
-       local.set $arrayObject
        
-       ;; Get array length
-       local.get $arrayObject
+       ;; Get array length.
+       local.get $array
        array.len
        local.set $length
        
-       ;; Check bounds
+       ;; Check bounds.
        local.get $index
        i32.const 0
        i32.lt_s
        if
        i32.const 0
        return
-       end
-       
+       else
        local.get $index
        local.get $length
        i32.ge_u
@@ -365,12 +564,50 @@
        i32.const 0
        return
        end
+       return 1
+       )
+
+ (func $objectArrayAt
+       (param $array (ref $ObjectArray))
+       (param $index i32)
+       (result (ref null eq))
+
+       local.get $array
+       ref.cast (ref eq)
+       local.get $index
+       call $arrayOkayAt
+       i32.eqz
+       if
+       i32.const -1
+       return
+       else
        
        ;; Safe to access array
-       local.get $arrayObject
+       local.get $array
        local.get $index
-       array.get_u $ByteArray
-       ) ;; (func $byteArrayAt
+       array.get $ObjectArray
+       )
+ 
+ (func (export "byteArrayAt")
+       (param $array eqref)
+       (param $index i32)
+       (result i32)
+
+       local.get $array
+       local.get $index
+       call $arrayOkayAt
+       i32.eqz
+       if
+       i32.const -1
+       return
+       else
+       
+       ;; Safe to access array
+       local.get $array
+       ref.cast (ref $ByteArray)
+       local.get $index
+       array.get_s $ByteArray
+       )
 
  (func (export "byteArrayLength")
        (param $array eqref)
@@ -379,7 +616,7 @@
        local.get $array
        ref.cast (ref $ByteArray)
        array.len
-       ) ;; (func $byteArrayLength
+       )
 
  (func (export "copyByteArrayToMemory")
        (param (ref $ByteArray))
@@ -425,41 +662,6 @@
        i32.const 0
        )
 
- (func $objectArrayAt
-       (param $array (ref $ObjectArray))
-       (param $index i32)
-       (result (ref null eq))
-
-       (local $length i32)
-
-       ;; Get array length
-       local.get $array
-       array.len
-       local.set $length
-       
-       ;; Check bounds
-       local.get $index
-       i32.const 0
-       i32.lt_s
-       if
-       ref.null eq
-       return
-       end
-       
-       local.get $index
-       local.get $length
-       i32.ge_u
-       if
-       ref.null eq
-       return
-       end
-       
-       ;; Safe to access array
-       local.get $array
-       local.get $index
-       array.get $ObjectArray
-       ) ;; (func $objectArrayAt
- 
  ;; Memory management
  (func $nextIdentityHash
        (param $vm (ref $VirtualMachine))
@@ -479,6 +681,7 @@
  (func $pushOnStack
        (param $context (ref $Context))
        (param $value eqref)
+
        (local $stack (ref $ObjectArray))
        (local $sp i32)
 
@@ -514,6 +717,7 @@
  (func $popFromStack
        (param $context (ref null $Context))
        (result (ref null eq))
+
        (local $stack (ref $ObjectArray))
        (local $sp i32)
        
@@ -554,6 +758,7 @@
  (func $topOfStack
        (param $context (ref null $Context))
        (result (ref null eq))
+
        (local $stack (ref $ObjectArray))
        (local $sp i32)
        
@@ -585,7 +790,10 @@
        ) ;; (func $topOfStack
 
  ;; Get class of any object (including SmallIntegers)
- (func $classOfObject (param $obj (ref null eq)) (result (ref $Class))
+ (func $classOfObject
+       (param $obj (ref null eq))
+       (result (ref $Class))
+       
        local.get $obj
        ref.test (ref i31)
        if (result (ref $Class))
@@ -594,8 +802,8 @@
        else
        ;; Regular object
        local.get $obj
-       ref.cast (ref $SqueakObject)
-       struct.get $SqueakObject $class
+       ref.cast (ref $Object)
+       struct.get $Object $class
        end ;; else
        ) ;; if (result (ref $Class))
 
@@ -603,6 +811,7 @@
        (param $receiver (ref null eq))
        (param $selector (ref null eq))
        (result (ref null $CompiledMethod))
+
        (local $class (ref $Class))
        (local $currentClass (ref $Class))
        (local $methodDictionary (ref null $Dictionary))
@@ -734,6 +943,7 @@
        (param $selector (ref null eq))
        (param $receiverClass (ref $Class))
        (result (ref null $CompiledMethod))
+
        (local $cache (ref null $ObjectArray))
        (local $cacheSize i32)
        (local $hash i32)
@@ -753,8 +963,8 @@
        
        ;; Simple hash function (identity hash of selector + class)
        local.get $selector
-       ref.cast (ref $SqueakObject)
-       struct.get $SqueakObject $identityHash
+       ref.cast (ref $Object)
+       struct.get $Object $identityHash
        
        local.get $receiverClass
        ref.as_non_null
@@ -846,6 +1056,7 @@
        (param $selector (ref null eq))
        (param $receiverClass (ref $Class))
        (param $method (ref $CompiledMethod))
+
        (local $cache (ref null $ObjectArray))
        (local $index i32)
        (local $entry (ref $PICEntry))
@@ -861,8 +1072,8 @@
        
        ;; Simple hash function
        local.get $selector
-       ref.cast (ref $SqueakObject)
-       struct.get $SqueakObject $identityHash
+       ref.cast (ref $Object)
+       struct.get $Object $identityHash
        
        local.get $receiverClass
        ref.as_non_null
@@ -896,6 +1107,7 @@
        (param $method (ref $CompiledMethod))
        (param $selector eqref)
        (result (ref null $Context))
+
        (local $stack (ref $ObjectArray))
        (local $slots (ref $ObjectArray))
        (local $args (ref $ObjectArray))
@@ -927,7 +1139,7 @@
        call $nextIdentityHash
        i32.const 14         ;; format (MethodContext)
        i32.const 14         ;; size
-       ref.null $SqueakObject ;; nextObject
+       ref.null $Object ;; nextObject
        local.get $slots     ;; slots (non-nullable)
        local.get $vm
        struct.get $VirtualMachine $activeContext  ;; sender (current context)
@@ -942,12 +1154,18 @@
        ) ;; (func $createMethodContext
 
  ;; SmallInteger operations
- (func $smallIntegerForValue (param $value i32) (result (ref i31))
+ (func $smallIntegerForValue
+       (param $value i32)
+       (result (ref i31))
+       
        local.get $value
        ref.i31
        ) ;; (func $smallIntegerForValue (param $value i32) (result (ref i31))
  
- (func $valueOfSmallInteger (param $obj (ref null eq)) (result i32)
+ (func $valueOfSmallInteger
+       (param $obj (ref null eq))
+       (result i32)
+       
        local.get $obj
        ref.test (ref i31)
        if (result i32)
@@ -961,7 +1179,10 @@
        ) ;; if (result i32)
 
  ;; Check if method has compiled function
- (func $isTranslated (param $method (ref $CompiledMethod)) (result i32)
+ (func $isTranslated
+       (param $method (ref $CompiledMethod))
+       (result i32)
+       
        local.get $method
        struct.get $CompiledMethod $functionIndex
        i32.const 0
@@ -973,6 +1194,7 @@
        (param $context (ref null $Context))
        (param $funcIndex i32)
        (result i32)
+       
        ;; Call the compiled function directly using call_indirect
        ;; The function should operate on the context and return 0 for success
        local.get $context
@@ -981,7 +1203,11 @@
        ) ;; (func $executeTranslatedMethod
 
  ;; Trigger JIT compilation for hot method
- (func $triggerMethodTranslation (param $method (ref $CompiledMethod))
+ (func $triggerMethodTranslation
+       (param $method (ref $CompiledMethod))
+       (param $class eqref)
+       (param $selector (ref $Symbol))
+       
        (local $bytecodes (ref null $ByteArray))
        (local $bytecodeLen i32)
        (local $functionIndexIndex i32)
@@ -1004,12 +1230,17 @@
        
        ;; Call JS method translator with method info
        local.get $method
-       
+       local.get $class
+       local.get $selector
        call $translateMethod
        ) ;; (func $triggerMethodTranslation (param $method (ref $CompiledMethod))
 
  ;; Handle method return and context switching
- (func $handleMethodReturn (param $vm (ref $VirtualMachine)) (param $context (ref null $Context)) (result (ref null eq))
+ (func $handleMethodReturn
+       (param $vm (ref $VirtualMachine))
+       (param $context (ref null $Context))
+       (result (ref null eq))
+       
        (local $sender (ref null $Context))
        (local $result (ref null eq))
        
@@ -1047,33 +1278,22 @@
        local.get $sender
        ref.is_null
        if
-       ref.null $Context
        local.get $vm
+       ref.null $Context
        struct.set $VirtualMachine $activeContext
        else
-       local.get $sender
-       ref.as_non_null
        local.get $vm
+       local.get $sender
        struct.set $VirtualMachine $activeContext
        end ;; else
        
        local.get $result
        ) ;; if
 
- ;; VM initialization and bootstrap
- (func $initialize (export "initialize") (result (ref $VirtualMachine))
-       (local $vm (ref $VirtualMachine))
-       
-       struct.new $VirtualMachine
-       local.set $vm
-
-       ;; Create minimal object memory for 3 workload example
-       local.get $vm
-       call $createMinimalBootstrap
-       ) ;; (func $initialize (export "initialize") (result i32)
-
  ;; Create minimal bootstrap environment for 3 workload
- (func $createMinimalBootstrap (result i32)
+ (func $createMinimalBootstrap
+       (result i32)
+       
        (local $vm (ref $VirtualMachine))
        (local $workloadMethod (ref $CompiledMethod))
        (local $mainMethod (ref $CompiledMethod))
@@ -1081,188 +1301,14 @@
        (local $workloadBytecodes (ref $ByteArray))
        (local $workloadSelector (ref $Symbol))
        (local $methodDictionary (ref $Dictionary))
-       (local $newObject (ref $SqueakObject))
+       (local $newObject (ref $Object))
        (local $slots (ref $ObjectArray))
        (local $keys (ref $ObjectArray))
        (local $values (ref $ObjectArray))
-       (local $emptyDict (ref $Dictionary))
        (local $emptySymbol (ref $Symbol))
        (local $emptyInstVarNames (ref $ObjectArray))
        (local $workloadSlots (ref $ObjectArray))
        
-       ;; Initialize method cache
-       ref.null eq
-       global.get $methodCacheSize
-       array.new $ObjectArray
-       local.get $vm
-       struct.set $VirtualMachine $methodCache
-       
-       ;; Create minimal objects for non-nullable fields
-       ;; Empty Dictionary for methodDictionary
-       global.get $objectClass ;; class (ref $Class)
-       local.get $vm
-       call $nextIdentityHash
-       i32.const 2         ;; format (variable object)
-       i32.const 9         ;; size
-       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
-       ref.null eq
-       i32.const 0
-       array.new $ObjectArray
-       ref.as_non_null      ;; $slots (non-nullable)
-       ref.null eq
-       i32.const 0
-       array.new $ObjectArray
-       ref.null eq
-       i32.const 0
-       array.new $ObjectArray
-       i32.const 0         ;; count
-       struct.new $Dictionary
-       local.set $emptyDict
-
-       ;; Empty Symbol for name
-       global.get $objectClass ;; class (ref $Class)
-       local.get $vm
-       call $nextIdentityHash
-       i32.const 8         ;; format (byte object)
-       i32.const 7         ;; size
-       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
-       ref.null eq
-       i32.const 0
-       array.new $ObjectArray
-       ref.as_non_null
-       ref.null $ByteArray
-       struct.new $Symbol
-       local.set $emptySymbol
-
-       ;; Empty ObjectArray for instanceVariableNames (array of $Symbol, but empty for bootstrap)
-       ref.null eq
-       i32.const 0
-       array.new $ObjectArray
-       ref.as_non_null
-       local.set $emptyInstVarNames
-
-       ;; Create Class class first (bootstrap issue)
-       ref.null $Class     ;; class (will be set to itself)
-       local.get $vm
-       call $nextIdentityHash
-       i32.const 1         ;; format (regular object)
-       i32.const 11        ;; size
-       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
-       ref.null eq
-       i32.const 0
-       array.new $ObjectArray
-       ref.as_non_null      ;; $slots (non-nullable)
-       ref.null $Class     ;; superclass (nullable)
-       local.get $emptyDict ;; methodDictionary (non-nullable)
-       local.get $emptyInstVarNames ;; instanceVariableNames (non-nullable $ObjectArray)
-       local.get $emptySymbol ;; name (non-nullable)
-       i32.const 0         ;; instanceSize
-       struct.new $Class
-       local.set $newObject
-       local.get $newObject
-       global.set $classClass
-       global.get $classClass
-       ;; Set its own class field to itself (must be (ref null $Class))
-       local.get $newObject
-       struct.set $Class $class
-       ;; For the very first object, set both $firstObject and $lastObject
-       local.get $newObject
-       local.get $vm
-       struct.set $VirtualMachine $firstObject
-       local.get $newObject
-       local.get $vm
-       struct.set $VirtualMachine $lastObject
-
-       ;; Create Object class
-       global.get $classClass ;; class (ref $Class)
-       call $nextIdentityHash
-       i32.const 1         ;; format
-       i32.const 11        ;; size
-       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
-       ref.null eq
-       i32.const 0
-       array.new $ObjectArray
-       ref.as_non_null      ;; $slots (non-nullable)
-       ref.null $Class     ;; superclass (ref $Class)
-       local.get $emptyDict ;; methodDictionary (non-nullable)
-       local.get $emptyInstVarNames ;; instanceVariableNames (non-nullable $ObjectArray)
-       local.get $emptySymbol ;; name (non-nullable)
-       i32.const 0         ;; instanceSize
-       struct.new $Class
-       local.set $newObject
-       ;; Link this object to the chain
-       local.get $vm
-       struct.get $VirtualMachine $lastObject
-       local.get $newObject
-       struct.set $SqueakObject $nextObject
-       local.get $newObject
-       local.get $vm
-       struct.set $VirtualMachine $lastObject
-       local.get $newObject
-       global.set $objectClass
-
-       ;; Create SmallInteger class
-       global.get $classClass ;; class (ref $Class)
-       call $nextIdentityHash
-       i32.const 1         ;; format
-       i32.const 11        ;; size
-       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
-       ref.null eq
-       i32.const 0
-       array.new $ObjectArray
-       ref.as_non_null      ;; $slots (non-nullable)
-       global.get $objectClass ;; superclass (class Object)
-       local.get $emptyDict ;; methodDictionary (non-nullable)
-       local.get $emptyInstVarNames ;; instanceVariableNames (non-nullable $ObjectArray)
-       local.get $emptySymbol ;; name (non-nullable)
-       i32.const 0         ;; instanceSize
-       struct.new $Class
-       local.set $newObject
-       ;; Link this object to the chain
-       local.get $vm
-       struct.get $VirtualMachine $lastObject
-       ref.as_non_null
-       local.get $newObject
-       struct.set $SqueakObject $nextObject
-       local.get $newObject
-       local.get $vm
-       struct.set $VirtualMachine $lastObject
-       local.get $newObject
-       global.set $smallIntegerClass
-
-       ;; Create method dictionary for SmallInteger
-       global.get $objectClass ;; class (ref $Class)
-       call $nextIdentityHash
-       i32.const 2         ;; format (variable object)
-       i32.const 9         ;; size
-       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
-       ref.null eq
-       i32.const 0
-       array.new $ObjectArray
-       ref.as_non_null      ;; $slots (non-nullable)
-       ref.null eq
-       i32.const 1
-       array.new $ObjectArray
-       ref.as_non_null      ;; $keys (non-nullable)
-       ref.null eq
-       i32.const 1
-       array.new $ObjectArray
-       ref.as_non_null      ;; $values (non-nullable)
-       i32.const 0         ;; count
-       struct.new $Dictionary
-       local.set $newObject
-       ;; Link this object to the chain
-       local.get $vm
-       struct.get $VirtualMachine $lastObject
-       ref.as_non_null
-       local.get $newObject
-       struct.set $SqueakObject $nextObject
-       local.get $newObject
-       local.get $vm
-       struct.set $VirtualMachine $lastObject
-       local.get $newObject
-       local.set $methodDictionary
-
        ;; Create bytecodes for main method: [push_receiver, send_workload, return]
        i32.const 0x70      ;; push_receiver 
        i32.const 0xD0      ;; send_workload
@@ -1369,11 +1415,10 @@
 
        ;; Create "workload" selector symbol with actual bytes
        ;; Now create the Symbol with the byte array (push fields in correct order)
-       global.get $objectClass ;; class (ref $Class)
-       call $nextIdentityHash
-       i32.const 8         ;; format (byte object)
-       i32.const 7         ;; size
-       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
+       global.get $objectClass ;; $class
+       local.get $vm
+       call $nextIdentityHash ;; $identityHash
+       ref.null $Object ;; nextObject (ref null $Object)
        ref.null eq
        i32.const 0
        array.new $ObjectArray
@@ -1397,7 +1442,7 @@
        ref.as_non_null
        local.get $workloadSelector
        ref.as_non_null
-       struct.set $SqueakObject $nextObject
+       struct.set $Object $nextObject
        local.get $workloadSelector
        ref.as_non_null
        local.get $vm
@@ -1419,7 +1464,7 @@
        call $nextIdentityHash  ;; identityHash (i32)
        i32.const 6         ;; format (i32)
        i32.const 14        ;; size (i32)
-       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
+       ref.null $Object ;; nextObject (ref null $Object)
        local.get $slots      ;; slots (ref $ObjectArray)
        i32.const 0         ;; header (i32)
        local.get $mainBytecodes ;; bytecodes (ref null $ByteArray)
@@ -1435,7 +1480,7 @@
        local.get $vm
        struct.get $VirtualMachine $lastObject
        local.get $newObject
-       struct.set $SqueakObject $nextObject
+       struct.set $Object $nextObject
        local.get $newObject
        local.get $vm
        struct.set $VirtualMachine $lastObject
@@ -1482,7 +1527,7 @@
        call $nextIdentityHash  ;; identityHash (i32)
        i32.const 6         ;; format (i32)
        i32.const 14        ;; size (i32)
-       ref.null $SqueakObject ;; nextObject (ref null $SqueakObject)
+       ref.null $Object ;; nextObject (ref null $Object)
        local.get $workloadSlots ;; slots (ref $ObjectArray) - now has proper literals
        i32.const 0         ;; header (i32)
        local.get $workloadBytecodes ;; bytecodes (ref null $ByteArray)
@@ -1499,7 +1544,7 @@
        struct.get $VirtualMachine $lastObject
        ref.as_non_null
        local.get $newObject
-       struct.set $SqueakObject $nextObject
+       struct.set $Object $nextObject
        local.get $newObject
        local.get $vm
        struct.set $VirtualMachine $lastObject
@@ -1549,7 +1594,7 @@
        
        ;; Return success
        i32.const 1
-       ) ;; (func $createMinimalBootstrap (result i32)
+       )
 
  ;; Interpret single bytecode - returns 1 if method should return, 0 to continue
  (func $interpretBytecode
@@ -1557,6 +1602,7 @@
        (param $context (ref $Context))
        (param $bytecode i32) 
        (result i32)
+       
        (local $receiver eqref)
        (local $value1 eqref)
        (local $value2 eqref)
@@ -1861,7 +1907,9 @@
        ) ;; (func $interpretBytecode
 
  ;; Main interpreter loop
- (func $interpret (export "interpret") (result i32)
+ (func $interpret (export "interpret")
+       (result i32)
+       
        (local $vm (ref $VirtualMachine))
        (local $context (ref $Context))
        (local $method (ref $CompiledMethod))
@@ -1906,7 +1954,7 @@
        i32.const 2001       ;; identityHash
        i32.const 14         ;; format (MethodContext)
        i32.const 14         ;; size
-       ref.null $SqueakObject ;; nextObject
+       ref.null $Object     ;; nextObject
        local.get $slots     ;; slots (non-nullable)
        ref.null $Context    ;; sender
        i32.const 0          ;; pc
