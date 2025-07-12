@@ -328,8 +328,7 @@
        struct.new $Dictionary
        )
 
- ;; The stack has a bunch of $Objects pushed onto it that need to be
- ;; linked via their $nextObject fields.
+ ;; Link $objects via their $nextObject fields.
 
  (func $linkObjects
        (param $vm (ref $VirtualMachine))
