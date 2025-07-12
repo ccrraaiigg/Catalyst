@@ -24,10 +24,10 @@
   "buildDate": "2025-07-03T17:26:58.919Z",
   "files": {
     "wasm": [
-      "squeak-vm-core.wasm"
+      "catalyst.wasm"
     ],
     "javascript": [
-      "squeak-vm.js"
+      "catalyst.js"
     ],
     "test": "test.html"
   }

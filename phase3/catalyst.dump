@@ -1,0 +1,3104 @@
+    0x0 | 00 61 73 6d | version 1 (Module)
+        | 01 00 00 00
+    0x8 | 01 b9 04    | type section
+    0xb | 26          | 38 count
+--- rec group 0 (explicit) ---
+    0xc | 4e 12       | 
+    0xe | 5e 6d 01    | [type 0] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Array(ArrayType(FieldType { element_type: Val(Ref(eqref)), mutable: true })), shared: false } }
+   0x11 | 5e 78 01    | [type 1] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Array(ArrayType(FieldType { element_type: I8, mutable: true })), shared: false } }
+   0x14 | 5e 7f 01    | [type 2] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Array(ArrayType(FieldType { element_type: Val(I32), mutable: true })), shared: false } }
+   0x17 | 5f 03 6d 01 | [type 3] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }] }), shared: false } }
+        | 7f 01 6d 01
+   0x1f | 50 01 03 5f | [type 4] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 3 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref (module 0)))), mutable: false }] }), shared: false } }
+        | 04 6d 01 7f
+        | 01 6d 01 64
+        | 00 00      
+   0x2d | 50 01 03 5f | [type 5] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 3 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref (module 1)))), mutable: false }] }), shared: false } }
+        | 04 6d 01 7f
+        | 01 6d 01 64
+        | 01 00      
+   0x3b | 50 01 03 5f | [type 6] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 3 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref (module 2)))), mutable: false }] }), shared: false } }
+        | 04 6d 01 7f
+        | 01 6d 01 64
+        | 02 00      
+   0x49 | 50 01 03 5f | [type 7] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 3 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref eq))), mutable: true }] }), shared: false } }
+        | 04 6d 01 7f
+        | 01 6d 01 64
+        | 6d 01      
+   0x57 | 50 01 07 5f | [type 8] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 7 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref eq))), mutable: true }] }), shared: false } }
+        | 04 6d 01 7f
+        | 01 6d 01 64
+        | 6d 01      
+   0x65 | 50 01 03 5f | [type 9] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 3 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: false }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: false }, FieldType { element_type: Val(I32), mutable: true }] }), shared: false } }
+        | 06 6d 01 7f
+        | 01 6d 01 64
+        | 04 00 64 04
+        | 00 7f 01   
+   0x78 | 50 01 03 5f | [type 10] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 3 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref (module 9)))), mutable: true }, FieldType { element_type: Val(I32), mutable: true }] }), shared: false } }
+        | 06 6d 01 7f
+        | 01 6d 01 6d
+        | 01 64 09 01
+        | 7f 01      
+   0x8a | 50 01 0a 5f | [type 11] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 10 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref (module 9)))), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 5)))), mutable: true }] }), shared: false } }
+        | 08 6d 01 7f
+        | 01 6d 01 6d
+        | 01 64 09 01
+        | 7f 01 64 04
+        | 01 64 05 01
+   0xa2 | 50 01 0b 5f | [type 12] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 11 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref (module 9)))), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 5)))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 8)))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 9)))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: true }] }), shared: false } }
+        | 0c 6d 01 7f
+        | 01 6d 01 6d
+        | 01 64 09 01
+        | 7f 01 64 04
+        | 01 64 05 01
+        | 64 04 01 64
+        | 08 01 64 09
+        | 01 64 04 01
+   0xc6 | 50 01 0b 5f | [type 13] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 11 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref (module 9)))), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 5)))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 12)))), mutable: true }] }), shared: false } }
+        | 09 6d 01 7f
+        | 01 6d 01 6d
+        | 01 64 09 01
+        | 7f 01 64 04
+        | 01 64 05 01
+        | 64 0c 01   
+   0xe1 | 50 01 07 5f | [type 14] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 7 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref eq))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: false }, FieldType { element_type: Val(I32), mutable: false }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(I32), mutable: false }, FieldType { element_type: Val(I32), mutable: true }] }), shared: false } }
+        | 0a 6d 01 7f
+        | 01 6d 01 64
+        | 6d 01 64 04
+        | 00 7f 00 7f
+        | 01 7f 01 7f
+        | 00 7f 01   
+   0xfc | 50 01 03 5f | [type 15] SubType { is_final: false, supertype_idx: Some(CoreTypeIndex { kind: "module", index: 3 }), composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref null (module 15)))), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref((ref (module 14)))), mutable: true }, FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: true }] }), shared: false } }
+        | 0b 6d 01 7f
+        | 01 6d 01 63
+        | 0f 01 7f 01
+        | 7f 01 64 0e
+        | 01 6d 01 64
+        | 04 01 64 04
+        | 01 64 04 01
+  0x11c | 5f 04 6d 01 | [type 16] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref(eqref)), mutable: true }, FieldType { element_type: Val(Ref((ref (module 12)))), mutable: true }, FieldType { element_type: Val(Ref((ref (module 14)))), mutable: true }, FieldType { element_type: Val(I32), mutable: true }] }), shared: false } }
+        | 64 0c 01 64
+        | 0e 01 7f 01
+  0x128 | 5f 0c 63 0f | [type 17] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Struct(StructType { fields: [FieldType { element_type: Val(Ref((ref null (module 15)))), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref((ref (module 4)))), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(I32), mutable: true }, FieldType { element_type: Val(Ref((ref null (module 3)))), mutable: true }, FieldType { element_type: Val(Ref((ref null (module 3)))), mutable: true }, FieldType { element_type: Val(Ref((ref null (module 12)))), mutable: true }, FieldType { element_type: Val(Ref((ref null (module 12)))), mutable: true }, FieldType { element_type: Val(Ref((ref null (module 12)))), mutable: true }] }), shared: false } }
+        | 01 7f 01 64
+        | 04 01 7f 01
+        | 7f 01 7f 01
+        | 7f 01 63 03
+        | 01 63 03 01
+        | 63 0c 01 63
+        | 0c 01 63 0c
+        | 01         
+--- rec group 1 (implicit) ---
+  0x149 | 60 01 7f 00 | [type 18] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [I32], results: [] }), shared: false } }
+--- rec group 2 (implicit) ---
+  0x14d | 60 03 6d 6d | [type 19] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref), Ref(eqref), Ref(eqref)], results: [] }), shared: false } }
+        | 6d 00      
+--- rec group 3 (implicit) ---
+  0x153 | 60 03 7f 7f | [type 20] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [I32, I32, I32], results: [] }), shared: false } }
+        | 7f 00      
+--- rec group 4 (implicit) ---
+  0x159 | 60 02 64 11 | [type 21] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), Ref((ref (module 0)))], results: [Ref((ref (module 4)))] }), shared: false } }
+        | 64 00 01 64
+        | 04         
+--- rec group 5 (implicit) ---
+  0x162 | 60 02 64 11 | [type 22] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), Ref((ref (module 1)))], results: [Ref((ref (module 4)))] }), shared: false } }
+        | 64 01 01 64
+        | 04         
+--- rec group 6 (implicit) ---
+  0x16b | 60 02 64 11 | [type 23] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), Ref((ref (module 2)))], results: [Ref((ref (module 4)))] }), shared: false } }
+        | 64 02 01 64
+        | 04         
+--- rec group 7 (implicit) ---
+  0x174 | 60 01 64 11 | [type 24] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17)))], results: [Ref((ref (module 9)))] }), shared: false } }
+        | 01 64 09   
+--- rec group 8 (implicit) ---
+  0x17b | 60 01 64 03 | [type 25] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 3)))], results: [Ref((ref (module 3)))] }), shared: false } }
+        | 01 64 03   
+--- rec group 9 (implicit) ---
+  0x182 | 60 02 64 11 | [type 26] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), I32], results: [] }), shared: false } }
+        | 7f 00      
+--- rec group 10 (implicit) ---
+  0x188 | 60 02 64 11 | [type 27] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), Ref((ref (module 12)))], results: [] }), shared: false } }
+        | 64 0c 00   
+--- rec group 11 (implicit) ---
+  0x18f | 60 02 64 11 | [type 28] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), Ref((ref (module 13)))], results: [] }), shared: false } }
+        | 64 0d 00   
+--- rec group 12 (implicit) ---
+  0x196 | 60 00 01 64 | [type 29] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [], results: [Ref((ref (module 17)))] }), shared: false } }
+        | 11         
+--- rec group 13 (implicit) ---
+  0x19b | 60 01 6d 01 | [type 30] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref)], results: [Ref((ref (module 5)))] }), shared: false } }
+        | 64 05      
+--- rec group 14 (implicit) ---
+  0x1a1 | 60 02 6d 7f | [type 31] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref), I32], results: [] }), shared: false } }
+        | 00         
+--- rec group 15 (implicit) ---
+  0x1a6 | 60 02 6d 6d | [type 32] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref), Ref(eqref)], results: [] }), shared: false } }
+        | 00         
+--- rec group 16 (implicit) ---
+  0x1ab | 60 01 6d 01 | [type 33] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref)], results: [Ref(eqref)] }), shared: false } }
+        | 6d         
+--- rec group 17 (implicit) ---
+  0x1b0 | 60 01 64 6c | [type 34] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref i31))], results: [I32] }), shared: false } }
+        | 01 7f      
+--- rec group 18 (implicit) ---
+  0x1b6 | 60 01 7f 01 | [type 35] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [I32], results: [Ref((ref i31))] }), shared: false } }
+        | 64 6c      
+--- rec group 19 (implicit) ---
+  0x1bc | 60 02 6d 7f | [type 36] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref), I32], results: [Ref(eqref)] }), shared: false } }
+        | 01 6d      
+--- rec group 20 (implicit) ---
+  0x1c2 | 60 02 6d 7f | [type 37] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref), I32], results: [I32] }), shared: false } }
+        | 01 7f      
+--- rec group 21 (implicit) ---
+  0x1c8 | 60 02 64 04 | [type 38] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 4))), I32], results: [Ref(eqref)] }), shared: false } }
+        | 7f 01 6d   
+--- rec group 22 (implicit) ---
+  0x1cf | 60 01 6d 01 | [type 39] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref)], results: [I32] }), shared: false } }
+        | 7f         
+--- rec group 23 (implicit) ---
+  0x1d4 | 60 01 64 01 | [type 40] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 1)))], results: [I32] }), shared: false } }
+        | 01 7f      
+--- rec group 24 (implicit) ---
+  0x1da | 60 01 64 11 | [type 41] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17)))], results: [I32] }), shared: false } }
+        | 01 7f      
+--- rec group 25 (implicit) ---
+  0x1e0 | 60 02 64 0f | [type 42] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 15))), Ref(eqref)], results: [] }), shared: false } }
+        | 6d 00      
+--- rec group 26 (implicit) ---
+  0x1e6 | 60 01 63 0f | [type 43] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref null (module 15)))], results: [Ref(eqref)] }), shared: false } }
+        | 01 6d      
+--- rec group 27 (implicit) ---
+  0x1ec | 60 02 64 11 | [type 44] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), Ref(eqref)], results: [Ref((ref (module 12)))] }), shared: false } }
+        | 6d 01 64 0c
+--- rec group 28 (implicit) ---
+  0x1f4 | 60 02 6d 6d | [type 45] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref(eqref), Ref(eqref)], results: [Ref((ref null (module 14)))] }), shared: false } }
+        | 01 63 0e   
+--- rec group 29 (implicit) ---
+  0x1fb | 60 03 64 11 | [type 46] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), Ref(eqref), Ref((ref (module 12)))], results: [Ref((ref null (module 14)))] }), shared: false } }
+        | 6d 64 0c 01
+        | 63 0e      
+--- rec group 30 (implicit) ---
+  0x205 | 60 04 64 11 | [type 47] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), Ref(eqref), Ref((ref (module 12))), Ref((ref (module 14)))], results: [] }), shared: false } }
+        | 6d 64 0c 64
+        | 0e 00      
+--- rec group 31 (implicit) ---
+  0x20f | 60 04 64 11 | [type 48] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), Ref(eqref), Ref((ref (module 14))), Ref(eqref)], results: [Ref((ref null (module 15)))] }), shared: false } }
+        | 6d 64 0e 6d
+        | 01 63 0f   
+--- rec group 32 (implicit) ---
+  0x21a | 60 01 64 0e | [type 49] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 14)))], results: [I32] }), shared: false } }
+        | 01 7f      
+--- rec group 33 (implicit) ---
+  0x220 | 60 02 63 0f | [type 50] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref null (module 15))), I32], results: [I32] }), shared: false } }
+        | 7f 01 7f   
+--- rec group 34 (implicit) ---
+  0x227 | 60 03 64 0e | [type 51] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 14))), Ref(eqref), Ref((ref (module 8)))], results: [] }), shared: false } }
+        | 6d 64 08 00
+--- rec group 35 (implicit) ---
+  0x22f | 60 02 64 11 | [type 52] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), Ref((ref null (module 15)))], results: [Ref(eqref)] }), shared: false } }
+        | 63 0f 01 6d
+--- rec group 36 (implicit) ---
+  0x237 | 60 03 64 11 | [type 53] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [Ref((ref (module 17))), Ref((ref (module 15))), I32], results: [I32] }), shared: false } }
+        | 64 0f 7f 01
+        | 7f         
+--- rec group 37 (implicit) ---
+  0x240 | 60 00 01 7f | [type 54] SubType { is_final: true, supertype_idx: None, composite_type: CompositeType { inner: Func(FuncType { params: [], results: [I32] }), shared: false } }
+  0x244 | 02 39       | import section
+  0x246 | 03          | 3 count
+  0x247 | 03 65 6e 76 | import [func 0] Import { module: "env", name: "reportResult", ty: Func(18) }
+        | 0c 72 65 70
+        | 6f 72 74 52
+        | 65 73 75 6c
+        | 74 00 12   
+  0x25a | 03 65 6e 76 | import [func 1] Import { module: "env", name: "translateMethod", ty: Func(19) }
+        | 0f 74 72 61
+        | 6e 73 6c 61
+        | 74 65 4d 65
+        | 74 68 6f 64
+        | 00 13      
+  0x270 | 03 65 6e 76 | import [func 2] Import { module: "env", name: "debugLog", ty: Func(20) }
+        | 08 64 65 62
+        | 75 67 4c 6f
+        | 67 00 14   
+  0x27f | 03 2c       | func section
+  0x281 | 2b          | 43 count
+  0x282 | 15          | [func 3] type 21
+  0x283 | 16          | [func 4] type 22
+  0x284 | 17          | [func 5] type 23
+  0x285 | 18          | [func 6] type 24
+  0x286 | 19          | [func 7] type 25
+  0x287 | 1a          | [func 8] type 26
+  0x288 | 1b          | [func 9] type 27
+  0x289 | 1c          | [func 10] type 28
+  0x28a | 1d          | [func 11] type 29
+  0x28b | 1e          | [func 12] type 30
+  0x28c | 1f          | [func 13] type 31
+  0x28d | 20          | [func 14] type 32
+  0x28e | 21          | [func 15] type 33
+  0x28f | 22          | [func 16] type 34
+  0x290 | 23          | [func 17] type 35
+  0x291 | 21          | [func 18] type 33
+  0x292 | 21          | [func 19] type 33
+  0x293 | 21          | [func 20] type 33
+  0x294 | 24          | [func 21] type 36
+  0x295 | 21          | [func 22] type 33
+  0x296 | 25          | [func 23] type 37
+  0x297 | 26          | [func 24] type 38
+  0x298 | 25          | [func 25] type 37
+  0x299 | 27          | [func 26] type 39
+  0x29a | 28          | [func 27] type 40
+  0x29b | 29          | [func 28] type 41
+  0x29c | 2a          | [func 29] type 42
+  0x29d | 2b          | [func 30] type 43
+  0x29e | 2b          | [func 31] type 43
+  0x29f | 2c          | [func 32] type 44
+  0x2a0 | 2d          | [func 33] type 45
+  0x2a1 | 2e          | [func 34] type 46
+  0x2a2 | 2f          | [func 35] type 47
+  0x2a3 | 30          | [func 36] type 48
+  0x2a4 | 23          | [func 37] type 35
+  0x2a5 | 27          | [func 38] type 39
+  0x2a6 | 31          | [func 39] type 49
+  0x2a7 | 32          | [func 40] type 50
+  0x2a8 | 33          | [func 41] type 51
+  0x2a9 | 34          | [func 42] type 52
+  0x2aa | 29          | [func 43] type 41
+  0x2ab | 35          | [func 44] type 53
+  0x2ac | 36          | [func 45] type 54
+  0x2ad | 04 04       | table section
+  0x2af | 01          | 1 count
+  0x2b0 | 70 00 64    | [table 0] Table { ty: TableType { element_type: funcref, table64: false, initial: 100, maximum: None, shared: false }, init: RefNull }
+  0x2b3 | 05 03       | memory section
+  0x2b5 | 01          | 1 count
+  0x2b6 | 00 01       | [memory 0] MemoryType { memory64: false, shared: false, initial: 1, maximum: None, page_size_log2: None }
+  0x2b8 | 06 0c       | global section
+  0x2ba | 02          | 2 count
+  0x2bb | 6d 01       | [global 0] GlobalType { content_type: Ref(eqref), mutable: true, shared: false }
+  0x2bd | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x2bf | 0b          | end
+  0x2c0 | 7f 01       | [global 1] GlobalType { content_type: I32, mutable: true, shared: false }
+  0x2c2 | 41 80 08    | i32_const value:1024
+  0x2c5 | 0b          | end
+  0x2c6 | 07 cf 02    | export section
+  0x2c9 | 13          | 19 count
+  0x2ca | 05 62 79 74 | export Export { name: "bytes", kind: Memory, index: 0 }
+        | 65 73 02 00
+  0x2d2 | 0d 66 75 6e | export Export { name: "functionTable", kind: Table, index: 0 }
+        | 63 74 69 6f
+        | 6e 54 61 62
+        | 6c 65 01 00
+  0x2e2 | 0a 69 6e 69 | export Export { name: "initialize", kind: Func, index: 11 }
+        | 74 69 61 6c
+        | 69 7a 65 00
+        | 0b         
+  0x2ef | 0f 6d 65 74 | export Export { name: "methodBytecodes", kind: Func, index: 12 }
+        | 68 6f 64 42
+        | 79 74 65 63
+        | 6f 64 65 73
+        | 00 0c      
+  0x301 | 16 73 65 74 | export Export { name: "setMethodFunctionIndex", kind: Func, index: 13 }
+        | 4d 65 74 68
+        | 6f 64 46 75
+        | 6e 63 74 69
+        | 6f 6e 49 6e
+        | 64 65 78 00
+        | 0d         
+  0x31a | 0d 6f 6e 43 | export Export { name: "onContextPush", kind: Func, index: 14 }
+        | 6f 6e 74 65
+        | 78 74 50 75
+        | 73 68 00 0e
+  0x32a | 0e 70 6f 70 | export Export { name: "popFromContext", kind: Func, index: 15 }
+        | 46 72 6f 6d
+        | 43 6f 6e 74
+        | 65 78 74 00
+        | 0f         
+  0x33b | 13 76 61 6c | export Export { name: "valueOfSmallInteger", kind: Func, index: 16 }
+        | 75 65 4f 66
+        | 53 6d 61 6c
+        | 6c 49 6e 74
+        | 65 67 65 72
+        | 00 10      
+  0x351 | 14 73 6d 61 | export Export { name: "smallIntegerForValue", kind: Func, index: 17 }
+        | 6c 6c 49 6e
+        | 74 65 67 65
+        | 72 46 6f 72
+        | 56 61 6c 75
+        | 65 00 11   
+  0x368 | 0d 63 6c 61 | export Export { name: "classOfObject", kind: Func, index: 18 }
+        | 73 73 4f 66
+        | 4f 62 6a 65
+        | 63 74 00 12
+  0x378 | 0f 63 6f 6e | export Export { name: "contextReceiver", kind: Func, index: 19 }
+        | 74 65 78 74
+        | 52 65 63 65
+        | 69 76 65 72
+        | 00 13      
+  0x38a | 0b 6d 65 74 | export Export { name: "methodSlots", kind: Func, index: 20 }
+        | 68 6f 64 53
+        | 6c 6f 74 73
+        | 00 14      
+  0x398 | 10 63 6f 6e | export Export { name: "contextLiteralAt", kind: Func, index: 21 }
+        | 74 65 78 74
+        | 4c 69 74 65
+        | 72 61 6c 41
+        | 74 00 15   
+  0x3ab | 0d 63 6f 6e | export Export { name: "contextMethod", kind: Func, index: 22 }
+        | 74 65 78 74
+        | 4d 65 74 68
+        | 6f 64 00 16
+  0x3bb | 0b 62 79 74 | export Export { name: "byteArrayAt", kind: Func, index: 25 }
+        | 65 41 72 72
+        | 61 79 41 74
+        | 00 19      
+  0x3c9 | 0f 62 79 74 | export Export { name: "byteArrayLength", kind: Func, index: 26 }
+        | 65 41 72 72
+        | 61 79 4c 65
+        | 6e 67 74 68
+        | 00 1a      
+  0x3db | 15 63 6f 70 | export Export { name: "copyByteArrayToMemory", kind: Func, index: 27 }
+        | 79 42 79 74
+        | 65 41 72 72
+        | 61 79 54 6f
+        | 4d 65 6d 6f
+        | 72 79 00 1b
+  0x3f3 | 16 63 72 65 | export Export { name: "createMinimalBootstrap", kind: Func, index: 43 }
+        | 61 74 65 4d
+        | 69 6e 69 6d
+        | 61 6c 42 6f
+        | 6f 74 73 74
+        | 72 61 70 00
+        | 2b         
+  0x40c | 09 69 6e 74 | export Export { name: "interpret", kind: Func, index: 45 }
+        | 65 72 70 72
+        | 65 74 00 2d
+  0x418 | 0a fe 1f    | code section
+  0x41b | 2b          | 43 count
+============== func 3 ====================
+  0x41c | 0f          | size of function
+  0x41d | 00          | 0 local blocks
+  0x41e | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x420 | 20 00       | local_get local_index:0
+  0x422 | 10 1c       | call function_index:28
+  0x424 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x426 | 20 01       | local_get local_index:1
+  0x428 | fb 00 04    | struct_new struct_type_index:4
+  0x42b | 0b          | end
+============== func 4 ====================
+  0x42c | 0f          | size of function
+  0x42d | 00          | 0 local blocks
+  0x42e | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x430 | 20 00       | local_get local_index:0
+  0x432 | 10 1c       | call function_index:28
+  0x434 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x436 | 20 01       | local_get local_index:1
+  0x438 | fb 00 05    | struct_new struct_type_index:5
+  0x43b | 0b          | end
+============== func 5 ====================
+  0x43c | 0f          | size of function
+  0x43d | 00          | 0 local blocks
+  0x43e | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x440 | 20 00       | local_get local_index:0
+  0x442 | 10 1c       | call function_index:28
+  0x444 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x446 | 20 01       | local_get local_index:1
+  0x448 | fb 00 06    | struct_new struct_type_index:6
+  0x44b | 0b          | end
+============== func 6 ====================
+  0x44c | 1d          | size of function
+  0x44d | 00          | 0 local blocks
+  0x44e | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x450 | 20 00       | local_get local_index:0
+  0x452 | 10 1c       | call function_index:28
+  0x454 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x456 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x458 | 41 00       | i32_const value:0
+  0x45a | fb 06 04    | array_new array_type_index:4
+  0x45d | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x45f | 41 00       | i32_const value:0
+  0x461 | fb 06 04    | array_new array_type_index:4
+  0x464 | 41 00       | i32_const value:0
+  0x466 | fb 00 09    | struct_new struct_type_index:9
+  0x469 | 0b          | end
+============== func 7 ====================
+  0x46a | 04          | size of function
+  0x46b | 00          | 0 local blocks
+  0x46c | 20 00       | local_get local_index:0
+  0x46e | 0b          | end
+============== func 8 ====================
+  0x46f | 47          | size of function
+  0x470 | 02          | 2 local blocks
+  0x471 | 02 64 03    | 2 locals of type Ref((ref (module 3)))
+  0x474 | 01 7f       | 1 locals of type I32
+  0x476 | 20 01       | local_get local_index:1
+  0x478 | 41 01       | i32_const value:1
+  0x47a | 48          | i32_lt_s
+  0x47b | 04 40       | if blockty:Empty
+  0x47d | 0f          | return
+  0x47e | 0b          | end
+  0x47f | 20 01       | local_get local_index:1
+  0x481 | 21 04       | local_set local_index:4
+  0x483 | 20 00       | local_get local_index:0
+  0x485 | fb 02 11 08 | struct_get struct_type_index:17 field_index:8
+  0x489 | 21 02       | local_set local_index:2
+  0x48b | 03 40       | loop blockty:Empty
+  0x48d | 20 04       | local_get local_index:4
+  0x48f | 41 00       | i32_const value:0
+  0x491 | 46          | i32_eq
+  0x492 | 04 40       | if blockty:Empty
+  0x494 | 0f          | return
+  0x495 | 0b          | end
+  0x496 | 10 07       | call function_index:7
+  0x498 | 21 03       | local_set local_index:3
+  0x49a | 20 00       | local_get local_index:0
+  0x49c | 20 02       | local_get local_index:2
+  0x49e | 22 03       | local_tee local_index:3
+  0x4a0 | fb 05 03 02 | struct_set struct_type_index:3 field_index:2
+  0x4a4 | fb 05 11 08 | struct_set struct_type_index:17 field_index:8
+  0x4a8 | 20 04       | local_get local_index:4
+  0x4aa | 41 01       | i32_const value:1
+  0x4ac | 6b          | i32_sub
+  0x4ad | 21 04       | local_set local_index:4
+  0x4af | 20 03       | local_get local_index:3
+  0x4b1 | 21 02       | local_set local_index:2
+  0x4b3 | 0d 00       | br_if relative_depth:0
+  0x4b5 | 0b          | end
+  0x4b6 | 0b          | end
+============== func 9 ====================
+  0x4b7 | 3e          | size of function
+  0x4b8 | 00          | 0 local blocks
+  0x4b9 | 20 01       | local_get local_index:1
+  0x4bb | fb 02 0c 00 | struct_get struct_type_index:12 field_index:0
+  0x4bf | 20 01       | local_get local_index:1
+  0x4c1 | fb 02 0c 03 | struct_get struct_type_index:12 field_index:3
+  0x4c5 | 20 01       | local_get local_index:1
+  0x4c7 | fb 02 0c 04 | struct_get struct_type_index:12 field_index:4
+  0x4cb | 20 01       | local_get local_index:1
+  0x4cd | fb 02 0c 06 | struct_get struct_type_index:12 field_index:6
+  0x4d1 | 20 01       | local_get local_index:1
+  0x4d3 | fb 02 0c 07 | struct_get struct_type_index:12 field_index:7
+  0x4d7 | 20 01       | local_get local_index:1
+  0x4d9 | fb 02 0c 08 | struct_get struct_type_index:12 field_index:8
+  0x4dd | 20 01       | local_get local_index:1
+  0x4df | fb 02 0c 09 | struct_get struct_type_index:12 field_index:9
+  0x4e3 | 20 01       | local_get local_index:1
+  0x4e5 | fb 02 0c 0a | struct_get struct_type_index:12 field_index:10
+  0x4e9 | 20 01       | local_get local_index:1
+  0x4eb | fb 02 0c 0b | struct_get struct_type_index:12 field_index:11
+  0x4ef | 20 00       | local_get local_index:0
+  0x4f1 | 41 09       | i32_const value:9
+  0x4f3 | 10 08       | call function_index:8
+  0x4f5 | 0b          | end
+============== func 10 ====================
+  0x4f6 | 36          | size of function
+  0x4f7 | 00          | 0 local blocks
+  0x4f8 | 20 01       | local_get local_index:1
+  0x4fa | fb 02 0d 00 | struct_get struct_type_index:13 field_index:0
+  0x4fe | 20 01       | local_get local_index:1
+  0x500 | fb 02 0d 03 | struct_get struct_type_index:13 field_index:3
+  0x504 | 20 01       | local_get local_index:1
+  0x506 | fb 02 0d 04 | struct_get struct_type_index:13 field_index:4
+  0x50a | 20 01       | local_get local_index:1
+  0x50c | fb 02 0d 06 | struct_get struct_type_index:13 field_index:6
+  0x510 | 20 01       | local_get local_index:1
+  0x512 | fb 02 0d 07 | struct_get struct_type_index:13 field_index:7
+  0x516 | 20 01       | local_get local_index:1
+  0x518 | fb 02 0d 08 | struct_get struct_type_index:13 field_index:8
+  0x51c | 20 00       | local_get local_index:0
+  0x51e | 41 06       | i32_const value:6
+  0x520 | 10 08       | call function_index:8
+  0x522 | 20 00       | local_get local_index:0
+  0x524 | 20 01       | local_get local_index:1
+  0x526 | fb 02 0d 08 | struct_get struct_type_index:13 field_index:8
+  0x52a | 10 09       | call function_index:9
+  0x52c | 0b          | end
+============== func 11 ====================
+  0x52d | 95 0a       | size of function
+  0x52f | 04          | 4 local blocks
+  0x530 | 01 7f       | 1 locals of type I32
+  0x532 | 01 64 03    | 1 locals of type Ref((ref (module 3)))
+  0x535 | 01 64 11    | 1 locals of type Ref((ref (module 17)))
+  0x538 | 07 64 0c    | 7 locals of type Ref((ref (module 12)))
+  0x53b | 41 80 02    | i32_const value:256
+  0x53e | 21 00       | local_set local_index:0
+  0x540 | d0 0c       | ref_null hty:Concrete(Module(12))
+  0x542 | 41 01       | i32_const value:1
+  0x544 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x546 | fb 00 03    | struct_new struct_type_index:3
+  0x549 | 21 01       | local_set local_index:1
+  0x54b | d0 0f       | ref_null hty:Concrete(Module(15))
+  0x54d | 41 01       | i32_const value:1
+  0x54f | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x551 | 20 00       | local_get local_index:0
+  0x553 | fb 06 00    | array_new array_type_index:0
+  0x556 | 41 00       | i32_const value:0
+  0x558 | 41 e8 07    | i32_const value:1000
+  0x55b | 20 00       | local_get local_index:0
+  0x55d | 41 e9 07    | i32_const value:1001
+  0x560 | 20 01       | local_get local_index:1
+  0x562 | 20 01       | local_get local_index:1
+  0x564 | fb 00 11    | struct_new struct_type_index:17
+  0x567 | 21 02       | local_set local_index:2
+  0x569 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x56b | 20 02       | local_get local_index:2
+  0x56d | 10 1c       | call function_index:28
+  0x56f | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x571 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x573 | 20 02       | local_get local_index:2
+  0x575 | 10 06       | call function_index:6
+  0x577 | 41 02       | i32_const value:2
+  0x579 | 20 02       | local_get local_index:2
+  0x57b | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x57d | 41 00       | i32_const value:0
+  0x57f | fb 06 00    | array_new array_type_index:0
+  0x582 | 10 03       | call function_index:3
+  0x584 | d0 05       | ref_null hty:Concrete(Module(5))
+  0x586 | 20 02       | local_get local_index:2
+  0x588 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x58a | 41 00       | i32_const value:0
+  0x58c | fb 06 00    | array_new array_type_index:0
+  0x58f | 10 03       | call function_index:3
+  0x591 | 20 02       | local_get local_index:2
+  0x593 | d0 0c       | ref_null hty:Concrete(Module(12))
+  0x595 | 20 02       | local_get local_index:2
+  0x597 | 10 1c       | call function_index:28
+  0x599 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x59b | 41 cf 00    | i32_const value:79
+  0x59e | 41 e2 00    | i32_const value:98
+  0x5a1 | 41 ea 00    | i32_const value:106
+  0x5a4 | 41 e5 00    | i32_const value:101
+  0x5a7 | 41 e3 00    | i32_const value:99
+  0x5aa | 41 f4 00    | i32_const value:116
+  0x5ad | fb 08 01 06 | array_new_fixed array_type_index:1 array_size:6
+  0x5b1 | 10 04       | call function_index:4
+  0x5b3 | fb 00 08    | struct_new struct_type_index:8
+  0x5b6 | 20 02       | local_get local_index:2
+  0x5b8 | 10 06       | call function_index:6
+  0x5ba | 20 02       | local_get local_index:2
+  0x5bc | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x5be | 41 00       | i32_const value:0
+  0x5c0 | fb 06 00    | array_new array_type_index:0
+  0x5c3 | 10 03       | call function_index:3
+  0x5c5 | fb 00 0c    | struct_new struct_type_index:12
+  0x5c8 | 21 03       | local_set local_index:3
+  0x5ca | 20 02       | local_get local_index:2
+  0x5cc | 20 03       | local_get local_index:3
+  0x5ce | fb 05 11 0a | struct_set struct_type_index:17 field_index:10
+  0x5d2 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x5d4 | 20 02       | local_get local_index:2
+  0x5d6 | 10 1c       | call function_index:28
+  0x5d8 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x5da | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x5dc | 20 02       | local_get local_index:2
+  0x5de | 10 06       | call function_index:6
+  0x5e0 | 41 02       | i32_const value:2
+  0x5e2 | 20 02       | local_get local_index:2
+  0x5e4 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x5e6 | 41 00       | i32_const value:0
+  0x5e8 | fb 06 00    | array_new array_type_index:0
+  0x5eb | 10 03       | call function_index:3
+  0x5ed | d0 05       | ref_null hty:Concrete(Module(5))
+  0x5ef | 20 02       | local_get local_index:2
+  0x5f1 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x5f3 | 41 00       | i32_const value:0
+  0x5f5 | fb 06 00    | array_new array_type_index:0
+  0x5f8 | 10 03       | call function_index:3
+  0x5fa | 20 02       | local_get local_index:2
+  0x5fc | d0 0c       | ref_null hty:Concrete(Module(12))
+  0x5fe | 20 02       | local_get local_index:2
+  0x600 | 10 1c       | call function_index:28
+  0x602 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x604 | 41 c2 00    | i32_const value:66
+  0x607 | 41 e5 00    | i32_const value:101
+  0x60a | 41 e8 00    | i32_const value:104
+  0x60d | 41 e1 00    | i32_const value:97
+  0x610 | 41 f6 00    | i32_const value:118
+  0x613 | 41 e9 00    | i32_const value:105
+  0x616 | 41 ef 00    | i32_const value:111
+  0x619 | 41 f2 00    | i32_const value:114
+  0x61c | fb 08 01 08 | array_new_fixed array_type_index:1 array_size:8
+  0x620 | 10 04       | call function_index:4
+  0x622 | fb 00 08    | struct_new struct_type_index:8
+  0x625 | 20 02       | local_get local_index:2
+  0x627 | 10 06       | call function_index:6
+  0x629 | 20 02       | local_get local_index:2
+  0x62b | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x62d | 41 00       | i32_const value:0
+  0x62f | fb 06 00    | array_new array_type_index:0
+  0x632 | 10 03       | call function_index:3
+  0x634 | fb 00 0c    | struct_new struct_type_index:12
+  0x637 | 21 04       | local_set local_index:4
+  0x639 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x63b | 20 02       | local_get local_index:2
+  0x63d | 10 1c       | call function_index:28
+  0x63f | d0 03       | ref_null hty:Concrete(Module(3))
+  0x641 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x643 | 20 02       | local_get local_index:2
+  0x645 | 10 06       | call function_index:6
+  0x647 | 41 02       | i32_const value:2
+  0x649 | 20 02       | local_get local_index:2
+  0x64b | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x64d | 41 00       | i32_const value:0
+  0x64f | fb 06 00    | array_new array_type_index:0
+  0x652 | 10 03       | call function_index:3
+  0x654 | d0 05       | ref_null hty:Concrete(Module(5))
+  0x656 | 20 02       | local_get local_index:2
+  0x658 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x65a | 41 00       | i32_const value:0
+  0x65c | fb 06 00    | array_new array_type_index:0
+  0x65f | 10 03       | call function_index:3
+  0x661 | 20 02       | local_get local_index:2
+  0x663 | d0 0c       | ref_null hty:Concrete(Module(12))
+  0x665 | 20 02       | local_get local_index:2
+  0x667 | 10 1c       | call function_index:28
+  0x669 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x66b | 41 c3 00    | i32_const value:67
+  0x66e | 41 ec 00    | i32_const value:108
+  0x671 | 41 e1 00    | i32_const value:97
+  0x674 | 41 f3 00    | i32_const value:115
+  0x677 | 41 f3 00    | i32_const value:115
+  0x67a | 41 c4 00    | i32_const value:68
+  0x67d | 41 e5 00    | i32_const value:101
+  0x680 | 41 f3 00    | i32_const value:115
+  0x683 | 41 e3 00    | i32_const value:99
+  0x686 | 41 f2 00    | i32_const value:114
+  0x689 | 41 e9 00    | i32_const value:105
+  0x68c | 41 f0 00    | i32_const value:112
+  0x68f | 41 f4 00    | i32_const value:116
+  0x692 | 41 e9 00    | i32_const value:105
+  0x695 | 41 ef 00    | i32_const value:111
+  0x698 | 41 ee 00    | i32_const value:110
+  0x69b | fb 08 05 10 | array_new_fixed array_type_index:5 array_size:16
+  0x69f | 10 04       | call function_index:4
+  0x6a1 | fb 00 08    | struct_new struct_type_index:8
+  0x6a4 | 20 02       | local_get local_index:2
+  0x6a6 | 10 06       | call function_index:6
+  0x6a8 | 20 02       | local_get local_index:2
+  0x6aa | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x6ac | 41 00       | i32_const value:0
+  0x6ae | fb 06 00    | array_new array_type_index:0
+  0x6b1 | 10 03       | call function_index:3
+  0x6b3 | fb 00 0c    | struct_new struct_type_index:12
+  0x6b6 | 21 05       | local_set local_index:5
+  0x6b8 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x6ba | 20 02       | local_get local_index:2
+  0x6bc | 10 1c       | call function_index:28
+  0x6be | d0 03       | ref_null hty:Concrete(Module(3))
+  0x6c0 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x6c2 | 20 02       | local_get local_index:2
+  0x6c4 | 10 06       | call function_index:6
+  0x6c6 | 41 02       | i32_const value:2
+  0x6c8 | 20 02       | local_get local_index:2
+  0x6ca | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x6cc | 41 00       | i32_const value:0
+  0x6ce | fb 06 00    | array_new array_type_index:0
+  0x6d1 | 10 03       | call function_index:3
+  0x6d3 | d0 05       | ref_null hty:Concrete(Module(5))
+  0x6d5 | 20 02       | local_get local_index:2
+  0x6d7 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x6d9 | 41 00       | i32_const value:0
+  0x6db | fb 06 00    | array_new array_type_index:0
+  0x6de | 10 03       | call function_index:3
+  0x6e0 | 20 02       | local_get local_index:2
+  0x6e2 | d0 0c       | ref_null hty:Concrete(Module(12))
+  0x6e4 | 20 02       | local_get local_index:2
+  0x6e6 | 10 1c       | call function_index:28
+  0x6e8 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x6ea | 41 cd 00    | i32_const value:77
+  0x6ed | 41 e5 00    | i32_const value:101
+  0x6f0 | 41 f4 00    | i32_const value:116
+  0x6f3 | 41 e1 00    | i32_const value:97
+  0x6f6 | 41 e3 00    | i32_const value:99
+  0x6f9 | 41 ec 00    | i32_const value:108
+  0x6fc | 41 e1 00    | i32_const value:97
+  0x6ff | 41 f3 00    | i32_const value:115
+  0x702 | 41 f3 00    | i32_const value:115
+  0x705 | fb 08 01 09 | array_new_fixed array_type_index:1 array_size:9
+  0x709 | 10 04       | call function_index:4
+  0x70b | fb 00 08    | struct_new struct_type_index:8
+  0x70e | 20 02       | local_get local_index:2
+  0x710 | 10 06       | call function_index:6
+  0x712 | 20 02       | local_get local_index:2
+  0x714 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x716 | 41 00       | i32_const value:0
+  0x718 | fb 06 00    | array_new array_type_index:0
+  0x71b | 10 03       | call function_index:3
+  0x71d | fb 00 0c    | struct_new struct_type_index:12
+  0x720 | 21 07       | local_set local_index:7
+  0x722 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x724 | 20 02       | local_get local_index:2
+  0x726 | 10 1c       | call function_index:28
+  0x728 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x72a | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x72c | 20 02       | local_get local_index:2
+  0x72e | 10 06       | call function_index:6
+  0x730 | 41 02       | i32_const value:2
+  0x732 | 20 02       | local_get local_index:2
+  0x734 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x736 | 41 00       | i32_const value:0
+  0x738 | fb 06 00    | array_new array_type_index:0
+  0x73b | 10 03       | call function_index:3
+  0x73d | d0 05       | ref_null hty:Concrete(Module(5))
+  0x73f | 20 02       | local_get local_index:2
+  0x741 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x743 | 41 00       | i32_const value:0
+  0x745 | fb 06 00    | array_new array_type_index:0
+  0x748 | 10 03       | call function_index:3
+  0x74a | 20 02       | local_get local_index:2
+  0x74c | d0 0c       | ref_null hty:Concrete(Module(12))
+  0x74e | 20 02       | local_get local_index:2
+  0x750 | 10 1c       | call function_index:28
+  0x752 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x754 | 41 c3 00    | i32_const value:67
+  0x757 | 41 ec 00    | i32_const value:108
+  0x75a | 41 e1 00    | i32_const value:97
+  0x75d | 41 f3 00    | i32_const value:115
+  0x760 | 41 f3 00    | i32_const value:115
+  0x763 | fb 08 01 05 | array_new_fixed array_type_index:1 array_size:5
+  0x767 | 10 04       | call function_index:4
+  0x769 | fb 00 08    | struct_new struct_type_index:8
+  0x76c | 20 02       | local_get local_index:2
+  0x76e | 10 06       | call function_index:6
+  0x770 | 20 02       | local_get local_index:2
+  0x772 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x774 | 41 00       | i32_const value:0
+  0x776 | fb 06 00    | array_new array_type_index:0
+  0x779 | 10 03       | call function_index:3
+  0x77b | fb 00 0c    | struct_new struct_type_index:12
+  0x77e | 21 06       | local_set local_index:6
+  0x780 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x782 | 20 02       | local_get local_index:2
+  0x784 | 10 1c       | call function_index:28
+  0x786 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x788 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x78a | 20 02       | local_get local_index:2
+  0x78c | 10 06       | call function_index:6
+  0x78e | 41 02       | i32_const value:2
+  0x790 | 20 02       | local_get local_index:2
+  0x792 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x794 | 41 00       | i32_const value:0
+  0x796 | fb 06 00    | array_new array_type_index:0
+  0x799 | 10 03       | call function_index:3
+  0x79b | d0 05       | ref_null hty:Concrete(Module(5))
+  0x79d | 20 02       | local_get local_index:2
+  0x79f | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x7a1 | 41 00       | i32_const value:0
+  0x7a3 | fb 06 00    | array_new array_type_index:0
+  0x7a6 | 10 03       | call function_index:3
+  0x7a8 | 20 02       | local_get local_index:2
+  0x7aa | d0 0c       | ref_null hty:Concrete(Module(12))
+  0x7ac | 20 02       | local_get local_index:2
+  0x7ae | 10 1c       | call function_index:28
+  0x7b0 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x7b2 | 41 d3 00    | i32_const value:83
+  0x7b5 | 41 f9 00    | i32_const value:121
+  0x7b8 | 41 ed 00    | i32_const value:109
+  0x7bb | 41 e2 00    | i32_const value:98
+  0x7be | 41 ef 00    | i32_const value:111
+  0x7c1 | 41 ec 00    | i32_const value:108
+  0x7c4 | fb 08 01 06 | array_new_fixed array_type_index:1 array_size:6
+  0x7c8 | 10 04       | call function_index:4
+  0x7ca | fb 00 08    | struct_new struct_type_index:8
+  0x7cd | 20 02       | local_get local_index:2
+  0x7cf | 10 06       | call function_index:6
+  0x7d1 | 20 02       | local_get local_index:2
+  0x7d3 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x7d5 | 41 00       | i32_const value:0
+  0x7d7 | fb 06 00    | array_new array_type_index:0
+  0x7da | 10 03       | call function_index:3
+  0x7dc | fb 00 0c    | struct_new struct_type_index:12
+  0x7df | 21 08       | local_set local_index:8
+  0x7e1 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x7e3 | 20 02       | local_get local_index:2
+  0x7e5 | 10 1c       | call function_index:28
+  0x7e7 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x7e9 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x7eb | 20 02       | local_get local_index:2
+  0x7ed | 10 06       | call function_index:6
+  0x7ef | 41 02       | i32_const value:2
+  0x7f1 | 20 02       | local_get local_index:2
+  0x7f3 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x7f5 | 41 00       | i32_const value:0
+  0x7f7 | fb 06 00    | array_new array_type_index:0
+  0x7fa | 10 03       | call function_index:3
+  0x7fc | d0 05       | ref_null hty:Concrete(Module(5))
+  0x7fe | 20 02       | local_get local_index:2
+  0x800 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x802 | 41 00       | i32_const value:0
+  0x804 | fb 06 00    | array_new array_type_index:0
+  0x807 | 10 03       | call function_index:3
+  0x809 | 20 02       | local_get local_index:2
+  0x80b | d0 0c       | ref_null hty:Concrete(Module(12))
+  0x80d | 20 02       | local_get local_index:2
+  0x80f | 10 1c       | call function_index:28
+  0x811 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x813 | 41 d3 00    | i32_const value:83
+  0x816 | 41 ed 00    | i32_const value:109
+  0x819 | 41 e1 00    | i32_const value:97
+  0x81c | 41 ec 00    | i32_const value:108
+  0x81f | 41 ec 00    | i32_const value:108
+  0x822 | 41 c9 00    | i32_const value:73
+  0x825 | 41 ee 00    | i32_const value:110
+  0x828 | 41 f4 00    | i32_const value:116
+  0x82b | 41 e5 00    | i32_const value:101
+  0x82e | 41 e7 00    | i32_const value:103
+  0x831 | 41 e5 00    | i32_const value:101
+  0x834 | 41 e8 00    | i32_const value:104
+  0x837 | fb 08 01 0c | array_new_fixed array_type_index:1 array_size:12
+  0x83b | 10 04       | call function_index:4
+  0x83d | fb 00 08    | struct_new struct_type_index:8
+  0x840 | 20 02       | local_get local_index:2
+  0x842 | 10 06       | call function_index:6
+  0x844 | 20 02       | local_get local_index:2
+  0x846 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x848 | 41 00       | i32_const value:0
+  0x84a | fb 06 00    | array_new array_type_index:0
+  0x84d | 10 03       | call function_index:3
+  0x84f | fb 00 0c    | struct_new struct_type_index:12
+  0x852 | 22 09       | local_tee local_index:9
+  0x854 | fb 05 11 09 | struct_set struct_type_index:17 field_index:9
+  0x858 | 20 03       | local_get local_index:3
+  0x85a | 20 07       | local_get local_index:7
+  0x85c | 20 02       | local_get local_index:2
+  0x85e | 10 1c       | call function_index:28
+  0x860 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x862 | 20 05       | local_get local_index:5
+  0x864 | 20 02       | local_get local_index:2
+  0x866 | 10 06       | call function_index:6
+  0x868 | 41 98 01    | i32_const value:152
+  0x86b | 20 02       | local_get local_index:2
+  0x86d | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x86f | 41 00       | i32_const value:0
+  0x871 | fb 06 00    | array_new array_type_index:0
+  0x874 | 10 03       | call function_index:3
+  0x876 | d0 05       | ref_null hty:Concrete(Module(5))
+  0x878 | 20 07       | local_get local_index:7
+  0x87a | fb 00 0d    | struct_new struct_type_index:13
+  0x87d | fb 05 0c 00 | struct_set struct_type_index:12 field_index:0
+  0x881 | 20 03       | local_get local_index:3
+  0x883 | fb 02 0c 09 | struct_get struct_type_index:12 field_index:9
+  0x887 | 20 08       | local_get local_index:8
+  0x889 | fb 05 08 00 | struct_set struct_type_index:8 field_index:0
+  0x88d | 20 04       | local_get local_index:4
+  0x88f | 20 07       | local_get local_index:7
+  0x891 | 20 02       | local_get local_index:2
+  0x893 | 10 1c       | call function_index:28
+  0x895 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x897 | 20 05       | local_get local_index:5
+  0x899 | 20 02       | local_get local_index:2
+  0x89b | 10 06       | call function_index:6
+  0x89d | 41 98 01    | i32_const value:152
+  0x8a0 | 20 02       | local_get local_index:2
+  0x8a2 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x8a4 | 41 00       | i32_const value:0
+  0x8a6 | fb 06 00    | array_new array_type_index:0
+  0x8a9 | 10 03       | call function_index:3
+  0x8ab | d0 05       | ref_null hty:Concrete(Module(5))
+  0x8ad | 20 04       | local_get local_index:4
+  0x8af | fb 00 0d    | struct_new struct_type_index:13
+  0x8b2 | fb 05 0c 00 | struct_set struct_type_index:12 field_index:0
+  0x8b6 | 20 04       | local_get local_index:4
+  0x8b8 | 20 03       | local_get local_index:3
+  0x8ba | fb 05 0c 03 | struct_set struct_type_index:12 field_index:3
+  0x8be | 20 04       | local_get local_index:4
+  0x8c0 | fb 02 0c 09 | struct_get struct_type_index:12 field_index:9
+  0x8c4 | 20 08       | local_get local_index:8
+  0x8c6 | fb 05 08 00 | struct_set struct_type_index:8 field_index:0
+  0x8ca | 20 05       | local_get local_index:5
+  0x8cc | 20 07       | local_get local_index:7
+  0x8ce | 20 02       | local_get local_index:2
+  0x8d0 | 10 1c       | call function_index:28
+  0x8d2 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x8d4 | 20 05       | local_get local_index:5
+  0x8d6 | 20 02       | local_get local_index:2
+  0x8d8 | 10 06       | call function_index:6
+  0x8da | 41 98 01    | i32_const value:152
+  0x8dd | 20 02       | local_get local_index:2
+  0x8df | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x8e1 | 41 00       | i32_const value:0
+  0x8e3 | fb 06 00    | array_new array_type_index:0
+  0x8e6 | 10 03       | call function_index:3
+  0x8e8 | d0 05       | ref_null hty:Concrete(Module(5))
+  0x8ea | 20 06       | local_get local_index:6
+  0x8ec | fb 00 0d    | struct_new struct_type_index:13
+  0x8ef | fb 05 0c 00 | struct_set struct_type_index:12 field_index:0
+  0x8f3 | 20 05       | local_get local_index:5
+  0x8f5 | 20 04       | local_get local_index:4
+  0x8f7 | fb 05 0c 03 | struct_set struct_type_index:12 field_index:3
+  0x8fb | 20 05       | local_get local_index:5
+  0x8fd | fb 02 0c 09 | struct_get struct_type_index:12 field_index:9
+  0x901 | 20 08       | local_get local_index:8
+  0x903 | fb 05 08 00 | struct_set struct_type_index:8 field_index:0
+  0x907 | 20 06       | local_get local_index:6
+  0x909 | 20 07       | local_get local_index:7
+  0x90b | 20 02       | local_get local_index:2
+  0x90d | 10 1c       | call function_index:28
+  0x90f | d0 03       | ref_null hty:Concrete(Module(3))
+  0x911 | 20 06       | local_get local_index:6
+  0x913 | 20 02       | local_get local_index:2
+  0x915 | 10 06       | call function_index:6
+  0x917 | 41 98 01    | i32_const value:152
+  0x91a | 20 02       | local_get local_index:2
+  0x91c | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x91e | 41 00       | i32_const value:0
+  0x920 | fb 06 00    | array_new array_type_index:0
+  0x923 | 10 03       | call function_index:3
+  0x925 | d0 05       | ref_null hty:Concrete(Module(5))
+  0x927 | 20 06       | local_get local_index:6
+  0x929 | fb 00 0d    | struct_new struct_type_index:13
+  0x92c | fb 05 0c 00 | struct_set struct_type_index:12 field_index:0
+  0x930 | 20 06       | local_get local_index:6
+  0x932 | 20 05       | local_get local_index:5
+  0x934 | fb 05 0c 03 | struct_set struct_type_index:12 field_index:3
+  0x938 | 20 04       | local_get local_index:4
+  0x93a | fb 02 0c 09 | struct_get struct_type_index:12 field_index:9
+  0x93e | 20 08       | local_get local_index:8
+  0x940 | fb 05 08 00 | struct_set struct_type_index:8 field_index:0
+  0x944 | 20 07       | local_get local_index:7
+  0x946 | 20 07       | local_get local_index:7
+  0x948 | 20 02       | local_get local_index:2
+  0x94a | 10 1c       | call function_index:28
+  0x94c | d0 03       | ref_null hty:Concrete(Module(3))
+  0x94e | 20 06       | local_get local_index:6
+  0x950 | 20 02       | local_get local_index:2
+  0x952 | 10 06       | call function_index:6
+  0x954 | 41 98 01    | i32_const value:152
+  0x957 | 20 02       | local_get local_index:2
+  0x959 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x95b | 41 00       | i32_const value:0
+  0x95d | fb 06 00    | array_new array_type_index:0
+  0x960 | 10 03       | call function_index:3
+  0x962 | d0 05       | ref_null hty:Concrete(Module(5))
+  0x964 | 20 07       | local_get local_index:7
+  0x966 | fb 00 0d    | struct_new struct_type_index:13
+  0x969 | fb 05 0c 00 | struct_set struct_type_index:12 field_index:0
+  0x96d | 20 07       | local_get local_index:7
+  0x96f | 20 03       | local_get local_index:3
+  0x971 | fb 05 0c 03 | struct_set struct_type_index:12 field_index:3
+  0x975 | 20 07       | local_get local_index:7
+  0x977 | fb 02 0c 09 | struct_get struct_type_index:12 field_index:9
+  0x97b | 20 08       | local_get local_index:8
+  0x97d | fb 05 08 00 | struct_set struct_type_index:8 field_index:0
+  0x981 | 20 08       | local_get local_index:8
+  0x983 | 20 07       | local_get local_index:7
+  0x985 | 20 02       | local_get local_index:2
+  0x987 | 10 1c       | call function_index:28
+  0x989 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x98b | 20 06       | local_get local_index:6
+  0x98d | 20 02       | local_get local_index:2
+  0x98f | 10 06       | call function_index:6
+  0x991 | 41 98 01    | i32_const value:152
+  0x994 | 20 02       | local_get local_index:2
+  0x996 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x998 | 41 00       | i32_const value:0
+  0x99a | fb 06 00    | array_new array_type_index:0
+  0x99d | 10 03       | call function_index:3
+  0x99f | d0 05       | ref_null hty:Concrete(Module(5))
+  0x9a1 | 20 08       | local_get local_index:8
+  0x9a3 | fb 00 0d    | struct_new struct_type_index:13
+  0x9a6 | fb 05 0c 00 | struct_set struct_type_index:12 field_index:0
+  0x9aa | 20 08       | local_get local_index:8
+  0x9ac | 20 03       | local_get local_index:3
+  0x9ae | fb 05 0c 03 | struct_set struct_type_index:12 field_index:3
+  0x9b2 | 20 08       | local_get local_index:8
+  0x9b4 | fb 02 0c 09 | struct_get struct_type_index:12 field_index:9
+  0x9b8 | 20 08       | local_get local_index:8
+  0x9ba | fb 05 08 00 | struct_set struct_type_index:8 field_index:0
+  0x9be | 20 09       | local_get local_index:9
+  0x9c0 | 20 07       | local_get local_index:7
+  0x9c2 | 20 02       | local_get local_index:2
+  0x9c4 | 10 1c       | call function_index:28
+  0x9c6 | d0 03       | ref_null hty:Concrete(Module(3))
+  0x9c8 | 20 06       | local_get local_index:6
+  0x9ca | 20 02       | local_get local_index:2
+  0x9cc | 10 06       | call function_index:6
+  0x9ce | 41 98 01    | i32_const value:152
+  0x9d1 | 20 02       | local_get local_index:2
+  0x9d3 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0x9d5 | 41 00       | i32_const value:0
+  0x9d7 | fb 06 00    | array_new array_type_index:0
+  0x9da | 10 03       | call function_index:3
+  0x9dc | d0 05       | ref_null hty:Concrete(Module(5))
+  0x9de | 20 09       | local_get local_index:9
+  0x9e0 | fb 00 0d    | struct_new struct_type_index:13
+  0x9e3 | fb 05 0c 00 | struct_set struct_type_index:12 field_index:0
+  0x9e7 | 20 09       | local_get local_index:9
+  0x9e9 | 20 03       | local_get local_index:3
+  0x9eb | fb 05 0c 03 | struct_set struct_type_index:12 field_index:3
+  0x9ef | 20 09       | local_get local_index:9
+  0x9f1 | fb 02 0c 09 | struct_get struct_type_index:12 field_index:9
+  0x9f5 | 20 08       | local_get local_index:8
+  0x9f7 | fb 05 08 00 | struct_set struct_type_index:8 field_index:0
+  0x9fb | 20 01       | local_get local_index:1
+  0x9fd | 20 02       | local_get local_index:2
+  0x9ff | 20 03       | local_get local_index:3
+  0xa01 | fb 02 0c 00 | struct_get struct_type_index:12 field_index:0
+  0xa05 | 10 0a       | call function_index:10
+  0xa07 | 20 02       | local_get local_index:2
+  0xa09 | 20 04       | local_get local_index:4
+  0xa0b | fb 02 0c 00 | struct_get struct_type_index:12 field_index:0
+  0xa0f | 10 0a       | call function_index:10
+  0xa11 | 20 02       | local_get local_index:2
+  0xa13 | 20 05       | local_get local_index:5
+  0xa15 | fb 02 0c 00 | struct_get struct_type_index:12 field_index:0
+  0xa19 | 10 0a       | call function_index:10
+  0xa1b | 20 02       | local_get local_index:2
+  0xa1d | 20 06       | local_get local_index:6
+  0xa1f | fb 02 0c 00 | struct_get struct_type_index:12 field_index:0
+  0xa23 | 10 0a       | call function_index:10
+  0xa25 | 20 02       | local_get local_index:2
+  0xa27 | 20 07       | local_get local_index:7
+  0xa29 | fb 02 0c 00 | struct_get struct_type_index:12 field_index:0
+  0xa2d | 10 0a       | call function_index:10
+  0xa2f | 20 02       | local_get local_index:2
+  0xa31 | 20 08       | local_get local_index:8
+  0xa33 | fb 02 0c 00 | struct_get struct_type_index:12 field_index:0
+  0xa37 | 10 0a       | call function_index:10
+  0xa39 | 20 02       | local_get local_index:2
+  0xa3b | 20 09       | local_get local_index:9
+  0xa3d | fb 02 0c 00 | struct_get struct_type_index:12 field_index:0
+  0xa41 | 10 0a       | call function_index:10
+  0xa43 | 0b          | end
+============== func 12 ====================
+  0xa44 | 0b          | size of function
+  0xa45 | 00          | 0 local blocks
+  0xa46 | 20 00       | local_get local_index:0
+  0xa48 | fb 16 0e    | ref_cast_non_null hty:Concrete(Module(14))
+  0xa4b | fb 02 0e 03 | struct_get struct_type_index:14 field_index:3
+  0xa4f | 0b          | end
+============== func 13 ====================
+  0xa50 | 0d          | size of function
+  0xa51 | 00          | 0 local blocks
+  0xa52 | 20 00       | local_get local_index:0
+  0xa54 | fb 16 0e    | ref_cast_non_null hty:Concrete(Module(14))
+  0xa57 | 20 01       | local_get local_index:1
+  0xa59 | fb 05 0e 07 | struct_set struct_type_index:14 field_index:7
+  0xa5d | 0b          | end
+============== func 14 ====================
+  0xa5e | 0b          | size of function
+  0xa5f | 00          | 0 local blocks
+  0xa60 | 20 00       | local_get local_index:0
+  0xa62 | fb 16 0f    | ref_cast_non_null hty:Concrete(Module(15))
+  0xa65 | 20 01       | local_get local_index:1
+  0xa67 | 10 1d       | call function_index:29
+  0xa69 | 0b          | end
+============== func 15 ====================
+  0xa6a | 09          | size of function
+  0xa6b | 00          | 0 local blocks
+  0xa6c | 20 00       | local_get local_index:0
+  0xa6e | fb 16 0f    | ref_cast_non_null hty:Concrete(Module(15))
+  0xa71 | 10 1e       | call function_index:30
+  0xa73 | 0b          | end
+============== func 16 ====================
+  0xa74 | 06          | size of function
+  0xa75 | 00          | 0 local blocks
+  0xa76 | 20 00       | local_get local_index:0
+  0xa78 | 10 26       | call function_index:38
+  0xa7a | 0b          | end
+============== func 17 ====================
+  0xa7b | 06          | size of function
+  0xa7c | 00          | 0 local blocks
+  0xa7d | 20 00       | local_get local_index:0
+  0xa7f | 10 25       | call function_index:37
+  0xa81 | 0b          | end
+============== func 18 ====================
+  0xa82 | 06          | size of function
+  0xa83 | 00          | 0 local blocks
+  0xa84 | 20 00       | local_get local_index:0
+  0xa86 | 10 20       | call function_index:32
+  0xa88 | 0b          | end
+============== func 19 ====================
+  0xa89 | 0b          | size of function
+  0xa8a | 00          | 0 local blocks
+  0xa8b | 20 00       | local_get local_index:0
+  0xa8d | fb 16 0f    | ref_cast_non_null hty:Concrete(Module(15))
+  0xa90 | fb 02 0f 07 | struct_get struct_type_index:15 field_index:7
+  0xa94 | 0b          | end
+============== func 20 ====================
+  0xa95 | 0b          | size of function
+  0xa96 | 00          | 0 local blocks
+  0xa97 | 20 00       | local_get local_index:0
+  0xa99 | fb 16 0e    | ref_cast_non_null hty:Concrete(Module(14))
+  0xa9c | fb 02 0e 03 | struct_get struct_type_index:14 field_index:3
+  0xaa0 | 0b          | end
+============== func 21 ====================
+  0xaa1 | 13          | size of function
+  0xaa2 | 00          | 0 local blocks
+  0xaa3 | 20 00       | local_get local_index:0
+  0xaa5 | fb 16 0f    | ref_cast_non_null hty:Concrete(Module(15))
+  0xaa8 | fb 02 0f 06 | struct_get struct_type_index:15 field_index:6
+  0xaac | fb 02 0e 03 | struct_get struct_type_index:14 field_index:3
+  0xab0 | 20 01       | local_get local_index:1
+  0xab2 | 10 18       | call function_index:24
+  0xab4 | 0b          | end
+============== func 22 ====================
+  0xab5 | 0b          | size of function
+  0xab6 | 00          | 0 local blocks
+  0xab7 | 20 00       | local_get local_index:0
+  0xab9 | fb 16 0f    | ref_cast_non_null hty:Concrete(Module(15))
+  0xabc | fb 02 0f 06 | struct_get struct_type_index:15 field_index:6
+  0xac0 | 0b          | end
+============== func 23 ====================
+  0xac1 | 23          | size of function
+  0xac2 | 01          | 1 local blocks
+  0xac3 | 01 7f       | 1 locals of type I32
+  0xac5 | 20 00       | local_get local_index:0
+  0xac7 | fb 0f       | array_len
+  0xac9 | 21 02       | local_set local_index:2
+  0xacb | 20 01       | local_get local_index:1
+  0xacd | 41 00       | i32_const value:0
+  0xacf | 48          | i32_lt_s
+  0xad0 | 04 40       | if blockty:Empty
+  0xad2 | 41 00       | i32_const value:0
+  0xad4 | 0f          | return
+  0xad5 | 05          | else
+  0xad6 | 20 01       | local_get local_index:1
+  0xad8 | 20 02       | local_get local_index:2
+  0xada | 4f          | i32_ge_u
+  0xadb | 04 40       | if blockty:Empty
+  0xadd | 41 00       | i32_const value:0
+  0xadf | 0f          | return
+  0xae0 | 0b          | end
+  0xae1 | 41 01       | i32_const value:1
+  0xae3 | 0b          | end
+  0xae4 | 0b          | end
+============== func 24 ====================
+  0xae5 | 1a          | size of function
+  0xae6 | 00          | 0 local blocks
+  0xae7 | 20 00       | local_get local_index:0
+  0xae9 | fb 16 6d    | ref_cast_non_null hty:Abstract { shared: false, ty: Eq }
+  0xaec | 20 01       | local_get local_index:1
+  0xaee | 10 17       | call function_index:23
+  0xaf0 | 45          | i32_eqz
+  0xaf1 | 04 40       | if blockty:Empty
+  0xaf3 | 41 7f       | i32_const value:-1
+  0xaf5 | 0f          | return
+  0xaf6 | 05          | else
+  0xaf7 | 20 00       | local_get local_index:0
+  0xaf9 | 20 01       | local_get local_index:1
+  0xafb | fb 0b 04    | array_get array_type_index:4
+  0xafe | 0b          | end
+  0xaff | 0b          | end
+============== func 25 ====================
+  0xb00 | 1a          | size of function
+  0xb01 | 00          | 0 local blocks
+  0xb02 | 20 00       | local_get local_index:0
+  0xb04 | 20 01       | local_get local_index:1
+  0xb06 | 10 17       | call function_index:23
+  0xb08 | 45          | i32_eqz
+  0xb09 | 04 40       | if blockty:Empty
+  0xb0b | 41 7f       | i32_const value:-1
+  0xb0d | 0f          | return
+  0xb0e | 05          | else
+  0xb0f | 20 00       | local_get local_index:0
+  0xb11 | fb 16 01    | ref_cast_non_null hty:Concrete(Module(1))
+  0xb14 | 20 01       | local_get local_index:1
+  0xb16 | fb 0c 01    | array_get_s array_type_index:1
+  0xb19 | 0b          | end
+  0xb1a | 0b          | end
+============== func 26 ====================
+  0xb1b | 09          | size of function
+  0xb1c | 00          | 0 local blocks
+  0xb1d | 20 00       | local_get local_index:0
+  0xb1f | fb 16 01    | ref_cast_non_null hty:Concrete(Module(1))
+  0xb22 | fb 0f       | array_len
+  0xb24 | 0b          | end
+============== func 27 ====================
+  0xb25 | 41          | size of function
+  0xb26 | 01          | 1 local blocks
+  0xb27 | 02 7f       | 2 locals of type I32
+  0xb29 | 20 00       | local_get local_index:0
+  0xb2b | d1          | ref_is_null
+  0xb2c | 04 40       | if blockty:Empty
+  0xb2e | 41 00       | i32_const value:0
+  0xb30 | 0f          | return
+  0xb31 | 0b          | end
+  0xb32 | 20 00       | local_get local_index:0
+  0xb34 | d4          | ref_as_non_null
+  0xb35 | fb 0f       | array_len
+  0xb37 | 21 01       | local_set local_index:1
+  0xb39 | 41 00       | i32_const value:0
+  0xb3b | 21 02       | local_set local_index:2
+  0xb3d | 03 40       | loop blockty:Empty
+  0xb3f | 20 02       | local_get local_index:2
+  0xb41 | 20 01       | local_get local_index:1
+  0xb43 | 4f          | i32_ge_u
+  0xb44 | 04 40       | if blockty:Empty
+  0xb46 | 23 01       | global_get global_index:1
+  0xb48 | 0f          | return
+  0xb49 | 0b          | end
+  0xb4a | 23 01       | global_get global_index:1
+  0xb4c | 20 02       | local_get local_index:2
+  0xb4e | 6a          | i32_add
+  0xb4f | 20 00       | local_get local_index:0
+  0xb51 | d4          | ref_as_non_null
+  0xb52 | 20 02       | local_get local_index:2
+  0xb54 | fb 0d 01    | array_get_u array_type_index:1
+  0xb57 | 3a 00 00    | i32_store8 memarg:MemArg { align: 0, max_align: 0, offset: 0, memory: 0 }
+  0xb5a | 20 02       | local_get local_index:2
+  0xb5c | 41 01       | i32_const value:1
+  0xb5e | 6a          | i32_add
+  0xb5f | 21 02       | local_set local_index:2
+  0xb61 | 0c 00       | br relative_depth:0
+  0xb63 | 0b          | end
+  0xb64 | 41 00       | i32_const value:0
+  0xb66 | 0b          | end
+============== func 28 ====================
+  0xb67 | 17          | size of function
+  0xb68 | 00          | 0 local blocks
+  0xb69 | 20 00       | local_get local_index:0
+  0xb6b | 20 00       | local_get local_index:0
+  0xb6d | fb 02 11 06 | struct_get struct_type_index:17 field_index:6
+  0xb71 | 41 01       | i32_const value:1
+  0xb73 | 6a          | i32_add
+  0xb74 | fb 05 11 06 | struct_set struct_type_index:17 field_index:6
+  0xb78 | 20 00       | local_get local_index:0
+  0xb7a | fb 02 11 06 | struct_get struct_type_index:17 field_index:6
+  0xb7e | 0b          | end
+============== func 29 ====================
+  0xb7f | 37          | size of function
+  0xb80 | 02          | 2 local blocks
+  0xb81 | 01 64 04    | 1 locals of type Ref((ref (module 4)))
+  0xb84 | 01 7f       | 1 locals of type I32
+  0xb86 | 20 00       | local_get local_index:0
+  0xb88 | fb 02 0f 0a | struct_get struct_type_index:15 field_index:10
+  0xb8c | 21 02       | local_set local_index:2
+  0xb8e | 20 00       | local_get local_index:0
+  0xb90 | fb 02 0f 05 | struct_get struct_type_index:15 field_index:5
+  0xb94 | 21 03       | local_set local_index:3
+  0xb96 | 20 03       | local_get local_index:3
+  0xb98 | 20 02       | local_get local_index:2
+  0xb9a | fb 0f       | array_len
+  0xb9c | 4f          | i32_ge_u
+  0xb9d | 04 40       | if blockty:Empty
+  0xb9f | 0f          | return
+  0xba0 | 0b          | end
+  0xba1 | 20 02       | local_get local_index:2
+  0xba3 | 20 03       | local_get local_index:3
+  0xba5 | 20 01       | local_get local_index:1
+  0xba7 | fb 0e 04    | array_set array_type_index:4
+  0xbaa | 20 00       | local_get local_index:0
+  0xbac | 20 03       | local_get local_index:3
+  0xbae | 41 01       | i32_const value:1
+  0xbb0 | 6a          | i32_add
+  0xbb1 | fb 05 0f 05 | struct_set struct_type_index:15 field_index:5
+  0xbb5 | 0f          | return
+  0xbb6 | 0b          | end
+============== func 30 ====================
+  0xbb7 | 38          | size of function
+  0xbb8 | 02          | 2 local blocks
+  0xbb9 | 01 64 04    | 1 locals of type Ref((ref (module 4)))
+  0xbbc | 01 7f       | 1 locals of type I32
+  0xbbe | 20 00       | local_get local_index:0
+  0xbc0 | fb 02 0f 0a | struct_get struct_type_index:15 field_index:10
+  0xbc4 | 21 01       | local_set local_index:1
+  0xbc6 | 20 00       | local_get local_index:0
+  0xbc8 | fb 02 0f 05 | struct_get struct_type_index:15 field_index:5
+  0xbcc | 21 02       | local_set local_index:2
+  0xbce | 20 02       | local_get local_index:2
+  0xbd0 | 41 00       | i32_const value:0
+  0xbd2 | 4d          | i32_le_u
+  0xbd3 | 04 40       | if blockty:Empty
+  0xbd5 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0xbd7 | 0f          | return
+  0xbd8 | 0b          | end
+  0xbd9 | 20 00       | local_get local_index:0
+  0xbdb | 20 02       | local_get local_index:2
+  0xbdd | 41 01       | i32_const value:1
+  0xbdf | 6b          | i32_sub
+  0xbe0 | fb 05 0f 05 | struct_set struct_type_index:15 field_index:5
+  0xbe4 | 20 01       | local_get local_index:1
+  0xbe6 | 20 02       | local_get local_index:2
+  0xbe8 | 41 01       | i32_const value:1
+  0xbea | 6b          | i32_sub
+  0xbeb | fb 0b 04    | array_get array_type_index:4
+  0xbee | 0f          | return
+  0xbef | 0b          | end
+============== func 31 ====================
+  0xbf0 | 2d          | size of function
+  0xbf1 | 02          | 2 local blocks
+  0xbf2 | 01 64 04    | 1 locals of type Ref((ref (module 4)))
+  0xbf5 | 01 7f       | 1 locals of type I32
+  0xbf7 | 20 00       | local_get local_index:0
+  0xbf9 | fb 02 0f 0a | struct_get struct_type_index:15 field_index:10
+  0xbfd | 21 01       | local_set local_index:1
+  0xbff | 20 00       | local_get local_index:0
+  0xc01 | fb 02 0f 05 | struct_get struct_type_index:15 field_index:5
+  0xc05 | 21 02       | local_set local_index:2
+  0xc07 | 20 02       | local_get local_index:2
+  0xc09 | 41 00       | i32_const value:0
+  0xc0b | 4d          | i32_le_u
+  0xc0c | 04 40       | if blockty:Empty
+  0xc0e | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0xc10 | 0f          | return
+  0xc11 | 0b          | end
+  0xc12 | 20 01       | local_get local_index:1
+  0xc14 | 20 02       | local_get local_index:2
+  0xc16 | 41 01       | i32_const value:1
+  0xc18 | 6b          | i32_sub
+  0xc19 | fb 0b 04    | array_get array_type_index:4
+  0xc1c | 0f          | return
+  0xc1d | 0b          | end
+============== func 32 ====================
+  0xc1e | 1b          | size of function
+  0xc1f | 00          | 0 local blocks
+  0xc20 | 20 01       | local_get local_index:1
+  0xc22 | fb 14 6c    | ref_test_non_null hty:Abstract { shared: false, ty: I31 }
+  0xc25 | 04 64 0c    | if blockty:Type(Ref((ref (module 12))))
+  0xc28 | 20 00       | local_get local_index:0
+  0xc2a | fb 02 11 09 | struct_get struct_type_index:17 field_index:9
+  0xc2e | 05          | else
+  0xc2f | 20 01       | local_get local_index:1
+  0xc31 | fb 16 03    | ref_cast_non_null hty:Concrete(Module(3))
+  0xc34 | fb 02 03 00 | struct_get struct_type_index:3 field_index:0
+  0xc38 | 0b          | end
+  0xc39 | 0b          | end
+============== func 33 ====================
+  0xc3a | b6 01       | size of function
+  0xc3c | 05          | 5 local blocks
+  0xc3d | 02 64 0c    | 2 locals of type Ref((ref (module 12)))
+  0xc40 | 01 63 09    | 1 locals of type Ref((ref null (module 9)))
+  0xc43 | 02 63 04    | 2 locals of type Ref((ref null (module 4)))
+  0xc46 | 02 7f       | 2 locals of type I32
+  0xc48 | 01 6d       | 1 locals of type Ref(eqref)
+  0xc4a | 20 00       | local_get local_index:0
+  0xc4c | 10 20       | call function_index:32
+  0xc4e | 21 03       | local_set local_index:3
+  0xc50 | 03 40       | loop blockty:Empty
+  0xc52 | 20 03       | local_get local_index:3
+  0xc54 | d1          | ref_is_null
+  0xc55 | 04 40       | if blockty:Empty
+  0xc57 | d0 0e       | ref_null hty:Concrete(Module(14))
+  0xc59 | 0f          | return
+  0xc5a | 0b          | end
+  0xc5b | 20 03       | local_get local_index:3
+  0xc5d | d4          | ref_as_non_null
+  0xc5e | fb 02 0c 04 | struct_get struct_type_index:12 field_index:4
+  0xc62 | 22 04       | local_tee local_index:4
+  0xc64 | d1          | ref_is_null
+  0xc65 | 04 40       | if blockty:Empty
+  0xc67 | 20 03       | local_get local_index:3
+  0xc69 | d4          | ref_as_non_null
+  0xc6a | fb 02 0c 03 | struct_get struct_type_index:12 field_index:3
+  0xc6e | 21 03       | local_set local_index:3
+  0xc70 | 0c 01       | br relative_depth:1
+  0xc72 | 0b          | end
+  0xc73 | 20 04       | local_get local_index:4
+  0xc75 | d4          | ref_as_non_null
+  0xc76 | fb 02 09 03 | struct_get struct_type_index:9 field_index:3
+  0xc7a | 22 05       | local_tee local_index:5
+  0xc7c | d1          | ref_is_null
+  0xc7d | 04 40       | if blockty:Empty
+  0xc7f | 20 03       | local_get local_index:3
+  0xc81 | d4          | ref_as_non_null
+  0xc82 | fb 02 0c 03 | struct_get struct_type_index:12 field_index:3
+  0xc86 | 21 03       | local_set local_index:3
+  0xc88 | 0c 01       | br relative_depth:1
+  0xc8a | 0b          | end
+  0xc8b | 20 04       | local_get local_index:4
+  0xc8d | d4          | ref_as_non_null
+  0xc8e | fb 02 09 04 | struct_get struct_type_index:9 field_index:4
+  0xc92 | 22 06       | local_tee local_index:6
+  0xc94 | d1          | ref_is_null
+  0xc95 | 04 40       | if blockty:Empty
+  0xc97 | 20 03       | local_get local_index:3
+  0xc99 | d4          | ref_as_non_null
+  0xc9a | fb 02 0c 03 | struct_get struct_type_index:12 field_index:3
+  0xc9e | 21 03       | local_set local_index:3
+  0xca0 | 0c 01       | br relative_depth:1
+  0xca2 | 0b          | end
+  0xca3 | 20 04       | local_get local_index:4
+  0xca5 | d4          | ref_as_non_null
+  0xca6 | fb 02 09 05 | struct_get struct_type_index:9 field_index:5
+  0xcaa | 21 07       | local_set local_index:7
+  0xcac | 41 00       | i32_const value:0
+  0xcae | 21 08       | local_set local_index:8
+  0xcb0 | 03 40       | loop blockty:Empty
+  0xcb2 | 20 08       | local_get local_index:8
+  0xcb4 | 20 07       | local_get local_index:7
+  0xcb6 | 4f          | i32_ge_u
+  0xcb7 | 04 40       | if blockty:Empty
+  0xcb9 | 20 03       | local_get local_index:3
+  0xcbb | d4          | ref_as_non_null
+  0xcbc | fb 02 0c 03 | struct_get struct_type_index:12 field_index:3
+  0xcc0 | 21 03       | local_set local_index:3
+  0xcc2 | 0c 02       | br relative_depth:2
+  0xcc4 | 0b          | end
+  0xcc5 | 20 05       | local_get local_index:5
+  0xcc7 | d4          | ref_as_non_null
+  0xcc8 | 20 08       | local_get local_index:8
+  0xcca | fb 0b 04    | array_get array_type_index:4
+  0xccd | 21 09       | local_set local_index:9
+  0xccf | 20 09       | local_get local_index:9
+  0xcd1 | 20 01       | local_get local_index:1
+  0xcd3 | d3          | ref_eq
+  0xcd4 | 04 40       | if blockty:Empty
+  0xcd6 | 20 06       | local_get local_index:6
+  0xcd8 | d4          | ref_as_non_null
+  0xcd9 | 20 08       | local_get local_index:8
+  0xcdb | fb 0b 04    | array_get array_type_index:4
+  0xcde | fb 16 0e    | ref_cast_non_null hty:Concrete(Module(14))
+  0xce1 | 0f          | return
+  0xce2 | 0b          | end
+  0xce3 | 20 08       | local_get local_index:8
+  0xce5 | 41 01       | i32_const value:1
+  0xce7 | 6a          | i32_add
+  0xce8 | 21 08       | local_set local_index:8
+  0xcea | 0c 00       | br relative_depth:0
+  0xcec | 0b          | end
+  0xced | 0b          | end
+  0xcee | d0 0e       | ref_null hty:Concrete(Module(14))
+  0xcf0 | 0f          | return
+  0xcf1 | 0b          | end
+============== func 34 ====================
+  0xcf2 | a6 01       | size of function
+  0xcf4 | 04          | 4 local blocks
+  0xcf5 | 01 63 04    | 1 locals of type Ref((ref null (module 4)))
+  0xcf8 | 03 7f       | 3 locals of type I32
+  0xcfa | 01 63 10    | 1 locals of type Ref((ref null (module 16)))
+  0xcfd | 01 7f       | 1 locals of type I32
+  0xcff | 20 00       | local_get local_index:0
+  0xd01 | fb 02 11 02 | struct_get struct_type_index:17 field_index:2
+  0xd05 | 22 03       | local_tee local_index:3
+  0xd07 | d1          | ref_is_null
+  0xd08 | 04 40       | if blockty:Empty
+  0xd0a | d0 0e       | ref_null hty:Concrete(Module(14))
+  0xd0c | 0f          | return
+  0xd0d | 0b          | end
+  0xd0e | 20 01       | local_get local_index:1
+  0xd10 | fb 16 03    | ref_cast_non_null hty:Concrete(Module(3))
+  0xd13 | fb 02 03 01 | struct_get struct_type_index:3 field_index:1
+  0xd17 | 20 02       | local_get local_index:2
+  0xd19 | d4          | ref_as_non_null
+  0xd1a | fb 02 0c 01 | struct_get struct_type_index:12 field_index:1
+  0xd1e | 6a          | i32_add
+  0xd1f | 20 00       | local_get local_index:0
+  0xd21 | fb 02 11 05 | struct_get struct_type_index:17 field_index:5
+  0xd25 | 70          | i32_rem_u
+  0xd26 | 21 06       | local_set local_index:6
+  0xd28 | 41 08       | i32_const value:8
+  0xd2a | 21 08       | local_set local_index:8
+  0xd2c | 03 40       | loop blockty:Empty
+  0xd2e | 20 08       | local_get local_index:8
+  0xd30 | 41 00       | i32_const value:0
+  0xd32 | 4c          | i32_le_s
+  0xd33 | 04 40       | if blockty:Empty
+  0xd35 | d0 0e       | ref_null hty:Concrete(Module(14))
+  0xd37 | 0f          | return
+  0xd38 | 0b          | end
+  0xd39 | 20 03       | local_get local_index:3
+  0xd3b | d4          | ref_as_non_null
+  0xd3c | 20 06       | local_get local_index:6
+  0xd3e | fb 0b 04    | array_get array_type_index:4
+  0xd41 | fb 17 10    | ref_cast_nullable hty:Concrete(Module(16))
+  0xd44 | 22 07       | local_tee local_index:7
+  0xd46 | d1          | ref_is_null
+  0xd47 | 04 40       | if blockty:Empty
+  0xd49 | d0 0e       | ref_null hty:Concrete(Module(14))
+  0xd4b | 0f          | return
+  0xd4c | 0b          | end
+  0xd4d | 20 07       | local_get local_index:7
+  0xd4f | fb 16 10    | ref_cast_non_null hty:Concrete(Module(16))
+  0xd52 | 22 07       | local_tee local_index:7
+  0xd54 | fb 02 10 00 | struct_get struct_type_index:16 field_index:0
+  0xd58 | 20 01       | local_get local_index:1
+  0xd5a | d3          | ref_eq
+  0xd5b | 20 07       | local_get local_index:7
+  0xd5d | fb 02 10 01 | struct_get struct_type_index:16 field_index:1
+  0xd61 | 20 02       | local_get local_index:2
+  0xd63 | d3          | ref_eq
+  0xd64 | 71          | i32_and
+  0xd65 | 04 40       | if blockty:Empty
+  0xd67 | 20 07       | local_get local_index:7
+  0xd69 | 20 07       | local_get local_index:7
+  0xd6b | fb 02 10 03 | struct_get struct_type_index:16 field_index:3
+  0xd6f | 41 01       | i32_const value:1
+  0xd71 | 6a          | i32_add
+  0xd72 | fb 05 10 03 | struct_set struct_type_index:16 field_index:3
+  0xd76 | 20 07       | local_get local_index:7
+  0xd78 | fb 02 10 02 | struct_get struct_type_index:16 field_index:2
+  0xd7c | 0f          | return
+  0xd7d | 0b          | end
+  0xd7e | 20 06       | local_get local_index:6
+  0xd80 | 41 01       | i32_const value:1
+  0xd82 | 6a          | i32_add
+  0xd83 | 20 00       | local_get local_index:0
+  0xd85 | fb 02 11 05 | struct_get struct_type_index:17 field_index:5
+  0xd89 | 70          | i32_rem_u
+  0xd8a | 21 06       | local_set local_index:6
+  0xd8c | 20 08       | local_get local_index:8
+  0xd8e | 41 01       | i32_const value:1
+  0xd90 | 6b          | i32_sub
+  0xd91 | 21 08       | local_set local_index:8
+  0xd93 | 0c 00       | br relative_depth:0
+  0xd95 | 0b          | end
+  0xd96 | d0 0e       | ref_null hty:Concrete(Module(14))
+  0xd98 | 0f          | return
+  0xd99 | 0b          | end
+============== func 35 ====================
+  0xd9a | 48          | size of function
+  0xd9b | 03          | 3 local blocks
+  0xd9c | 01 63 04    | 1 locals of type Ref((ref null (module 4)))
+  0xd9f | 01 7f       | 1 locals of type I32
+  0xda1 | 01 64 10    | 1 locals of type Ref((ref (module 16)))
+  0xda4 | 20 00       | local_get local_index:0
+  0xda6 | fb 02 11 02 | struct_get struct_type_index:17 field_index:2
+  0xdaa | 22 04       | local_tee local_index:4
+  0xdac | d1          | ref_is_null
+  0xdad | 04 40       | if blockty:Empty
+  0xdaf | 0f          | return
+  0xdb0 | 0b          | end
+  0xdb1 | 20 01       | local_get local_index:1
+  0xdb3 | fb 16 03    | ref_cast_non_null hty:Concrete(Module(3))
+  0xdb6 | fb 02 03 01 | struct_get struct_type_index:3 field_index:1
+  0xdba | 20 02       | local_get local_index:2
+  0xdbc | d4          | ref_as_non_null
+  0xdbd | fb 02 0c 01 | struct_get struct_type_index:12 field_index:1
+  0xdc1 | 6a          | i32_add
+  0xdc2 | 20 00       | local_get local_index:0
+  0xdc4 | fb 02 11 05 | struct_get struct_type_index:17 field_index:5
+  0xdc8 | 70          | i32_rem_u
+  0xdc9 | 21 05       | local_set local_index:5
+  0xdcb | 20 01       | local_get local_index:1
+  0xdcd | 20 02       | local_get local_index:2
+  0xdcf | 20 03       | local_get local_index:3
+  0xdd1 | 41 01       | i32_const value:1
+  0xdd3 | fb 00 10    | struct_new struct_type_index:16
+  0xdd6 | 21 06       | local_set local_index:6
+  0xdd8 | 20 04       | local_get local_index:4
+  0xdda | d4          | ref_as_non_null
+  0xddb | 20 05       | local_get local_index:5
+  0xddd | 20 06       | local_get local_index:6
+  0xddf | fb 0e 04    | array_set array_type_index:4
+  0xde2 | 0b          | end
+============== func 36 ====================
+  0xde3 | 52          | size of function
+  0xde4 | 01          | 1 local blocks
+  0xde5 | 04 64 04    | 4 locals of type Ref((ref (module 4)))
+  0xde8 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0xdea | 41 14       | i32_const value:20
+  0xdec | fb 06 04    | array_new array_type_index:4
+  0xdef | 21 04       | local_set local_index:4
+  0xdf1 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0xdf3 | 41 00       | i32_const value:0
+  0xdf5 | fb 06 04    | array_new array_type_index:4
+  0xdf8 | 21 05       | local_set local_index:5
+  0xdfa | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0xdfc | 41 00       | i32_const value:0
+  0xdfe | fb 06 04    | array_new array_type_index:4
+  0xe01 | 21 06       | local_set local_index:6
+  0xe03 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0xe05 | 41 00       | i32_const value:0
+  0xe07 | fb 06 04    | array_new array_type_index:4
+  0xe0a | 21 07       | local_set local_index:7
+  0xe0c | 20 00       | local_get local_index:0
+  0xe0e | fb 02 11 0b | struct_get struct_type_index:17 field_index:11
+  0xe12 | 20 00       | local_get local_index:0
+  0xe14 | 10 1c       | call function_index:28
+  0xe16 | 41 0e       | i32_const value:14
+  0xe18 | 41 0e       | i32_const value:14
+  0xe1a | d0 03       | ref_null hty:Concrete(Module(3))
+  0xe1c | 20 05       | local_get local_index:5
+  0xe1e | 20 00       | local_get local_index:0
+  0xe20 | fb 02 11 00 | struct_get struct_type_index:17 field_index:0
+  0xe24 | 41 00       | i32_const value:0
+  0xe26 | 41 00       | i32_const value:0
+  0xe28 | 20 02       | local_get local_index:2
+  0xe2a | 20 01       | local_get local_index:1
+  0xe2c | 20 06       | local_get local_index:6
+  0xe2e | 20 07       | local_get local_index:7
+  0xe30 | 20 04       | local_get local_index:4
+  0xe32 | fb 00 0f    | struct_new struct_type_index:15
+  0xe35 | 0b          | end
+============== func 37 ====================
+  0xe36 | 06          | size of function
+  0xe37 | 00          | 0 local blocks
+  0xe38 | 20 00       | local_get local_index:0
+  0xe3a | fb 1c       | ref_i31
+  0xe3c | 0b          | end
+============== func 38 ====================
+  0xe3d | 14          | size of function
+  0xe3e | 00          | 0 local blocks
+  0xe3f | 20 00       | local_get local_index:0
+  0xe41 | fb 14 6c    | ref_test_non_null hty:Abstract { shared: false, ty: I31 }
+  0xe44 | 04 7f       | if blockty:Type(I32)
+  0xe46 | 20 00       | local_get local_index:0
+  0xe48 | fb 16 6c    | ref_cast_non_null hty:Abstract { shared: false, ty: I31 }
+  0xe4b | fb 1d       | i31_get_s
+  0xe4d | 05          | else
+  0xe4e | 41 00       | i32_const value:0
+  0xe50 | 0b          | end
+  0xe51 | 0b          | end
+============== func 39 ====================
+  0xe52 | 0b          | size of function
+  0xe53 | 00          | 0 local blocks
+  0xe54 | 20 00       | local_get local_index:0
+  0xe56 | fb 02 0e 07 | struct_get struct_type_index:14 field_index:7
+  0xe5a | 41 00       | i32_const value:0
+  0xe5c | 4b          | i32_gt_u
+  0xe5d | 0b          | end
+============== func 40 ====================
+  0xe5e | 09          | size of function
+  0xe5f | 00          | 0 local blocks
+  0xe60 | 20 00       | local_get local_index:0
+  0xe62 | 20 01       | local_get local_index:1
+  0xe64 | 11 27 00    | call_indirect type_index:39 table_index:0
+  0xe67 | 0b          | end
+============== func 41 ====================
+  0xe68 | 23          | size of function
+  0xe69 | 02          | 2 local blocks
+  0xe6a | 01 63 01    | 1 locals of type Ref((ref null (module 1)))
+  0xe6d | 03 7f       | 3 locals of type I32
+  0xe6f | 20 00       | local_get local_index:0
+  0xe71 | fb 02 0e 03 | struct_get struct_type_index:14 field_index:3
+  0xe75 | 22 03       | local_tee local_index:3
+  0xe77 | d1          | ref_is_null
+  0xe78 | 04 40       | if blockty:Empty
+  0xe7a | 0f          | return
+  0xe7b | 0b          | end
+  0xe7c | 20 03       | local_get local_index:3
+  0xe7e | d4          | ref_as_non_null
+  0xe7f | fb 0f       | array_len
+  0xe81 | 21 04       | local_set local_index:4
+  0xe83 | 20 00       | local_get local_index:0
+  0xe85 | 20 01       | local_get local_index:1
+  0xe87 | 20 02       | local_get local_index:2
+  0xe89 | 10 01       | call function_index:1
+  0xe8b | 0b          | end
+============== func 42 ====================
+  0xe8c | 4c          | size of function
+  0xe8d | 02          | 2 local blocks
+  0xe8e | 01 63 0f    | 1 locals of type Ref((ref null (module 15)))
+  0xe91 | 01 6d       | 1 locals of type Ref(eqref)
+  0xe93 | 20 01       | local_get local_index:1
+  0xe95 | 10 1f       | call function_index:31
+  0xe97 | 21 03       | local_set local_index:3
+  0xe99 | 20 01       | local_get local_index:1
+  0xe9b | fb 02 0f 03 | struct_get struct_type_index:15 field_index:3
+  0xe9f | 22 02       | local_tee local_index:2
+  0xea1 | d1          | ref_is_null
+  0xea2 | 45          | i32_eqz
+  0xea3 | 04 40       | if blockty:Empty
+  0xea5 | 20 02       | local_get local_index:2
+  0xea7 | d4          | ref_as_non_null
+  0xea8 | 20 03       | local_get local_index:3
+  0xeaa | d4          | ref_as_non_null
+  0xeab | 10 1d       | call function_index:29
+  0xead | 20 02       | local_get local_index:2
+  0xeaf | d4          | ref_as_non_null
+  0xeb0 | 20 02       | local_get local_index:2
+  0xeb2 | d4          | ref_as_non_null
+  0xeb3 | fb 02 0f 04 | struct_get struct_type_index:15 field_index:4
+  0xeb7 | 41 01       | i32_const value:1
+  0xeb9 | 6a          | i32_add
+  0xeba | fb 05 0f 04 | struct_set struct_type_index:15 field_index:4
+  0xebe | 0b          | end
+  0xebf | 20 02       | local_get local_index:2
+  0xec1 | d1          | ref_is_null
+  0xec2 | 04 40       | if blockty:Empty
+  0xec4 | 20 00       | local_get local_index:0
+  0xec6 | d0 0f       | ref_null hty:Concrete(Module(15))
+  0xec8 | fb 05 11 00 | struct_set struct_type_index:17 field_index:0
+  0xecc | 05          | else
+  0xecd | 20 00       | local_get local_index:0
+  0xecf | 20 02       | local_get local_index:2
+  0xed1 | fb 05 11 00 | struct_set struct_type_index:17 field_index:0
+  0xed5 | 0b          | end
+  0xed6 | 20 03       | local_get local_index:3
+  0xed8 | 0b          | end
+============== func 43 ====================
+  0xed9 | c2 04       | size of function
+  0xedb | 0a          | 10 local blocks
+  0xedc | 01 64 0e    | 1 locals of type Ref((ref (module 14)))
+  0xedf | 01 64 01    | 1 locals of type Ref((ref (module 1)))
+  0xee2 | 01 64 0e    | 1 locals of type Ref((ref (module 14)))
+  0xee5 | 01 64 01    | 1 locals of type Ref((ref (module 1)))
+  0xee8 | 01 64 08    | 1 locals of type Ref((ref (module 8)))
+  0xeeb | 01 64 09    | 1 locals of type Ref((ref (module 9)))
+  0xeee | 01 64 03    | 1 locals of type Ref((ref (module 3)))
+  0xef1 | 03 64 04    | 3 locals of type Ref((ref (module 4)))
+  0xef4 | 01 64 08    | 1 locals of type Ref((ref (module 8)))
+  0xef7 | 02 64 04    | 2 locals of type Ref((ref (module 4)))
+  0xefa | 41 f0 00    | i32_const value:112
+  0xefd | 41 d0 01    | i32_const value:208
+  0xf00 | 41 fc 00    | i32_const value:124
+  0xf03 | fb 08 05 03 | array_new_fixed array_type_index:5 array_size:3
+  0xf07 | 21 02       | local_set local_index:2
+  0xf09 | 41 f0 00    | i32_const value:112
+  0xf0c | 41 21       | i32_const value:33
+  0xf0e | 41 b0 01    | i32_const value:176
+  0xf11 | 41 22       | i32_const value:34
+  0xf13 | 41 b8 01    | i32_const value:184
+  0xf16 | 41 22       | i32_const value:34
+  0xf18 | 41 b0 01    | i32_const value:176
+  0xf1b | 41 23       | i32_const value:35
+  0xf1d | 41 b8 01    | i32_const value:184
+  0xf20 | 41 23       | i32_const value:35
+  0xf22 | 41 b0 01    | i32_const value:176
+  0xf25 | 41 22       | i32_const value:34
+  0xf27 | 41 b8 01    | i32_const value:184
+  0xf2a | 41 21       | i32_const value:33
+  0xf2c | 41 b0 01    | i32_const value:176
+  0xf2f | 41 22       | i32_const value:34
+  0xf31 | 41 b8 01    | i32_const value:184
+  0xf34 | 41 22       | i32_const value:34
+  0xf36 | 41 b0 01    | i32_const value:176
+  0xf39 | 41 23       | i32_const value:35
+  0xf3b | 41 b8 01    | i32_const value:184
+  0xf3e | 41 23       | i32_const value:35
+  0xf40 | 41 b0 01    | i32_const value:176
+  0xf43 | 41 22       | i32_const value:34
+  0xf45 | 41 b8 01    | i32_const value:184
+  0xf48 | 41 21       | i32_const value:33
+  0xf4a | 41 b0 01    | i32_const value:176
+  0xf4d | 41 22       | i32_const value:34
+  0xf4f | 41 b8 01    | i32_const value:184
+  0xf52 | 41 22       | i32_const value:34
+  0xf54 | 41 b0 01    | i32_const value:176
+  0xf57 | 41 23       | i32_const value:35
+  0xf59 | 41 b8 01    | i32_const value:184
+  0xf5c | 41 23       | i32_const value:35
+  0xf5e | 41 b0 01    | i32_const value:176
+  0xf61 | 41 22       | i32_const value:34
+  0xf63 | 41 b8 01    | i32_const value:184
+  0xf66 | 41 21       | i32_const value:33
+  0xf68 | 41 b0 01    | i32_const value:176
+  0xf6b | 41 22       | i32_const value:34
+  0xf6d | 41 b8 01    | i32_const value:184
+  0xf70 | 41 22       | i32_const value:34
+  0xf72 | 41 b0 01    | i32_const value:176
+  0xf75 | 41 23       | i32_const value:35
+  0xf77 | 41 b8 01    | i32_const value:184
+  0xf7a | 41 23       | i32_const value:35
+  0xf7c | 41 b0 01    | i32_const value:176
+  0xf7f | 41 22       | i32_const value:34
+  0xf81 | 41 b8 01    | i32_const value:184
+  0xf84 | 41 21       | i32_const value:33
+  0xf86 | 41 b0 01    | i32_const value:176
+  0xf89 | 41 22       | i32_const value:34
+  0xf8b | 41 b8 01    | i32_const value:184
+  0xf8e | 41 22       | i32_const value:34
+  0xf90 | 41 b0 01    | i32_const value:176
+  0xf93 | 41 23       | i32_const value:35
+  0xf95 | 41 b8 01    | i32_const value:184
+  0xf98 | 41 23       | i32_const value:35
+  0xf9a | 41 b0 01    | i32_const value:176
+  0xf9d | 41 22       | i32_const value:34
+  0xf9f | 41 b8 01    | i32_const value:184
+  0xfa2 | 41 fc 00    | i32_const value:124
+  0xfa5 | fb 08 05 3e | array_new_fixed array_type_index:5 array_size:62
+  0xfa9 | 21 04       | local_set local_index:4
+  0xfab | 20 00       | local_get local_index:0
+  0xfad | d0 0c       | ref_null hty:Concrete(Module(12))
+  0xfaf | 20 00       | local_get local_index:0
+  0xfb1 | 10 1c       | call function_index:28
+  0xfb3 | d0 03       | ref_null hty:Concrete(Module(3))
+  0xfb5 | 41 f7 00    | i32_const value:119
+  0xfb8 | 41 ef 00    | i32_const value:111
+  0xfbb | 41 f2 00    | i32_const value:114
+  0xfbe | 41 eb 00    | i32_const value:107
+  0xfc1 | 41 ec 00    | i32_const value:108
+  0xfc4 | 41 ef 00    | i32_const value:111
+  0xfc7 | 41 e1 00    | i32_const value:97
+  0xfca | 41 e4 00    | i32_const value:100
+  0xfcd | fb 08 01 08 | array_new_fixed array_type_index:1 array_size:8
+  0xfd1 | 10 04       | call function_index:4
+  0xfd3 | fb 00 08    | struct_new struct_type_index:8
+  0xfd6 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+  0xfd8 | 41 01       | i32_const value:1
+  0xfda | fb 06 04    | array_new array_type_index:4
+  0xfdd | 21 08       | local_set local_index:8
+  0xfdf | 20 08       | local_get local_index:8
+  0xfe1 | 41 00       | i32_const value:0
+  0xfe3 | 20 05       | local_get local_index:5
+  0xfe5 | d4          | ref_as_non_null
+  0xfe6 | fb 0e 04    | array_set array_type_index:4
+  0xfe9 | 20 00       | local_get local_index:0
+  0xfeb | fb 02 11 0a | struct_get struct_type_index:17 field_index:10
+  0xfef | 10 1c       | call function_index:28
+  0xff1 | 41 06       | i32_const value:6
+  0xff3 | 41 0e       | i32_const value:14
+  0xff5 | d0 03       | ref_null hty:Concrete(Module(3))
+  0xff7 | 20 08       | local_get local_index:8
+  0xff9 | 41 00       | i32_const value:0
+  0xffb | 20 02       | local_get local_index:2
+  0xffd | 41 00       | i32_const value:0
+  0xfff | 41 00       | i32_const value:0
+ 0x1001 | 20 00       | local_get local_index:0
+ 0x1003 | fb 02 11 04 | struct_get struct_type_index:17 field_index:4
+ 0x1007 | 41 00       | i32_const value:0
+ 0x1009 | fb 00 0e    | struct_new struct_type_index:14
+ 0x100c | 21 07       | local_set local_index:7
+ 0x100e | 20 07       | local_get local_index:7
+ 0x1010 | 21 03       | local_set local_index:3
+ 0x1012 | 20 00       | local_get local_index:0
+ 0x1014 | fb 02 11 0b | struct_get struct_type_index:17 field_index:11
+ 0x1018 | 41 d1 0f    | i32_const value:2001
+ 0x101b | 41 0e       | i32_const value:14
+ 0x101d | 41 0e       | i32_const value:14
+ 0x101f | d0 03       | ref_null hty:Concrete(Module(3))
+ 0x1021 | 20 08       | local_get local_index:8
+ 0x1023 | d0 0f       | ref_null hty:Concrete(Module(15))
+ 0x1025 | 41 00       | i32_const value:0
+ 0x1027 | 41 00       | i32_const value:0
+ 0x1029 | 20 03       | local_get local_index:3
+ 0x102b | 41 e4 00    | i32_const value:100
+ 0x102e | fb 1c       | ref_i31
+ 0x1030 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+ 0x1032 | 41 00       | i32_const value:0
+ 0x1034 | fb 06 00    | array_new array_type_index:0
+ 0x1037 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+ 0x1039 | 41 00       | i32_const value:0
+ 0x103b | fb 06 00    | array_new array_type_index:0
+ 0x103e | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+ 0x1040 | 41 00       | i32_const value:0
+ 0x1042 | fb 06 00    | array_new array_type_index:0
+ 0x1045 | fb 00 0f    | struct_new struct_type_index:15
+ 0x1048 | 20 00       | local_get local_index:0
+ 0x104a | fb 05 11 00 | struct_set struct_type_index:17 field_index:0
+ 0x104e | 20 00       | local_get local_index:0
+ 0x1050 | fb 02 11 08 | struct_get struct_type_index:17 field_index:8
+ 0x1054 | 20 07       | local_get local_index:7
+ 0x1056 | fb 05 03 02 | struct_set struct_type_index:3 field_index:2
+ 0x105a | 20 07       | local_get local_index:7
+ 0x105c | 20 00       | local_get local_index:0
+ 0x105e | fb 05 11 08 | struct_set struct_type_index:17 field_index:8
+ 0x1062 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+ 0x1064 | 41 04       | i32_const value:4
+ 0x1066 | fb 06 04    | array_new array_type_index:4
+ 0x1069 | d4          | ref_as_non_null
+ 0x106a | 21 0d       | local_set local_index:13
+ 0x106c | 20 0d       | local_get local_index:13
+ 0x106e | 41 00       | i32_const value:0
+ 0x1070 | 41 00       | i32_const value:0
+ 0x1072 | 10 25       | call function_index:37
+ 0x1074 | d4          | ref_as_non_null
+ 0x1075 | fb 0e 04    | array_set array_type_index:4
+ 0x1078 | 20 0d       | local_get local_index:13
+ 0x107a | 41 01       | i32_const value:1
+ 0x107c | 41 01       | i32_const value:1
+ 0x107e | 10 25       | call function_index:37
+ 0x1080 | d4          | ref_as_non_null
+ 0x1081 | fb 0e 04    | array_set array_type_index:4
+ 0x1084 | 20 0d       | local_get local_index:13
+ 0x1086 | 41 02       | i32_const value:2
+ 0x1088 | 41 02       | i32_const value:2
+ 0x108a | 10 25       | call function_index:37
+ 0x108c | d4          | ref_as_non_null
+ 0x108d | fb 0e 04    | array_set array_type_index:4
+ 0x1090 | 20 0d       | local_get local_index:13
+ 0x1092 | 41 03       | i32_const value:3
+ 0x1094 | 41 03       | i32_const value:3
+ 0x1096 | 10 25       | call function_index:37
+ 0x1098 | d4          | ref_as_non_null
+ 0x1099 | fb 0e 04    | array_set array_type_index:4
+ 0x109c | 20 00       | local_get local_index:0
+ 0x109e | fb 02 11 0a | struct_get struct_type_index:17 field_index:10
+ 0x10a2 | 10 1c       | call function_index:28
+ 0x10a4 | 41 06       | i32_const value:6
+ 0x10a6 | 41 0e       | i32_const value:14
+ 0x10a8 | d0 03       | ref_null hty:Concrete(Module(3))
+ 0x10aa | 20 0d       | local_get local_index:13
+ 0x10ac | 41 00       | i32_const value:0
+ 0x10ae | 20 04       | local_get local_index:4
+ 0x10b0 | 41 00       | i32_const value:0
+ 0x10b2 | 41 00       | i32_const value:0
+ 0x10b4 | 20 00       | local_get local_index:0
+ 0x10b6 | fb 02 11 04 | struct_get struct_type_index:17 field_index:4
+ 0x10ba | 41 00       | i32_const value:0
+ 0x10bc | fb 00 0e    | struct_new struct_type_index:14
+ 0x10bf | 21 07       | local_set local_index:7
+ 0x10c1 | 20 07       | local_get local_index:7
+ 0x10c3 | 21 01       | local_set local_index:1
+ 0x10c5 | 20 00       | local_get local_index:0
+ 0x10c7 | fb 02 11 08 | struct_get struct_type_index:17 field_index:8
+ 0x10cb | d4          | ref_as_non_null
+ 0x10cc | 20 07       | local_get local_index:7
+ 0x10ce | fb 05 03 02 | struct_set struct_type_index:3 field_index:2
+ 0x10d2 | 20 07       | local_get local_index:7
+ 0x10d4 | 20 00       | local_get local_index:0
+ 0x10d6 | fb 05 11 08 | struct_set struct_type_index:17 field_index:8
+ 0x10da | 20 00       | local_get local_index:0
+ 0x10dc | fb 02 11 09 | struct_get struct_type_index:17 field_index:9
+ 0x10e0 | d4          | ref_as_non_null
+ 0x10e1 | 20 06       | local_get local_index:6
+ 0x10e3 | d4          | ref_as_non_null
+ 0x10e4 | fb 05 0c 04 | struct_set struct_type_index:12 field_index:4
+ 0x10e8 | 20 06       | local_get local_index:6
+ 0x10ea | d4          | ref_as_non_null
+ 0x10eb | fb 02 09 03 | struct_get struct_type_index:9 field_index:3
+ 0x10ef | d4          | ref_as_non_null
+ 0x10f0 | 41 00       | i32_const value:0
+ 0x10f2 | 20 05       | local_get local_index:5
+ 0x10f4 | d4          | ref_as_non_null
+ 0x10f5 | fb 0e 04    | array_set array_type_index:4
+ 0x10f8 | 20 06       | local_get local_index:6
+ 0x10fa | d4          | ref_as_non_null
+ 0x10fb | fb 02 09 04 | struct_get struct_type_index:9 field_index:4
+ 0x10ff | d4          | ref_as_non_null
+ 0x1100 | 41 00       | i32_const value:0
+ 0x1102 | 20 01       | local_get local_index:1
+ 0x1104 | d4          | ref_as_non_null
+ 0x1105 | fb 0e 04    | array_set array_type_index:4
+ 0x1108 | 20 06       | local_get local_index:6
+ 0x110a | d4          | ref_as_non_null
+ 0x110b | 41 01       | i32_const value:1
+ 0x110d | fb 05 09 05 | struct_set struct_type_index:9 field_index:5
+ 0x1111 | 20 01       | local_get local_index:1
+ 0x1113 | d4          | ref_as_non_null
+ 0x1114 | 41 01       | i32_const value:1
+ 0x1116 | fb 05 0e 09 | struct_set struct_type_index:14 field_index:9
+ 0x111a | 41 01       | i32_const value:1
+ 0x111c | 0b          | end
+============== func 44 ====================
+ 0x111d | a2 03       | size of function
+ 0x111f | 08          | 8 local blocks
+ 0x1120 | 03 6d       | 3 locals of type Ref(eqref)
+ 0x1122 | 03 7f       | 3 locals of type I32
+ 0x1124 | 01 64 0f    | 1 locals of type Ref((ref (module 15)))
+ 0x1127 | 01 6d       | 1 locals of type Ref(eqref)
+ 0x1129 | 01 64 0e    | 1 locals of type Ref((ref (module 14)))
+ 0x112c | 01 64 0c    | 1 locals of type Ref((ref (module 12)))
+ 0x112f | 01 7f       | 1 locals of type I32
+ 0x1131 | 01 64 04    | 1 locals of type Ref((ref (module 4)))
+ 0x1134 | 20 02       | local_get local_index:2
+ 0x1136 | 41 20       | i32_const value:32
+ 0x1138 | 4f          | i32_ge_u
+ 0x1139 | 20 02       | local_get local_index:2
+ 0x113b | 41 2f       | i32_const value:47
+ 0x113d | 4d          | i32_le_u
+ 0x113e | 71          | i32_and
+ 0x113f | 04 40       | if blockty:Empty
+ 0x1141 | 20 02       | local_get local_index:2
+ 0x1143 | 41 20       | i32_const value:32
+ 0x1145 | 6b          | i32_sub
+ 0x1146 | 21 0d       | local_set local_index:13
+ 0x1148 | 20 01       | local_get local_index:1
+ 0x114a | fb 02 0f 06 | struct_get struct_type_index:15 field_index:6
+ 0x114e | d4          | ref_as_non_null
+ 0x114f | fb 02 0e 03 | struct_get struct_type_index:14 field_index:3
+ 0x1153 | d4          | ref_as_non_null
+ 0x1154 | 22 0e       | local_tee local_index:14
+ 0x1156 | 20 0d       | local_get local_index:13
+ 0x1158 | 20 0e       | local_get local_index:14
+ 0x115a | fb 0f       | array_len
+ 0x115c | 4f          | i32_ge_u
+ 0x115d | 04 40       | if blockty:Empty
+ 0x115f | 20 01       | local_get local_index:1
+ 0x1161 | 41 00       | i32_const value:0
+ 0x1163 | 10 25       | call function_index:37
+ 0x1165 | d4          | ref_as_non_null
+ 0x1166 | 10 1d       | call function_index:29
+ 0x1168 | 05          | else
+ 0x1169 | 20 01       | local_get local_index:1
+ 0x116b | 20 0e       | local_get local_index:14
+ 0x116d | 20 0d       | local_get local_index:13
+ 0x116f | fb 0b 04    | array_get array_type_index:4
+ 0x1172 | d4          | ref_as_non_null
+ 0x1173 | 10 1d       | call function_index:29
+ 0x1175 | 0b          | end
+ 0x1176 | 41 00       | i32_const value:0
+ 0x1178 | 0f          | return
+ 0x1179 | 0b          | end
+ 0x117a | 20 02       | local_get local_index:2
+ 0x117c | 41 f0 00    | i32_const value:112
+ 0x117f | 46          | i32_eq
+ 0x1180 | 04 40       | if blockty:Empty
+ 0x1182 | 20 01       | local_get local_index:1
+ 0x1184 | 20 01       | local_get local_index:1
+ 0x1186 | fb 02 0f 07 | struct_get struct_type_index:15 field_index:7
+ 0x118a | d4          | ref_as_non_null
+ 0x118b | 10 1d       | call function_index:29
+ 0x118d | 41 00       | i32_const value:0
+ 0x118f | 0f          | return
+ 0x1190 | 0b          | end
+ 0x1191 | 20 02       | local_get local_index:2
+ 0x1193 | 41 b8 01    | i32_const value:184
+ 0x1196 | 46          | i32_eq
+ 0x1197 | 04 40       | if blockty:Empty
+ 0x1199 | 20 01       | local_get local_index:1
+ 0x119b | 10 1e       | call function_index:30
+ 0x119d | 22 05       | local_tee local_index:5
+ 0x119f | d1          | ref_is_null
+ 0x11a0 | 04 40       | if blockty:Empty
+ 0x11a2 | 41 00       | i32_const value:0
+ 0x11a4 | 0f          | return
+ 0x11a5 | 0b          | end
+ 0x11a6 | 20 01       | local_get local_index:1
+ 0x11a8 | 10 1e       | call function_index:30
+ 0x11aa | 22 04       | local_tee local_index:4
+ 0x11ac | d1          | ref_is_null
+ 0x11ad | 04 40       | if blockty:Empty
+ 0x11af | 20 01       | local_get local_index:1
+ 0x11b1 | 20 05       | local_get local_index:5
+ 0x11b3 | d4          | ref_as_non_null
+ 0x11b4 | 10 1d       | call function_index:29
+ 0x11b6 | 41 00       | i32_const value:0
+ 0x11b8 | 0f          | return
+ 0x11b9 | 0b          | end
+ 0x11ba | 20 04       | local_get local_index:4
+ 0x11bc | 10 26       | call function_index:38
+ 0x11be | 21 06       | local_set local_index:6
+ 0x11c0 | 20 05       | local_get local_index:5
+ 0x11c2 | 10 26       | call function_index:38
+ 0x11c4 | 21 07       | local_set local_index:7
+ 0x11c6 | 20 06       | local_get local_index:6
+ 0x11c8 | 20 07       | local_get local_index:7
+ 0x11ca | 6c          | i32_mul
+ 0x11cb | 21 08       | local_set local_index:8
+ 0x11cd | 20 01       | local_get local_index:1
+ 0x11cf | 20 08       | local_get local_index:8
+ 0x11d1 | 10 25       | call function_index:37
+ 0x11d3 | d4          | ref_as_non_null
+ 0x11d4 | 10 1d       | call function_index:29
+ 0x11d6 | 41 00       | i32_const value:0
+ 0x11d8 | 0f          | return
+ 0x11d9 | 0b          | end
+ 0x11da | 20 02       | local_get local_index:2
+ 0x11dc | 41 b0 01    | i32_const value:176
+ 0x11df | 46          | i32_eq
+ 0x11e0 | 04 40       | if blockty:Empty
+ 0x11e2 | 20 01       | local_get local_index:1
+ 0x11e4 | 10 1e       | call function_index:30
+ 0x11e6 | 22 05       | local_tee local_index:5
+ 0x11e8 | d1          | ref_is_null
+ 0x11e9 | 04 40       | if blockty:Empty
+ 0x11eb | 41 00       | i32_const value:0
+ 0x11ed | 0f          | return
+ 0x11ee | 0b          | end
+ 0x11ef | 20 01       | local_get local_index:1
+ 0x11f1 | 10 1e       | call function_index:30
+ 0x11f3 | 22 04       | local_tee local_index:4
+ 0x11f5 | d1          | ref_is_null
+ 0x11f6 | 04 40       | if blockty:Empty
+ 0x11f8 | 20 01       | local_get local_index:1
+ 0x11fa | 20 05       | local_get local_index:5
+ 0x11fc | d4          | ref_as_non_null
+ 0x11fd | 10 1d       | call function_index:29
+ 0x11ff | 41 00       | i32_const value:0
+ 0x1201 | 0f          | return
+ 0x1202 | 0b          | end
+ 0x1203 | 20 04       | local_get local_index:4
+ 0x1205 | 10 26       | call function_index:38
+ 0x1207 | 21 06       | local_set local_index:6
+ 0x1209 | 20 05       | local_get local_index:5
+ 0x120b | 10 26       | call function_index:38
+ 0x120d | 21 07       | local_set local_index:7
+ 0x120f | 20 06       | local_get local_index:6
+ 0x1211 | 20 07       | local_get local_index:7
+ 0x1213 | 6a          | i32_add
+ 0x1214 | 21 08       | local_set local_index:8
+ 0x1216 | 20 01       | local_get local_index:1
+ 0x1218 | 20 08       | local_get local_index:8
+ 0x121a | 10 25       | call function_index:37
+ 0x121c | d4          | ref_as_non_null
+ 0x121d | 10 1d       | call function_index:29
+ 0x121f | 41 00       | i32_const value:0
+ 0x1221 | 0f          | return
+ 0x1222 | 0b          | end
+ 0x1223 | 20 02       | local_get local_index:2
+ 0x1225 | 41 fc 00    | i32_const value:124
+ 0x1228 | 46          | i32_eq
+ 0x1229 | 04 40       | if blockty:Empty
+ 0x122b | 41 01       | i32_const value:1
+ 0x122d | 0f          | return
+ 0x122e | 0b          | end
+ 0x122f | 20 02       | local_get local_index:2
+ 0x1231 | 41 d0 01    | i32_const value:208
+ 0x1234 | 46          | i32_eq
+ 0x1235 | 04 40       | if blockty:Empty
+ 0x1237 | 20 01       | local_get local_index:1
+ 0x1239 | 10 1e       | call function_index:30
+ 0x123b | 22 03       | local_tee local_index:3
+ 0x123d | d1          | ref_is_null
+ 0x123e | 04 40       | if blockty:Empty
+ 0x1240 | 41 00       | i32_const value:0
+ 0x1242 | 0f          | return
+ 0x1243 | 0b          | end
+ 0x1244 | 20 02       | local_get local_index:2
+ 0x1246 | 41 0f       | i32_const value:15
+ 0x1248 | 71          | i32_and
+ 0x1249 | 21 0d       | local_set local_index:13
+ 0x124b | 20 01       | local_get local_index:1
+ 0x124d | fb 02 0f 06 | struct_get struct_type_index:15 field_index:6
+ 0x1251 | d4          | ref_as_non_null
+ 0x1252 | fb 02 0e 03 | struct_get struct_type_index:14 field_index:3
+ 0x1256 | d4          | ref_as_non_null
+ 0x1257 | 22 0e       | local_tee local_index:14
+ 0x1259 | 20 0d       | local_get local_index:13
+ 0x125b | 20 0e       | local_get local_index:14
+ 0x125d | fb 0f       | array_len
+ 0x125f | 4f          | i32_ge_u
+ 0x1260 | 04 40       | if blockty:Empty
+ 0x1262 | 20 01       | local_get local_index:1
+ 0x1264 | 20 03       | local_get local_index:3
+ 0x1266 | d4          | ref_as_non_null
+ 0x1267 | 10 1d       | call function_index:29
+ 0x1269 | 41 00       | i32_const value:0
+ 0x126b | 0f          | return
+ 0x126c | 0b          | end
+ 0x126d | 20 0e       | local_get local_index:14
+ 0x126f | 20 0d       | local_get local_index:13
+ 0x1271 | fb 0b 04    | array_get array_type_index:4
+ 0x1274 | 21 0a       | local_set local_index:10
+ 0x1276 | 20 03       | local_get local_index:3
+ 0x1278 | 10 20       | call function_index:32
+ 0x127a | 21 0c       | local_set local_index:12
+ 0x127c | 20 0a       | local_get local_index:10
+ 0x127e | 20 0c       | local_get local_index:12
+ 0x1280 | 10 22       | call function_index:34
+ 0x1282 | 22 0b       | local_tee local_index:11
+ 0x1284 | d1          | ref_is_null
+ 0x1285 | 04 40       | if blockty:Empty
+ 0x1287 | 20 03       | local_get local_index:3
+ 0x1289 | 20 0a       | local_get local_index:10
+ 0x128b | 10 21       | call function_index:33
+ 0x128d | 22 0b       | local_tee local_index:11
+ 0x128f | d1          | ref_is_null
+ 0x1290 | 04 40       | if blockty:Empty
+ 0x1292 | 20 01       | local_get local_index:1
+ 0x1294 | 20 03       | local_get local_index:3
+ 0x1296 | d4          | ref_as_non_null
+ 0x1297 | 10 1d       | call function_index:29
+ 0x1299 | 41 00       | i32_const value:0
+ 0x129b | 0f          | return
+ 0x129c | 0b          | end
+ 0x129d | 20 0a       | local_get local_index:10
+ 0x129f | 20 0c       | local_get local_index:12
+ 0x12a1 | 20 0b       | local_get local_index:11
+ 0x12a3 | d4          | ref_as_non_null
+ 0x12a4 | 10 23       | call function_index:35
+ 0x12a6 | 0b          | end
+ 0x12a7 | 20 03       | local_get local_index:3
+ 0x12a9 | 20 0b       | local_get local_index:11
+ 0x12ab | d4          | ref_as_non_null
+ 0x12ac | 20 0a       | local_get local_index:10
+ 0x12ae | 10 24       | call function_index:36
+ 0x12b0 | 21 09       | local_set local_index:9
+ 0x12b2 | 20 09       | local_get local_index:9
+ 0x12b4 | 20 00       | local_get local_index:0
+ 0x12b6 | fb 05 11 00 | struct_set struct_type_index:17 field_index:0
+ 0x12ba | 41 00       | i32_const value:0
+ 0x12bc | 0f          | return
+ 0x12bd | 0b          | end
+ 0x12be | 41 00       | i32_const value:0
+ 0x12c0 | 0b          | end
+============== func 45 ====================
+ 0x12c1 | d6 02       | size of function
+ 0x12c3 | 09          | 9 local blocks
+ 0x12c4 | 01 64 11    | 1 locals of type Ref((ref (module 17)))
+ 0x12c7 | 01 64 0f    | 1 locals of type Ref((ref (module 15)))
+ 0x12ca | 01 64 0e    | 1 locals of type Ref((ref (module 14)))
+ 0x12cd | 02 7f       | 2 locals of type I32
+ 0x12cf | 03 64 04    | 3 locals of type Ref((ref (module 4)))
+ 0x12d2 | 02 6d       | 2 locals of type Ref(eqref)
+ 0x12d4 | 01 7f       | 1 locals of type I32
+ 0x12d6 | 01 64 01    | 1 locals of type Ref((ref (module 1)))
+ 0x12d9 | 01 7f       | 1 locals of type I32
+ 0x12db | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+ 0x12dd | 41 14       | i32_const value:20
+ 0x12df | fb 06 04    | array_new array_type_index:4
+ 0x12e2 | 21 05       | local_set local_index:5
+ 0x12e4 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+ 0x12e6 | 41 00       | i32_const value:0
+ 0x12e8 | fb 06 04    | array_new array_type_index:4
+ 0x12eb | 21 0b       | local_set local_index:11
+ 0x12ed | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+ 0x12ef | 41 00       | i32_const value:0
+ 0x12f1 | fb 06 04    | array_new array_type_index:4
+ 0x12f4 | 21 06       | local_set local_index:6
+ 0x12f6 | d0 6d       | ref_null hty:Abstract { shared: false, ty: Eq }
+ 0x12f8 | 41 00       | i32_const value:0
+ 0x12fa | fb 06 04    | array_new array_type_index:4
+ 0x12fd | 21 07       | local_set local_index:7
+ 0x12ff | 02 40       | block blockty:Empty
+ 0x1301 | 03 40       | loop blockty:Empty
+ 0x1303 | 20 00       | local_get local_index:0
+ 0x1305 | fb 02 11 00 | struct_get struct_type_index:17 field_index:0
+ 0x1309 | 22 01       | local_tee local_index:1
+ 0x130b | d1          | ref_is_null
+ 0x130c | 04 40       | if blockty:Empty
+ 0x130e | 0c 02       | br relative_depth:2
+ 0x1310 | 0b          | end
+ 0x1311 | 20 01       | local_get local_index:1
+ 0x1313 | d4          | ref_as_non_null
+ 0x1314 | fb 02 0f 06 | struct_get struct_type_index:15 field_index:6
+ 0x1318 | 22 02       | local_tee local_index:2
+ 0x131a | 20 02       | local_get local_index:2
+ 0x131c | fb 02 0e 06 | struct_get struct_type_index:14 field_index:6
+ 0x1320 | 41 01       | i32_const value:1
+ 0x1322 | 6a          | i32_add
+ 0x1323 | 21 0a       | local_set local_index:10
+ 0x1325 | 20 02       | local_get local_index:2
+ 0x1327 | 20 0a       | local_get local_index:10
+ 0x1329 | fb 05 0e 06 | struct_set struct_type_index:14 field_index:6
+ 0x132d | 20 0a       | local_get local_index:10
+ 0x132f | 20 02       | local_get local_index:2
+ 0x1331 | fb 02 0e 08 | struct_get struct_type_index:14 field_index:8
+ 0x1335 | 46          | i32_eq
+ 0x1336 | 20 00       | local_get local_index:0
+ 0x1338 | fb 02 11 01 | struct_get struct_type_index:17 field_index:1
+ 0x133c | 71          | i32_and
+ 0x133d | 04 40       | if blockty:Empty
+ 0x133f | 20 02       | local_get local_index:2
+ 0x1341 | fb 02 0e 09 | struct_get struct_type_index:14 field_index:9
+ 0x1345 | 41 01       | i32_const value:1
+ 0x1347 | 46          | i32_eq
+ 0x1348 | 04 40       | if blockty:Empty
+ 0x134a | 20 02       | local_get local_index:2
+ 0x134c | d4          | ref_as_non_null
+ 0x134d | 10 27       | call function_index:39
+ 0x134f | 45          | i32_eqz
+ 0x1350 | 04 40       | if blockty:Empty
+ 0x1352 | 20 02       | local_get local_index:2
+ 0x1354 | d4          | ref_as_non_null
+ 0x1355 | 10 29       | call function_index:41
+ 0x1357 | 0b          | end
+ 0x1358 | 0b          | end
+ 0x1359 | 0b          | end
+ 0x135a | 20 02       | local_get local_index:2
+ 0x135c | d4          | ref_as_non_null
+ 0x135d | 10 27       | call function_index:39
+ 0x135f | 04 40       | if blockty:Empty
+ 0x1361 | 20 02       | local_get local_index:2
+ 0x1363 | fb 02 0e 07 | struct_get struct_type_index:14 field_index:7
+ 0x1367 | 21 0c       | local_set local_index:12
+ 0x1369 | 20 01       | local_get local_index:1
+ 0x136b | d4          | ref_as_non_null
+ 0x136c | 20 0c       | local_get local_index:12
+ 0x136e | 10 28       | call function_index:40
+ 0x1370 | 1a          | drop
+ 0x1371 | 20 01       | local_get local_index:1
+ 0x1373 | d4          | ref_as_non_null
+ 0x1374 | 10 2a       | call function_index:42
+ 0x1376 | 21 09       | local_set local_index:9
+ 0x1378 | 0c 01       | br relative_depth:1
+ 0x137a | 05          | else
+ 0x137b | 20 02       | local_get local_index:2
+ 0x137d | fb 02 0e 03 | struct_get struct_type_index:14 field_index:3
+ 0x1381 | 22 0b       | local_tee local_index:11
+ 0x1383 | d1          | ref_is_null
+ 0x1384 | 04 40       | if blockty:Empty
+ 0x1386 | 0c 02       | br relative_depth:2
+ 0x1388 | 0b          | end
+ 0x1389 | 03 40       | loop blockty:Empty
+ 0x138b | 20 00       | local_get local_index:0
+ 0x138d | fb 02 11 00 | struct_get struct_type_index:17 field_index:0
+ 0x1391 | 22 01       | local_tee local_index:1
+ 0x1393 | d1          | ref_is_null
+ 0x1394 | 45          | i32_eqz
+ 0x1395 | 04 40       | if blockty:Empty
+ 0x1397 | 20 01       | local_get local_index:1
+ 0x1399 | d4          | ref_as_non_null
+ 0x139a | fb 02 0f 04 | struct_get struct_type_index:15 field_index:4
+ 0x139e | 21 04       | local_set local_index:4
+ 0x13a0 | 20 01       | local_get local_index:1
+ 0x13a2 | d4          | ref_as_non_null
+ 0x13a3 | fb 02 0f 06 | struct_get struct_type_index:15 field_index:6
+ 0x13a7 | 22 02       | local_tee local_index:2
+ 0x13a9 | fb 02 0e 03 | struct_get struct_type_index:14 field_index:3
+ 0x13ad | 22 0b       | local_tee local_index:11
+ 0x13af | d4          | ref_as_non_null
+ 0x13b0 | fb 0f       | array_len
+ 0x13b2 | 20 04       | local_get local_index:4
+ 0x13b4 | 4d          | i32_le_u
+ 0x13b5 | 04 40       | if blockty:Empty
+ 0x13b7 | 20 01       | local_get local_index:1
+ 0x13b9 | d4          | ref_as_non_null
+ 0x13ba | 10 2a       | call function_index:42
+ 0x13bc | 21 09       | local_set local_index:9
+ 0x13be | 0c 02       | br relative_depth:2
+ 0x13c0 | 0b          | end
+ 0x13c1 | 20 0b       | local_get local_index:11
+ 0x13c3 | d4          | ref_as_non_null
+ 0x13c4 | 20 04       | local_get local_index:4
+ 0x13c6 | fb 0d 05    | array_get_u array_type_index:5
+ 0x13c9 | 21 03       | local_set local_index:3
+ 0x13cb | 20 01       | local_get local_index:1
+ 0x13cd | d4          | ref_as_non_null
+ 0x13ce | 20 03       | local_get local_index:3
+ 0x13d0 | 10 2c       | call function_index:44
+ 0x13d2 | 04 40       | if blockty:Empty
+ 0x13d4 | 20 01       | local_get local_index:1
+ 0x13d6 | d4          | ref_as_non_null
+ 0x13d7 | 10 2a       | call function_index:42
+ 0x13d9 | 21 09       | local_set local_index:9
+ 0x13db | 0c 02       | br relative_depth:2
+ 0x13dd | 0b          | end
+ 0x13de | 20 00       | local_get local_index:0
+ 0x13e0 | fb 02 11 00 | struct_get struct_type_index:17 field_index:0
+ 0x13e4 | 20 01       | local_get local_index:1
+ 0x13e6 | d3          | ref_eq
+ 0x13e7 | 04 40       | if blockty:Empty
+ 0x13e9 | 20 01       | local_get local_index:1
+ 0x13eb | d4          | ref_as_non_null
+ 0x13ec | 20 04       | local_get local_index:4
+ 0x13ee | 41 01       | i32_const value:1
+ 0x13f0 | 6a          | i32_add
+ 0x13f1 | fb 05 0f 04 | struct_set struct_type_index:15 field_index:4
+ 0x13f5 | 05          | else
+ 0x13f6 | 20 00       | local_get local_index:0
+ 0x13f8 | fb 02 11 00 | struct_get struct_type_index:17 field_index:0
+ 0x13fc | d4          | ref_as_non_null
+ 0x13fd | fb 02 0f 04 | struct_get struct_type_index:15 field_index:4
+ 0x1401 | 45          | i32_eqz
+ 0x1402 | 04 40       | if blockty:Empty
+ 0x1404 | 0c 05       | br relative_depth:5
+ 0x1406 | 0b          | end
+ 0x1407 | 0b          | end
+ 0x1408 | 0c 01       | br relative_depth:1
+ 0x140a | 0b          | end
+ 0x140b | 0b          | end
+ 0x140c | 0b          | end
+ 0x140d | 20 09       | local_get local_index:9
+ 0x140f | 10 26       | call function_index:38
+ 0x1411 | 10 00       | call function_index:0
+ 0x1413 | 0b          | end
+ 0x1414 | 0b          | end
+ 0x1415 | 41 01       | i32_const value:1
+ 0x1417 | 0f          | return
+ 0x1418 | 0b          | end
+ 0x1419 | 00 cc 12    | custom section
+ 0x141c | 04 6e 61 6d | name: "name"
+        | 65         
+ 0x1421 | 01 e1 03    | function name section
+ 0x1424 | 1e          | 30 count
+ 0x1425 | 00 0c 72 65 | Naming { index: 0, name: "reportResult" }
+        | 70 6f 72 74
+        | 52 65 73 75
+        | 6c 74      
+ 0x1433 | 01 0f 74 72 | Naming { index: 1, name: "translateMethod" }
+        | 61 6e 73 6c
+        | 61 74 65 4d
+        | 65 74 68 6f
+        | 64         
+ 0x1444 | 02 08 64 65 | Naming { index: 2, name: "debugLog" }
+        | 62 75 67 4c
+        | 6f 67      
+ 0x144e | 03 08 6e 65 | Naming { index: 3, name: "newArray" }
+        | 77 41 72 72
+        | 61 79      
+ 0x1458 | 04 0c 6e 65 | Naming { index: 4, name: "newByteArray" }
+        | 77 42 79 74
+        | 65 41 72 72
+        | 61 79      
+ 0x1466 | 05 0c 6e 65 | Naming { index: 5, name: "newWordArray" }
+        | 77 57 6f 72
+        | 64 41 72 72
+        | 61 79      
+ 0x1474 | 06 0d 6e 65 | Naming { index: 6, name: "newDictionary" }
+        | 77 44 69 63
+        | 74 69 6f 6e
+        | 61 72 79   
+ 0x1483 | 07 09 70 6f | Naming { index: 7, name: "popObject" }
+        | 70 4f 62 6a
+        | 65 63 74   
+ 0x148e | 08 0b 6c 69 | Naming { index: 8, name: "linkObjects" }
+        | 6e 6b 4f 62
+        | 6a 65 63 74
+        | 73         
+ 0x149b | 09 10 6c 69 | Naming { index: 9, name: "linkClassObjects" }
+        | 6e 6b 43 6c
+        | 61 73 73 4f
+        | 62 6a 65 63
+        | 74 73      
+ 0x14ad | 0a 14 6c 69 | Naming { index: 10, name: "linkMetaclassObjects" }
+        | 6e 6b 4d 65
+        | 74 61 63 6c
+        | 61 73 73 4f
+        | 62 6a 65 63
+        | 74 73      
+ 0x14c3 | 17 0b 61 72 | Naming { index: 23, name: "arrayOkayAt" }
+        | 72 61 79 4f
+        | 6b 61 79 41
+        | 74         
+ 0x14d0 | 18 0d 6f 62 | Naming { index: 24, name: "objectArrayAt" }
+        | 6a 65 63 74
+        | 41 72 72 61
+        | 79 41 74   
+ 0x14df | 1c 10 6e 65 | Naming { index: 28, name: "nextIdentityHash" }
+        | 78 74 49 64
+        | 65 6e 74 69
+        | 74 79 48 61
+        | 73 68      
+ 0x14f1 | 1d 0b 70 75 | Naming { index: 29, name: "pushOnStack" }
+        | 73 68 4f 6e
+        | 53 74 61 63
+        | 6b         
+ 0x14fe | 1e 0c 70 6f | Naming { index: 30, name: "popFromStack" }
+        | 70 46 72 6f
+        | 6d 53 74 61
+        | 63 6b      
+ 0x150c | 1f 0a 74 6f | Naming { index: 31, name: "topOfStack" }
+        | 70 4f 66 53
+        | 74 61 63 6b
+ 0x1518 | 20 0d 63 6c | Naming { index: 32, name: "classOfObject" }
+        | 61 73 73 4f
+        | 66 4f 62 6a
+        | 65 63 74   
+ 0x1527 | 21 0c 6c 6f | Naming { index: 33, name: "lookupMethod" }
+        | 6f 6b 75 70
+        | 4d 65 74 68
+        | 6f 64      
+ 0x1535 | 22 0d 6c 6f | Naming { index: 34, name: "lookupInCache" }
+        | 6f 6b 75 70
+        | 49 6e 43 61
+        | 63 68 65   
+ 0x1544 | 23 0c 73 74 | Naming { index: 35, name: "storeInCache" }
+        | 6f 72 65 49
+        | 6e 43 61 63
+        | 68 65      
+ 0x1552 | 24 13 63 72 | Naming { index: 36, name: "createMethodContext" }
+        | 65 61 74 65
+        | 4d 65 74 68
+        | 6f 64 43 6f
+        | 6e 74 65 78
+        | 74         
+ 0x1567 | 25 14 73 6d | Naming { index: 37, name: "smallIntegerForValue" }
+        | 61 6c 6c 49
+        | 6e 74 65 67
+        | 65 72 46 6f
+        | 72 56 61 6c
+        | 75 65      
+ 0x157d | 26 13 76 61 | Naming { index: 38, name: "valueOfSmallInteger" }
+        | 6c 75 65 4f
+        | 66 53 6d 61
+        | 6c 6c 49 6e
+        | 74 65 67 65
+        | 72         
+ 0x1592 | 27 0c 69 73 | Naming { index: 39, name: "isTranslated" }
+        | 54 72 61 6e
+        | 73 6c 61 74
+        | 65 64      
+ 0x15a0 | 28 17 65 78 | Naming { index: 40, name: "executeTranslatedMethod" }
+        | 65 63 75 74
+        | 65 54 72 61
+        | 6e 73 6c 61
+        | 74 65 64 4d
+        | 65 74 68 6f
+        | 64         
+ 0x15b9 | 29 18 74 72 | Naming { index: 41, name: "triggerMethodTranslation" }
+        | 69 67 67 65
+        | 72 4d 65 74
+        | 68 6f 64 54
+        | 72 61 6e 73
+        | 6c 61 74 69
+        | 6f 6e      
+ 0x15d3 | 2a 12 68 61 | Naming { index: 42, name: "handleMethodReturn" }
+        | 6e 64 6c 65
+        | 4d 65 74 68
+        | 6f 64 52 65
+        | 74 75 72 6e
+ 0x15e7 | 2c 11 69 6e | Naming { index: 44, name: "interpretBytecode" }
+        | 74 65 72 70
+        | 72 65 74 42
+        | 79 74 65 63
+        | 6f 64 65   
+ 0x15fa | 2d 09 69 6e | Naming { index: 45, name: "interpret" }
+        | 74 65 72 70
+        | 72 65 74   
+ 0x1605 | 02 e4 0b    | local section
+ 0x1608 | 2b          | 43 count
+ 0x1609 | 03          | function 3 local name section
+ 0x160a | 02          | 2 count
+ 0x160b | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x160f | 01 05 61 72 | Naming { index: 1, name: "array" }
+        | 72 61 79   
+ 0x1616 | 04          | function 4 local name section
+ 0x1617 | 02          | 2 count
+ 0x1618 | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x161c | 01 05 61 72 | Naming { index: 1, name: "array" }
+        | 72 61 79   
+ 0x1623 | 05          | function 5 local name section
+ 0x1624 | 02          | 2 count
+ 0x1625 | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x1629 | 01 05 61 72 | Naming { index: 1, name: "array" }
+        | 72 61 79   
+ 0x1630 | 06          | function 6 local name section
+ 0x1631 | 01          | 1 count
+ 0x1632 | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x1636 | 07          | function 7 local name section
+ 0x1637 | 01          | 1 count
+ 0x1638 | 00 07 65 6c | Naming { index: 0, name: "element" }
+        | 65 6d 65 6e
+        | 74         
+ 0x1641 | 08          | function 8 local name section
+ 0x1642 | 05          | 5 count
+ 0x1643 | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x1647 | 01 0d 6e 75 | Naming { index: 1, name: "numberOfLinks" }
+        | 6d 62 65 72
+        | 4f 66 4c 69
+        | 6e 6b 73   
+ 0x1656 | 02 0e 70 72 | Naming { index: 2, name: "previousObject" }
+        | 65 76 69 6f
+        | 75 73 4f 62
+        | 6a 65 63 74
+ 0x1666 | 03 0a 6e 65 | Naming { index: 3, name: "nextObject" }
+        | 78 74 4f 62
+        | 6a 65 63 74
+ 0x1672 | 04 16 6e 75 | Naming { index: 4, name: "numberOfLinksRemaining" }
+        | 6d 62 65 72
+        | 4f 66 4c 69
+        | 6e 6b 73 52
+        | 65 6d 61 69
+        | 6e 69 6e 67
+ 0x168a | 09          | function 9 local name section
+ 0x168b | 02          | 2 count
+ 0x168c | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x1690 | 01 05 63 6c | Naming { index: 1, name: "class" }
+        | 61 73 73   
+ 0x1697 | 0a          | function 10 local name section
+ 0x1698 | 02          | 2 count
+ 0x1699 | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x169d | 01 09 6d 65 | Naming { index: 1, name: "metaclass" }
+        | 74 61 63 6c
+        | 61 73 73   
+ 0x16a8 | 0b          | function 11 local name section
+ 0x16a9 | 0a          | 10 count
+ 0x16aa | 00 0f 6d 65 | Naming { index: 0, name: "methodCacheSize" }
+        | 74 68 6f 64
+        | 43 61 63 68
+        | 65 53 69 7a
+        | 65         
+ 0x16bb | 01 0b 66 69 | Naming { index: 1, name: "firstObject" }
+        | 72 73 74 4f
+        | 62 6a 65 63
+        | 74         
+ 0x16c8 | 02 02 76 6d | Naming { index: 2, name: "vm" }
+ 0x16cc | 03 0b 63 6c | Naming { index: 3, name: "classObject" }
+        | 61 73 73 4f
+        | 62 6a 65 63
+        | 74         
+ 0x16d9 | 04 0d 63 6c | Naming { index: 4, name: "classBehavior" }
+        | 61 73 73 42
+        | 65 68 61 76
+        | 69 6f 72   
+ 0x16e8 | 05 15 63 6c | Naming { index: 5, name: "classClassDescription" }
+        | 61 73 73 43
+        | 6c 61 73 73
+        | 44 65 73 63
+        | 72 69 70 74
+        | 69 6f 6e   
+ 0x16ff | 06 0a 63 6c | Naming { index: 6, name: "classClass" }
+        | 61 73 73 43
+        | 6c 61 73 73
+ 0x170b | 07 0e 63 6c | Naming { index: 7, name: "classMetaclass" }
+        | 61 73 73 4d
+        | 65 74 61 63
+        | 6c 61 73 73
+ 0x171b | 08 0b 63 6c | Naming { index: 8, name: "classSymbol" }
+        | 61 73 73 53
+        | 79 6d 62 6f
+        | 6c         
+ 0x1728 | 09 11 63 6c | Naming { index: 9, name: "classSmallInteger" }
+        | 61 73 73 53
+        | 6d 61 6c 6c
+        | 49 6e 74 65
+        | 67 65 72   
+ 0x173b | 0c          | function 12 local name section
+ 0x173c | 01          | 1 count
+ 0x173d | 00 06 6d 65 | Naming { index: 0, name: "method" }
+        | 74 68 6f 64
+ 0x1745 | 0d          | function 13 local name section
+ 0x1746 | 02          | 2 count
+ 0x1747 | 00 06 6d 65 | Naming { index: 0, name: "method" }
+        | 74 68 6f 64
+ 0x174f | 01 05 69 6e | Naming { index: 1, name: "index" }
+        | 64 65 78   
+ 0x1756 | 0e          | function 14 local name section
+ 0x1757 | 02          | 2 count
+ 0x1758 | 00 07 63 6f | Naming { index: 0, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x1761 | 01 0c 70 75 | Naming { index: 1, name: "pushedObject" }
+        | 73 68 65 64
+        | 4f 62 6a 65
+        | 63 74      
+ 0x176f | 0f          | function 15 local name section
+ 0x1770 | 01          | 1 count
+ 0x1771 | 00 07 63 6f | Naming { index: 0, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x177a | 10          | function 16 local name section
+ 0x177b | 01          | 1 count
+ 0x177c | 00 0c 73 6d | Naming { index: 0, name: "smallInteger" }
+        | 61 6c 6c 49
+        | 6e 74 65 67
+        | 65 72      
+ 0x178a | 11          | function 17 local name section
+ 0x178b | 01          | 1 count
+ 0x178c | 00 05 76 61 | Naming { index: 0, name: "value" }
+        | 6c 75 65   
+ 0x1793 | 12          | function 18 local name section
+ 0x1794 | 01          | 1 count
+ 0x1795 | 00 06 6f 62 | Naming { index: 0, name: "object" }
+        | 6a 65 63 74
+ 0x179d | 13          | function 19 local name section
+ 0x179e | 01          | 1 count
+ 0x179f | 00 07 63 6f | Naming { index: 0, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x17a8 | 14          | function 20 local name section
+ 0x17a9 | 01          | 1 count
+ 0x17aa | 00 06 6d 65 | Naming { index: 0, name: "method" }
+        | 74 68 6f 64
+ 0x17b2 | 15          | function 21 local name section
+ 0x17b3 | 02          | 2 count
+ 0x17b4 | 00 07 63 6f | Naming { index: 0, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x17bd | 01 05 69 6e | Naming { index: 1, name: "index" }
+        | 64 65 78   
+ 0x17c4 | 16          | function 22 local name section
+ 0x17c5 | 01          | 1 count
+ 0x17c6 | 00 07 63 6f | Naming { index: 0, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x17cf | 17          | function 23 local name section
+ 0x17d0 | 03          | 3 count
+ 0x17d1 | 00 05 61 72 | Naming { index: 0, name: "array" }
+        | 72 61 79   
+ 0x17d8 | 01 05 69 6e | Naming { index: 1, name: "index" }
+        | 64 65 78   
+ 0x17df | 02 06 6c 65 | Naming { index: 2, name: "length" }
+        | 6e 67 74 68
+ 0x17e7 | 18          | function 24 local name section
+ 0x17e8 | 02          | 2 count
+ 0x17e9 | 00 05 61 72 | Naming { index: 0, name: "array" }
+        | 72 61 79   
+ 0x17f0 | 01 05 69 6e | Naming { index: 1, name: "index" }
+        | 64 65 78   
+ 0x17f7 | 19          | function 25 local name section
+ 0x17f8 | 02          | 2 count
+ 0x17f9 | 00 05 61 72 | Naming { index: 0, name: "array" }
+        | 72 61 79   
+ 0x1800 | 01 05 69 6e | Naming { index: 1, name: "index" }
+        | 64 65 78   
+ 0x1807 | 1a          | function 26 local name section
+ 0x1808 | 01          | 1 count
+ 0x1809 | 00 05 61 72 | Naming { index: 0, name: "array" }
+        | 72 61 79   
+ 0x1810 | 1b          | function 27 local name section
+ 0x1811 | 02          | 2 count
+ 0x1812 | 01 03 6c 65 | Naming { index: 1, name: "len" }
+        | 6e         
+ 0x1817 | 02 01 69    | Naming { index: 2, name: "i" }
+ 0x181a | 1c          | function 28 local name section
+ 0x181b | 01          | 1 count
+ 0x181c | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x1820 | 1d          | function 29 local name section
+ 0x1821 | 04          | 4 count
+ 0x1822 | 00 07 63 6f | Naming { index: 0, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x182b | 01 05 76 61 | Naming { index: 1, name: "value" }
+        | 6c 75 65   
+ 0x1832 | 02 05 73 74 | Naming { index: 2, name: "stack" }
+        | 61 63 6b   
+ 0x1839 | 03 02 73 70 | Naming { index: 3, name: "sp" }
+ 0x183d | 1e          | function 30 local name section
+ 0x183e | 03          | 3 count
+ 0x183f | 00 07 63 6f | Naming { index: 0, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x1848 | 01 05 73 74 | Naming { index: 1, name: "stack" }
+        | 61 63 6b   
+ 0x184f | 02 02 73 70 | Naming { index: 2, name: "sp" }
+ 0x1853 | 1f          | function 31 local name section
+ 0x1854 | 03          | 3 count
+ 0x1855 | 00 07 63 6f | Naming { index: 0, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x185e | 01 05 73 74 | Naming { index: 1, name: "stack" }
+        | 61 63 6b   
+ 0x1865 | 02 02 73 70 | Naming { index: 2, name: "sp" }
+ 0x1869 | 20          | function 32 local name section
+ 0x186a | 02          | 2 count
+ 0x186b | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x186f | 01 03 6f 62 | Naming { index: 1, name: "obj" }
+        | 6a         
+ 0x1874 | 21          | function 33 local name section
+ 0x1875 | 0a          | 10 count
+ 0x1876 | 00 08 72 65 | Naming { index: 0, name: "receiver" }
+        | 63 65 69 76
+        | 65 72      
+ 0x1880 | 01 08 73 65 | Naming { index: 1, name: "selector" }
+        | 6c 65 63 74
+        | 6f 72      
+ 0x188a | 02 05 63 6c | Naming { index: 2, name: "class" }
+        | 61 73 73   
+ 0x1891 | 03 0c 63 75 | Naming { index: 3, name: "currentClass" }
+        | 72 72 65 6e
+        | 74 43 6c 61
+        | 73 73      
+ 0x189f | 04 10 6d 65 | Naming { index: 4, name: "methodDictionary" }
+        | 74 68 6f 64
+        | 44 69 63 74
+        | 69 6f 6e 61
+        | 72 79      
+ 0x18b1 | 05 04 6b 65 | Naming { index: 5, name: "keys" }
+        | 79 73      
+ 0x18b7 | 06 06 76 61 | Naming { index: 6, name: "values" }
+        | 6c 75 65 73
+ 0x18bf | 07 05 63 6f | Naming { index: 7, name: "count" }
+        | 75 6e 74   
+ 0x18c6 | 08 01 69    | Naming { index: 8, name: "i" }
+ 0x18c9 | 09 03 6b 65 | Naming { index: 9, name: "key" }
+        | 79         
+ 0x18ce | 22          | function 34 local name section
+ 0x18cf | 09          | 9 count
+ 0x18d0 | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x18d4 | 01 08 73 65 | Naming { index: 1, name: "selector" }
+        | 6c 65 63 74
+        | 6f 72      
+ 0x18de | 02 0d 72 65 | Naming { index: 2, name: "receiverClass" }
+        | 63 65 69 76
+        | 65 72 43 6c
+        | 61 73 73   
+ 0x18ed | 03 05 63 61 | Naming { index: 3, name: "cache" }
+        | 63 68 65   
+ 0x18f4 | 04 09 63 61 | Naming { index: 4, name: "cacheSize" }
+        | 63 68 65 53
+        | 69 7a 65   
+ 0x18ff | 05 04 68 61 | Naming { index: 5, name: "hash" }
+        | 73 68      
+ 0x1905 | 06 05 69 6e | Naming { index: 6, name: "index" }
+        | 64 65 78   
+ 0x190c | 07 05 65 6e | Naming { index: 7, name: "entry" }
+        | 74 72 79   
+ 0x1913 | 08 0a 70 72 | Naming { index: 8, name: "probeLimit" }
+        | 6f 62 65 4c
+        | 69 6d 69 74
+ 0x191f | 23          | function 35 local name section
+ 0x1920 | 07          | 7 count
+ 0x1921 | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x1925 | 01 08 73 65 | Naming { index: 1, name: "selector" }
+        | 6c 65 63 74
+        | 6f 72      
+ 0x192f | 02 0d 72 65 | Naming { index: 2, name: "receiverClass" }
+        | 63 65 69 76
+        | 65 72 43 6c
+        | 61 73 73   
+ 0x193e | 03 06 6d 65 | Naming { index: 3, name: "method" }
+        | 74 68 6f 64
+ 0x1946 | 04 05 63 61 | Naming { index: 4, name: "cache" }
+        | 63 68 65   
+ 0x194d | 05 05 69 6e | Naming { index: 5, name: "index" }
+        | 64 65 78   
+ 0x1954 | 06 05 65 6e | Naming { index: 6, name: "entry" }
+        | 74 72 79   
+ 0x195b | 24          | function 36 local name section
+ 0x195c | 08          | 8 count
+ 0x195d | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x1961 | 01 08 72 65 | Naming { index: 1, name: "receiver" }
+        | 63 65 69 76
+        | 65 72      
+ 0x196b | 02 06 6d 65 | Naming { index: 2, name: "method" }
+        | 74 68 6f 64
+ 0x1973 | 03 08 73 65 | Naming { index: 3, name: "selector" }
+        | 6c 65 63 74
+        | 6f 72      
+ 0x197d | 04 05 73 74 | Naming { index: 4, name: "stack" }
+        | 61 63 6b   
+ 0x1984 | 05 05 73 6c | Naming { index: 5, name: "slots" }
+        | 6f 74 73   
+ 0x198b | 06 04 61 72 | Naming { index: 6, name: "args" }
+        | 67 73      
+ 0x1991 | 07 05 74 65 | Naming { index: 7, name: "temps" }
+        | 6d 70 73   
+ 0x1998 | 25          | function 37 local name section
+ 0x1999 | 01          | 1 count
+ 0x199a | 00 05 76 61 | Naming { index: 0, name: "value" }
+        | 6c 75 65   
+ 0x19a1 | 26          | function 38 local name section
+ 0x19a2 | 01          | 1 count
+ 0x19a3 | 00 03 6f 62 | Naming { index: 0, name: "obj" }
+        | 6a         
+ 0x19a8 | 27          | function 39 local name section
+ 0x19a9 | 01          | 1 count
+ 0x19aa | 00 06 6d 65 | Naming { index: 0, name: "method" }
+        | 74 68 6f 64
+ 0x19b2 | 28          | function 40 local name section
+ 0x19b3 | 02          | 2 count
+ 0x19b4 | 00 07 63 6f | Naming { index: 0, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x19bd | 01 09 66 75 | Naming { index: 1, name: "funcIndex" }
+        | 6e 63 49 6e
+        | 64 65 78   
+ 0x19c8 | 29          | function 41 local name section
+ 0x19c9 | 07          | 7 count
+ 0x19ca | 00 06 6d 65 | Naming { index: 0, name: "method" }
+        | 74 68 6f 64
+ 0x19d2 | 01 05 63 6c | Naming { index: 1, name: "class" }
+        | 61 73 73   
+ 0x19d9 | 02 08 73 65 | Naming { index: 2, name: "selector" }
+        | 6c 65 63 74
+        | 6f 72      
+ 0x19e3 | 03 05 73 6c | Naming { index: 3, name: "slots" }
+        | 6f 74 73   
+ 0x19ea | 04 0b 62 79 | Naming { index: 4, name: "bytecodeLen" }
+        | 74 65 63 6f
+        | 64 65 4c 65
+        | 6e         
+ 0x19f7 | 05 12 66 75 | Naming { index: 5, name: "functionIndexIndex" }
+        | 6e 63 74 69
+        | 6f 6e 49 6e
+        | 64 65 78 49
+        | 6e 64 65 78
+ 0x1a0b | 06 0c 6d 65 | Naming { index: 6, name: "memoryOffset" }
+        | 6d 6f 72 79
+        | 4f 66 66 73
+        | 65 74      
+ 0x1a19 | 2a          | function 42 local name section
+ 0x1a1a | 04          | 4 count
+ 0x1a1b | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x1a1f | 01 07 63 6f | Naming { index: 1, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x1a28 | 02 06 73 65 | Naming { index: 2, name: "sender" }
+        | 6e 64 65 72
+ 0x1a30 | 03 06 72 65 | Naming { index: 3, name: "result" }
+        | 73 75 6c 74
+ 0x1a38 | 2b          | function 43 local name section
+ 0x1a39 | 0e          | 14 count
+ 0x1a3a | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x1a3e | 01 0e 77 6f | Naming { index: 1, name: "workloadMethod" }
+        | 72 6b 6c 6f
+        | 61 64 4d 65
+        | 74 68 6f 64
+ 0x1a4e | 02 0d 6d 61 | Naming { index: 2, name: "mainBytecodes" }
+        | 69 6e 42 79
+        | 74 65 63 6f
+        | 64 65 73   
+ 0x1a5d | 03 0a 6d 61 | Naming { index: 3, name: "mainMethod" }
+        | 69 6e 4d 65
+        | 74 68 6f 64
+ 0x1a69 | 04 11 77 6f | Naming { index: 4, name: "workloadBytecodes" }
+        | 72 6b 6c 6f
+        | 61 64 42 79
+        | 74 65 63 6f
+        | 64 65 73   
+ 0x1a7c | 05 10 77 6f | Naming { index: 5, name: "workloadSelector" }
+        | 72 6b 6c 6f
+        | 61 64 53 65
+        | 6c 65 63 74
+        | 6f 72      
+ 0x1a8e | 06 10 6d 65 | Naming { index: 6, name: "methodDictionary" }
+        | 74 68 6f 64
+        | 44 69 63 74
+        | 69 6f 6e 61
+        | 72 79      
+ 0x1aa0 | 07 09 6e 65 | Naming { index: 7, name: "newObject" }
+        | 77 4f 62 6a
+        | 65 63 74   
+ 0x1aab | 08 05 73 6c | Naming { index: 8, name: "slots" }
+        | 6f 74 73   
+ 0x1ab2 | 09 04 6b 65 | Naming { index: 9, name: "keys" }
+        | 79 73      
+ 0x1ab8 | 0a 06 76 61 | Naming { index: 10, name: "values" }
+        | 6c 75 65 73
+ 0x1ac0 | 0b 0b 65 6d | Naming { index: 11, name: "emptySymbol" }
+        | 70 74 79 53
+        | 79 6d 62 6f
+        | 6c         
+ 0x1acd | 0c 11 65 6d | Naming { index: 12, name: "emptyInstVarNames" }
+        | 70 74 79 49
+        | 6e 73 74 56
+        | 61 72 4e 61
+        | 6d 65 73   
+ 0x1ae0 | 0d 0d 77 6f | Naming { index: 13, name: "workloadSlots" }
+        | 72 6b 6c 6f
+        | 61 64 53 6c
+        | 6f 74 73   
+ 0x1aef | 2c          | function 44 local name section
+ 0x1af0 | 0f          | 15 count
+ 0x1af1 | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x1af5 | 01 07 63 6f | Naming { index: 1, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x1afe | 02 08 62 79 | Naming { index: 2, name: "bytecode" }
+        | 74 65 63 6f
+        | 64 65      
+ 0x1b08 | 03 08 72 65 | Naming { index: 3, name: "receiver" }
+        | 63 65 69 76
+        | 65 72      
+ 0x1b12 | 04 06 76 61 | Naming { index: 4, name: "value1" }
+        | 6c 75 65 31
+ 0x1b1a | 05 06 76 61 | Naming { index: 5, name: "value2" }
+        | 6c 75 65 32
+ 0x1b22 | 06 04 69 6e | Naming { index: 6, name: "int1" }
+        | 74 31      
+ 0x1b28 | 07 04 69 6e | Naming { index: 7, name: "int2" }
+        | 74 32      
+ 0x1b2e | 08 06 72 65 | Naming { index: 8, name: "result" }
+        | 73 75 6c 74
+ 0x1b36 | 09 0a 6e 65 | Naming { index: 9, name: "newContext" }
+        | 77 43 6f 6e
+        | 74 65 78 74
+ 0x1b42 | 0a 08 73 65 | Naming { index: 10, name: "selector" }
+        | 6c 65 63 74
+        | 6f 72      
+ 0x1b4c | 0b 06 6d 65 | Naming { index: 11, name: "method" }
+        | 74 68 6f 64
+ 0x1b54 | 0c 0d 72 65 | Naming { index: 12, name: "receiverClass" }
+        | 63 65 69 76
+        | 65 72 43 6c
+        | 61 73 73   
+ 0x1b63 | 0d 0d 73 65 | Naming { index: 13, name: "selectorIndex" }
+        | 6c 65 63 74
+        | 6f 72 49 6e
+        | 64 65 78   
+ 0x1b72 | 0e 05 73 6c | Naming { index: 14, name: "slots" }
+        | 6f 74 73   
+ 0x1b79 | 2d          | function 45 local name section
+ 0x1b7a | 0d          | 13 count
+ 0x1b7b | 00 02 76 6d | Naming { index: 0, name: "vm" }
+ 0x1b7f | 01 07 63 6f | Naming { index: 1, name: "context" }
+        | 6e 74 65 78
+        | 74         
+ 0x1b88 | 02 06 6d 65 | Naming { index: 2, name: "method" }
+        | 74 68 6f 64
+ 0x1b90 | 03 08 62 79 | Naming { index: 3, name: "bytecode" }
+        | 74 65 63 6f
+        | 64 65      
+ 0x1b9a | 04 02 70 63 | Naming { index: 4, name: "pc" }
+ 0x1b9e | 05 05 73 74 | Naming { index: 5, name: "stack" }
+        | 61 63 6b   
+ 0x1ba5 | 06 04 61 72 | Naming { index: 6, name: "args" }
+        | 67 73      
+ 0x1bab | 07 05 74 65 | Naming { index: 7, name: "temps" }
+        | 6d 70 73   
+ 0x1bb2 | 08 08 72 65 | Naming { index: 8, name: "receiver" }
+        | 63 65 69 76
+        | 65 72      
+ 0x1bbc | 09 0b 72 65 | Naming { index: 9, name: "resultValue" }
+        | 73 75 6c 74
+        | 56 61 6c 75
+        | 65         
+ 0x1bc9 | 0a 0f 69 6e | Naming { index: 10, name: "invocationCount" }
+        | 76 6f 63 61
+        | 74 69 6f 6e
+        | 43 6f 75 6e
+        | 74         
+ 0x1bda | 0b 05 73 6c | Naming { index: 11, name: "slots" }
+        | 6f 74 73   
+ 0x1be1 | 0c 09 66 75 | Naming { index: 12, name: "funcIndex" }
+        | 6e 63 49 6e
+        | 64 65 78   
+ 0x1bec | 03 6c       | label section
+ 0x1bee | 05          | 5 count
+ 0x1bef | 08          | function 8 label name section
+ 0x1bf0 | 01          | 1 count
+ 0x1bf1 | 01 04 6c 69 | Naming { index: 1, name: "link" }
+        | 6e 6b      
+ 0x1bf7 | 1b          | function 27 label name section
+ 0x1bf8 | 01          | 1 count
+ 0x1bf9 | 01 04 63 6f | Naming { index: 1, name: "copy" }
+        | 70 79      
+ 0x1bff | 21          | function 33 label name section
+ 0x1c00 | 02          | 2 count
+ 0x1c01 | 00 0e 68 69 | Naming { index: 0, name: "hierarchy_loop" }
+        | 65 72 61 72
+        | 63 68 79 5f
+        | 6c 6f 6f 70
+ 0x1c11 | 05 0b 73 65 | Naming { index: 5, name: "search_loop" }
+        | 61 72 63 68
+        | 5f 6c 6f 6f
+        | 70         
+ 0x1c1e | 22          | function 34 label name section
+ 0x1c1f | 01          | 1 count
+ 0x1c20 | 01 0a 70 72 | Naming { index: 1, name: "probe_loop" }
+        | 6f 62 65 5f
+        | 6c 6f 6f 70
+ 0x1c2c | 2d          | function 45 label name section
+ 0x1c2d | 03          | 3 count
+ 0x1c2e | 00 08 66 69 | Naming { index: 0, name: "finished" }
+        | 6e 69 73 68
+        | 65 64      
+ 0x1c38 | 01 0e 65 78 | Naming { index: 1, name: "execution_loop" }
+        | 65 63 75 74
+        | 69 6f 6e 5f
+        | 6c 6f 6f 70
+ 0x1c48 | 08 10 69 6e | Naming { index: 8, name: "interpreter_loop" }
+        | 74 65 72 70
+        | 72 65 74 65
+        | 72 5f 6c 6f
+        | 6f 70      
+ 0x1c5a | 04 ce 01    | type name section
+ 0x1c5d | 12          | 18 count
+ 0x1c5e | 00 0b 6f 62 | Naming { index: 0, name: "objectArray" }
+        | 6a 65 63 74
+        | 41 72 72 61
+        | 79         
+ 0x1c6b | 01 09 62 79 | Naming { index: 1, name: "byteArray" }
+        | 74 65 41 72
+        | 72 61 79   
+ 0x1c76 | 02 09 77 6f | Naming { index: 2, name: "wordArray" }
+        | 72 64 41 72
+        | 72 61 79   
+ 0x1c81 | 03 06 4f 62 | Naming { index: 3, name: "Object" }
+        | 6a 65 63 74
+ 0x1c89 | 04 05 41 72 | Naming { index: 4, name: "Array" }
+        | 72 61 79   
+ 0x1c90 | 05 09 42 79 | Naming { index: 5, name: "ByteArray" }
+        | 74 65 41 72
+        | 72 61 79   
+ 0x1c9b | 06 09 57 6f | Naming { index: 6, name: "WordArray" }
+        | 72 64 41 72
+        | 72 61 79   
+ 0x1ca6 | 07 0e 56 61 | Naming { index: 7, name: "VariableObject" }
+        | 72 69 61 62
+        | 6c 65 4f 62
+        | 6a 65 63 74
+ 0x1cb6 | 08 06 53 79 | Naming { index: 8, name: "Symbol" }
+        | 6d 62 6f 6c
+ 0x1cbe | 09 0a 44 69 | Naming { index: 9, name: "Dictionary" }
+        | 63 74 69 6f
+        | 6e 61 72 79
+ 0x1cca | 0a 08 42 65 | Naming { index: 10, name: "Behavior" }
+        | 68 61 76 69
+        | 6f 72      
+ 0x1cd4 | 0b 10 43 6c | Naming { index: 11, name: "ClassDescription" }
+        | 61 73 73 44
+        | 65 73 63 72
+        | 69 70 74 69
+        | 6f 6e      
+ 0x1ce6 | 0c 05 43 6c | Naming { index: 12, name: "Class" }
+        | 61 73 73   
+ 0x1ced | 0d 09 4d 65 | Naming { index: 13, name: "Metaclass" }
+        | 74 61 63 6c
+        | 61 73 73   
+ 0x1cf8 | 0e 0e 43 6f | Naming { index: 14, name: "CompiledMethod" }
+        | 6d 70 69 6c
+        | 65 64 4d 65
+        | 74 68 6f 64
+ 0x1d08 | 0f 07 43 6f | Naming { index: 15, name: "Context" }
+        | 6e 74 65 78
+        | 74         
+ 0x1d11 | 10 08 50 49 | Naming { index: 16, name: "PICEntry" }
+        | 43 45 6e 74
+        | 72 79      
+ 0x1d1b | 11 0e 56 69 | Naming { index: 17, name: "VirtualMachine" }
+        | 72 74 75 61
+        | 6c 4d 61 63
+        | 68 69 6e 65
+ 0x1d2b | 05 10       | table name section
+ 0x1d2d | 01          | 1 count
+ 0x1d2e | 00 0d 66 75 | Naming { index: 0, name: "functionTable" }
+        | 6e 63 74 69
+        | 6f 6e 54 61
+        | 62 6c 65   
+ 0x1d3d | 07 29       | global name section
+ 0x1d3f | 02          | 2 count
+ 0x1d40 | 00 10 77 6f | Naming { index: 0, name: "workloadSelector" }
+        | 72 6b 6c 6f
+        | 61 64 53 65
+        | 6c 65 63 74
+        | 6f 72      
+ 0x1d52 | 01 14 62 79 | Naming { index: 1, name: "byteArrayCopyPointer" }
+        | 74 65 41 72
+        | 72 61 79 43
+        | 6f 70 79 50
+        | 6f 69 6e 74
+        | 65 72      

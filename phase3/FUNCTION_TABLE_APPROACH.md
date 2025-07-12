@@ -12,7 +12,7 @@
 
 ### 1. Function Table Declaration (At Instantiation Time)
 
-In the WASM module (`squeak-vm-core.wat`):
+In the WASM module (`catalyst.wat`):
 ```wat
 ;; Function table for compiled methods
 (table $funcTable (export "funcTable") 100 funcref)
@@ -22,7 +22,7 @@ This reserves 100 slots in a `funcref` table, but the contents can be left null.
 
 ### 2. Function Table Initialization (After Instantiation)
 
-In JavaScript (`squeak-vm.js`):
+In JavaScript (`catalyst.js`):
 ```javascript
 initializeFunctionTable() {
     const funcTable = this.wasmModule.instance.exports.funcTable;

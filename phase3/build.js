@@ -115,7 +115,7 @@ function main() {
     ensureDir(outputDir);
 
     // Compile WAT files to WASM
-    const watFiles = ['squeak-vm-core.wat'];
+    const watFiles = ['catalyst.wat'];
     let allSuccess = true;
 
     for (const watFile of watFiles) {
@@ -144,7 +144,7 @@ function main() {
     }
 
     // Copy JavaScript files
-    const jsFiles = ['squeak-vm.js'];
+    const jsFiles = ['catalyst.js'];
 
     for (const jsFile of jsFiles) {
         const destFile = path.join(outputDir, jsFile);

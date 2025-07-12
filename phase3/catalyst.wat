@@ -60,13 +60,13 @@
   (type $byteArray (array (mut i8)))
   (type $wordArray (array (mut i32)))
 
-  (type $Object (struct
+  (type $Object (sub (struct
 		 ;; $Class or $Metaclass
 		 (field $class (mut (ref null eq)))
 
 		 (field $identityHash (mut i32))
 		 (field $nextObject (mut (ref null eq)))
-		 ))  
+		 )))
 
   ;; (A proper Collection hierarchy connected to class Object is coming later.)
 

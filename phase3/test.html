@@ -176,7 +176,7 @@
     </style>
 </head>
 <body>
-  <script type="module" src="./squeak-vm.js"></script>
+  <script type="module" src="./catalyst.js"></script>
 
     <div class="container">
         <h1>🚀 Phase 3 JIT Compilation Test Interface</h1>
@@ -289,7 +289,7 @@
 
         function initVM() {
             if (!vm) {
-                return import('./squeak-vm.js')
+                return import('./catalyst.js')
                     .then(({ SqueakVM }) => {
                     vm = new SqueakVM();
                         return vm.initialize();

@@ -105,7 +105,7 @@ Bytecodes → English Analysis → LLM Reasoning → Optimized WAT → Advanced 
 
 ## 🔧 Advanced Configuration
 
-You can customize the LLM configuration in `squeak-vm.js`:
+You can customize the LLM configuration in `catalyst.js`:
 
 ```javascript
 vm.enableLLMOptimization('your-api-key', {
