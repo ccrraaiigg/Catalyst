@@ -40,144 +40,193 @@
  ;; a struct of type $CompiledMethod. A $CompiledMethod is
  ;; "translated" to a WASM function.
  ;; 
- ;; Nullable fields are only nullable because their initial values
+ ;; The nullable fields are only nullable because their initial values
  ;; aren't always knowable at creation time.
- 
- (rec ;; recursive (mutually referential) type definitions
-  (type $ObjectArray (array (mut eqref)))
-  (type $ByteArray (array (mut i8)))
-
-  (type $Object (sub (struct
-		      (field $class (mut null eqref)) ;; $Class or $Metaclass
-		      (field $identityHash (mut i32))
-		      (field $nextObject (mut (ref null $Object)))
-		      )))
+ ;; 
+ ;; Behind the scenes here in the virtual machine, null references in
+ ;; fields of Smalltalk objects are given as the nil Smalltalk object
+ ;; when anything at the Smalltalk level asks about them. This saves
+ ;; us the effort of fixing up them up to be nil.
   
+ (rec ;; recursive (mutually referential) type definitions
+
+  ;; Arrays created with these three array types are not Smalltalk
+  ;; objects unto themselves. A $VirtualMachine uses them for things
+  ;; that aren't objects (like $methodCache), $Array and $ByteArray
+  ;; use them to define objects that wrap them (e.g.,
+  ;; $Context$methodCache and $Symbol$bytes)
+
+  (type $objectArray (array (mut (ref null eq))))
+  (type $byteArray (array (mut i8)))
+  (type $wordArray (array (mut i32)))
+
+  (type $Object (struct
+		 ;; $Class or $Metaclass
+		 (field $class (mut (ref null eq)))
+
+		 (field $identityHash (mut i32))
+		 (field $nextObject (mut (ref null eq)))
+		 ))  
+
+  ;; (A proper Collection hierarchy connected to class Object is coming later.)
+
+  (type $Array (sub $Object (struct
+			     ;; $Class or $Metaclass
+			     (field $class (mut (ref null eq)))
+
+			     (field $identityHash (mut i32))
+			     (field $nextObject (mut (ref null eq)))
+			     (field $array (ref $objectArray))
+			     )))
+
+  (type $ByteArray (sub $Object (struct
+				 ;; $Class or $Metaclass
+				 (field $class (mut (ref null eq)))
+
+				 (field $identityHash (mut i32))
+				 (field $nextObject (mut (ref null eq)))
+				 (field $array (ref $byteArray))
+				 )))
+
+  (type $WordArray (sub $Object (struct
+				 ;; $Class or $Metaclass
+				 (field $class (mut (ref null eq)))
+
+				 (field $identityHash (mut i32))
+				 (field $nextObject (mut (ref null eq)))
+				 (field $array (ref $wordArray))
+				 )))
+
   (type $VariableObject (sub $Object (struct
-				      (field $class (mut null eqref)) ;; $Class or $Metaclass
+				      ;; $Class or $Metaclass
+				      (field $class (mut (ref null eq)))
+
 				      (field $identityHash (mut i32))
-				      (field $nextObject (mut (ref null $Object)))
-				      (field $slots (mut (ref $ObjectArray)))
+				      (field $nextObject (mut (ref null eq)))
+				      ;; $Array, $ByteArray, or $WordArray
+				      (field $slots (mut (ref eq)))
 				      )))
   
   (type $Symbol (sub $VariableObject (struct
-				      (field $class (mut null eqref)) ;; $Class or $Metaclass
+  				      ;; $Class or $Metaclass
+				      (field $class (mut (ref null eq)))
+
 				      (field $identityHash (mut i32))
-				      (field $nextObject (mut (ref null $Object)))
-				      (field $slots (mut (ref $ObjectArray)))
-				      (field $bytes (ref $ByteArray))
+				      (field $nextObject (mut (ref null eq)))
+				      ;; $Array, $ByteArray, or $WordArray
+				      (field $slots (mut (ref eq)))
 				      )))
 
-  (type $Dictionary (sub $VariableObject (struct
-					  (field $class (mut null eqref)) ;; $Class or $Metaclass
-					  (field $identityHash (mut i32))
-					  (field $nextObject (mut (ref null $Object)))
-					  (field $slots (mut (ref $ObjectArray)))
-					  (field $keys (ref $ObjectArray))
-					  (field $values (ref $ObjectArray))
-					  (field $count (mut i32))
-					  )))
+  (type $Dictionary (sub $Object (struct
+				  ;; $Class or $Metaclass
+				  (field $class (mut (ref null eq)))
+
+				  (field $identityHash (mut i32))
+				  (field $nextObject (mut (ref null eq)))
+				  (field $keys (ref $Array))
+				  (field $values (ref $Array))
+				  (field $count (mut i32))
+				  )))
   
-  (type $Behavior (sub $VariableObject (struct
-					;; a $Class or $Metaclass
-					(field $class (mut null eqref))
+  (type $Behavior (sub $Object (struct
+				;; $Class or $Metaclass
+				(field $class (mut (ref null eq)))
 
-					(field $identityHash (mut i32))
-					(field $nextObject (mut (ref null $Object)))
-					(field $slots (mut (ref $ObjectArray)))
+				(field $identityHash (mut i32))
+				(field $nextObject (mut (ref null eq)))
+				;; a $Class or $Metaclass
+				(field $superclass (mut (ref null eq)))
 
-					;; a $Class or $Metaclass
-					(field $superclass (mut null eqref))
-
-					(field $methodDictionary (mut (ref $Dictionary)))
-					(field $format (mut i32))
-					)))
+				(field $methodDictionary (mut (ref $Dictionary)))
+				(field $format (mut i32))
+				)))
 
   (type $ClassDescription (sub $Behavior (struct
-					  ;; a $Class or $Metaclass
-					  (field $class (mut null eqref))
+					  ;; $Class or $Metaclass
+					  (field $class (mut (ref null eq)))
 
 					  (field $identityHash (mut i32))
-					  (field $nextObject (mut (ref null $Object)))
-					  (field $slots (mut (ref $ObjectArray)))
-
+					  (field $nextObject (mut (ref null eq)))
 					  ;; a $Class or $Metaclass
-					  (field $superclass (mut null eqref))
+					  (field $superclass (mut (ref null eq)))
 
 					  (field $methodDictionary (mut (ref $Dictionary)))
 					  (field $format (mut i32))
-					  (field $instanceVariableNames (mut (ref $ObjectArray)))
+					  (field $instanceVariableNames (mut (ref $Array)))
 					  (field $baseID (mut (ref $ByteArray)))
 					  )))
 
   (type $Class (sub $ClassDescription (struct
-				       ;; a $Class or $Metaclass
-				       (field $class (mut null eqref))
+				       ;; $Class or $Metaclass
+				       (field $class (mut (ref null eq)))
 
 				       (field $identityHash (mut i32))
-				       (field $nextObject (mut (ref null $Object)))
-				       (field $slots (mut (ref $ObjectArray)))
-
+				       (field $nextObject (mut (ref null eq)))
 				       ;; a $Class or $Metaclass
-				       (field $superclass (mut null eqref))
+				       (field $superclass (mut (ref null eq)))
 
 				       (field $methodDictionary (mut (ref $Dictionary)))
 				       (field $format (mut i32))
-				       (field $instanceVariableNames (mut (ref $ObjectArray)))
-				       (field $baseID (mut (ref null $ByteArray)))
-				       (field $subclasses (mut (ref $ObjectArray)))
+				       (field $instanceVariableNames (mut (ref $Array)))
+				       (field $baseID (mut (ref $ByteArray)))
+				       (field $subclasses (mut (ref $Array)))
 				       (field $name (mut (ref $Symbol)))
 				       (field $classPool (mut (ref $Dictionary)))
-				       (field $sharedPools (mut (ref $ObjectArray)))
+				       (field $sharedPools (mut (ref $Array)))
 				       )))
 
   (type $Metaclass (sub $ClassDescription (struct
-					   ;; a $Class or $Metaclass
-					   (field $class (mut null eqref))
+					   ;; $Class or $Metaclass
+					   (field $class (mut (ref null eq)))
 
 					   (field $identityHash (mut i32))
-					   (field $nextObject (mut (ref null $Object)))
-					   (field $slots (mut (ref $ObjectArray)))
-
+					   (field $nextObject (mut (ref null eq)))
 					   ;; a $Class or $Metaclass
-					   (field $superclass (mut null eqref))
+					   (field $superclass (mut (ref null eq)))
 
 					   (field $methodDictionary (mut (ref $Dictionary)))
 					   (field $format (mut i32))
-					   (field $instanceVariableNames (mut (ref $ObjectArray)))
+					   (field $instanceVariableNames (mut (ref $Array)))
 					   (field $baseID (mut (ref $ByteArray)))
 					   (field $thisClass (mut (ref $Class)))
 					   )))
 
   (type $CompiledMethod (sub $VariableObject (struct
-					      (field $class (mut null eqref)) ;; $Class or $Metaclass
+					      ;; $Class or $Metaclass
+					      (field $class (mut (ref null eq)))
+
 					      (field $identityHash (mut i32))
-					      (field $nextObject (mut (ref null $Object)))
-					      (field $slots (mut (ref $ObjectArray)))
+					      (field $nextObject (mut (ref null eq)))
+					      ;; $Array, $ByteArray, or $WordArray
+					      (field $slots (mut (ref eq)))
+					      (field $literals (ref $Array))
 					      (field $header i32)
-					      (field $bytecodes (ref $ByteArray))
 					      (field $invocationCount (mut i32))
+
 					      ;; Index into function table
 					      (field $functionIndex (mut i32))  
+
 					      (field $translationThreshold i32)
+
 					      ;; 0 = not installed, 1 = installed
 					      (field $isInstalled (mut i32))   
 					      )))
   
-  (type $Context (sub $VariableObject (struct
-				       (field $class (mut null eqref)) ;; $Class or $Metaclass
-				       (field $identityHash (mut i32))
-				       (field $nextObject (mut (ref null $Object)))
-				       (field $slots (mut (ref $ObjectArray)))
-				       (field $sender (mut (ref null $Context)))
-				       (field $pc (mut i32))
-				       (field $sp (mut i32))
-				       (field $method (mut (ref $CompiledMethod)))
-				       (field $receiver (mut eqref))
-				       (field $args (mut (ref $ObjectArray)))
-				       (field $temps (mut (ref $ObjectArray)))
-				       (field $stack (mut (ref $ObjectArray)))
-				       )))
+  (type $Context (sub $Object (struct
+			       ;; $Class or $Metaclass
+			       (field $class (mut (ref null eq)))
+
+			       (field $identityHash (mut i32))
+			       (field $nextObject (mut (ref null eq)))
+			       (field $sender (mut (ref null $Context)))
+			       (field $pc (mut i32))
+			       (field $sp (mut i32))
+			       (field $method (mut (ref $CompiledMethod)))
+			       (field $receiver (mut eqref))
+			       (field $args (mut (ref $Array)))
+			       (field $temps (mut (ref $Array)))
+			       (field $stack (mut (ref $Array)))
+			       )))
   
   (type $PICEntry (struct
                    (field $selector (mut eqref))
@@ -190,9 +239,11 @@
 			 ;; created with a null $activeContext; it's set later
 			 (field $activeContext (mut (ref null $Context)))
 
-			 (field $jitEnabled (mut i32))
-			 (field $methodCache (mut (ref $ObjectArray)))
+			 (field $translationEnabled (mut i32))
+			 (field $methodCache (mut (ref $Array)))
 			 (field $functionTableBaseIndex (mut i32))
+			 (field $translationThreshold (mut i32))
+			 (field $methodCacheSize (mut i32))
 
 			 ;; object memory management
 			 (field $nextIdentityHash (mut i32))
@@ -200,7 +251,12 @@
 			 ;; created with null $firstObject and
 			 ;; $lastObject; they're set later
 			 (field $firstObject (mut (ref null $Object)))
-			 (field $lastObject (mut (ref null $Object))))))
+			 (field $lastObject (mut (ref null $Object)))
+
+			 (field $classSmallInteger (mut (ref null $Class)))
+			 (field $classObject (mut (ref null $Class)))
+			 (field $classContext (mut (ref null $Class)))
+			 )))
 
  ;; global state for all virtual machines
  ;;
@@ -208,13 +264,8 @@
  ;; are enforced to be non-null after runtime initialization.
 
  ;; special selectors for quick sends
- (global $workloadSelector (mut null eqref) (ref.null eq))
+ (global $workloadSelector (mut (ref null eq)) (ref.null eq))
  
- ;; method translation globals and method lookup cache
- ;; default translation threshold; each method can have its own
- (global $translationThreshold (mut i32) (i32.const 1000))
- (global $methodCacheSize (mut i32) (i32.const 256))
-
  ;; start of staging bytes
  (global $byteArrayCopyPointer (mut i32) (i32.const 1024))
 
@@ -224,6 +275,45 @@
  ;; translated methods function table (the only table in this module)
  (table $functionTable (export "functionTable") 100 funcref)
 
+ (func $newArray
+       (param $vm (ref $VirtualMachine))
+       (param $array (ref $objectArray))
+       (result (ref $Array))
+
+       ref.null eq            ;; $class to be set later, to class Array
+       local.get $vm
+       call $nextIdentityHash ;; $identityHash
+       ref.null $Object       ;; $nextObject to be set later
+       local.get $array       ;; $array
+       struct.new $Array
+       )
+
+ (func $newByteArray
+       (param $vm (ref $VirtualMachine))
+       (param $array (ref $byteArray))
+       (result (ref $Array))
+
+       ref.null eq            ;; $class to be set later, to class Array
+       local.get $vm
+       call $nextIdentityHash ;; $identityHash
+       ref.null $Object       ;; $nextObject to be set later
+       local.get $array       ;; $array
+       struct.new $ByteArray
+       )
+
+ (func $newWordArray
+       (param $vm (ref $VirtualMachine))
+       (param $array (ref $wordArray))
+       (result (ref $Array))
+
+       ref.null eq            ;; $class to be set later, to class Array
+       local.get $vm
+       call $nextIdentityHash ;; $identityHash
+       ref.null $Object       ;; $nextObject to be set later
+       local.get $array       ;; $array
+       struct.new $WordArray
+       )
+
  (func $newDictionary
        (param $vm (ref $VirtualMachine))
        (result (ref $Dictionary))
@@ -231,54 +321,191 @@
        ref.null eq            ;; $class to be set later, to class Dictionary
        local.get $vm
        call $nextIdentityHash ;; $identityHash
-       ref.null $Object       ;; $nextObject to be set later, once there is one
+       ref.null $Object       ;; $nextObject to be set later
        ref.null eq            ;; default array element
        i32.const 0            ;; empty
-       array.new $ObjectArray ;; $slots
+       array.new $Array ;; $keys
        ref.null eq            ;; default array element
        i32.const 0            ;; empty
-       array.new $ObjectArray ;; $keys
-       ref.null eq            ;; default array element
-       i32.const 0            ;; empty
-       array.new $ObjectArray ;; $values
+       array.new $Array ;; $values
        i32.const 0            ;; $count
        struct.new $Dictionary
        )
 
- ;; Create and answer a virtual machine with an object memory.
+ ;; pop an element from the stack
+ 
+ (func $popObject
+       (param $element (ref $Object))
+       (result (ref $Object))
+
+       local.get $element)
+ 
+ ;; The stack has a bunch of $Objects pushed onto it that need to be
+ ;; linked via their $nextObject fields.
+
+ (func $linkObjects
+       (param $vm (ref $VirtualMachine))
+       (param $numberOfLinks i32)
+       
+       (local $previousObject (ref $Object))
+       (local $nextObject (ref $Object))
+       (local $numberOfLinksRemaining i32)
+
+       local.get $numberOfLinks
+       i32.const 1
+       i32.lt_s
+       if
+       return
+       end
+
+       local.get $numberOfLinks
+       local.set $numberOfLinksRemaining
+
+       local.get $vm
+       struct.get $VirtualMachine $lastObject
+       local.set $previousObject
+
+       loop $link
+       local.get $numberOfLinksRemaining
+       i32.const 0
+       i32.eq
+       if
+       return
+       end
+       
+       call $popObject
+       local.set $nextObject
+
+       local.get $vm
+       local.get $previousObject
+       local.tee $nextObject
+       struct.set $Object $nextObject
+       struct.set $VirtualMachine $lastObject
+       
+       local.get $numberOfLinksRemaining
+       i32.const 1
+       i32.sub
+       local.set $numberOfLinksRemaining
+
+       local.get $nextObject
+       local.set $previousObject
+       br_if $link
+       end)
+
+ ;; Link the objects of a $Class.
+ 
+ (func $linkClassObjects
+       (param $vm (ref $VirtualMachine))
+       (param $class (ref $Class))
+
+       local.get $class
+       struct.get $Class $class
+       local.get $class
+       struct.get $Class $superclass
+       local.get $class
+       struct.get $Class $methodDictionary
+       local.get $class
+       struct.get $Class $instanceVariableNames
+       local.get $class
+       struct.get $Class $baseID
+       local.get $class
+       struct.get $Class $subclasses
+       local.get $class
+       struct.get $Class $name
+       local.get $class
+       struct.get $Class $classPool
+       local.get $class
+       struct.get $Class $sharedPools
+
+       local.get $vm
+       i32.const 9
+       call $linkObjects
+       )       
+
+ ;; Link the objects of a $Metaclass.
+ 
+ (func $linkMetaclassObjects
+       (param $vm (ref $VirtualMachine))
+       (param $metaclass (ref $Metaclass))
+
+       local.get $metaclass
+       struct.get $Metaclass $class
+       local.get $metaclass
+       struct.get $Metaclass $superclass
+       local.get $metaclass
+       struct.get $Metaclass $methodDictionary
+       local.get $metaclass
+       struct.get $Metaclass $instanceVariableNames
+       local.get $metaclass
+       struct.get $Metaclass $baseID
+       local.get $metaclass
+       struct.get $Metaclass $thisClass
+
+       local.get $vm
+       i32.const 6
+       call $linkObjects
+
+       local.get $vm
+       local.get $metaclass
+       struct.get $Metaclass $thisClass
+       call $linkClassObjects
+       )
+ 
+ ;; Create and answer a virtual machine with an object memory, ready
+ ;; to create an active context and run it.
+
  (func (export "initialize")
        (result (ref $VirtualMachine))
        
+       (local $methodCacheSize i32)
+       (local $firstObject (ref $Object))
        (local $vm (ref $VirtualMachine))
-       (local $classBehavior (ref $Class))
-       (local $classClass (ref $Class))
        (local $classObject (ref $Class))
+       (local $classBehavior (ref $Class))
+       (local $classClassDescription (ref $Class))
+       (local $classClass (ref $Class))
+       (local $classMetaclass (ref $Class))
+       (local $classSymbol (ref $Class))
+       (local $classSmallInteger (ref $Class))
+
+       i32.const 256
+       local.set $methodCacheSize
+
+       ref.null $Class               ;; $class
+       i32.const 1                   ;; $identityHash
+       ref.null eq                   ;; $nextObject
+       struct.new $Object
+       local.set $firstObject
        
        ;; create virtual machine
-       ref.null $Context            ;; $activeContext to be set later
-       i32.const 1                  ;; jitEnabled
+
+       ref.null $Context             ;; $activeContext to be set later
+       i32.const 1                   ;; translationEnabled
 
        ;; initialize method cache
-       ref.null eq                  ;; default array element
-       global.get $methodCacheSize
-       array.new $ObjectArray       ;; $methodCache
-
-       i32.const 0                  ;; $functionTableBaseIndex
-       i32.const 1001               ;; $nextIdentityHash
-       ref.null $Object             ;; $firstObject
-       ref.null $Object             ;; $lastObject
+       ref.null eq                   ;; default array element
+       local.get $methodCacheSize    ;; size
+       array.new $objectArray        ;; $methodCache
+       
+       i32.const 0                   ;; $functionTableBaseIndex
+       i32.const 1000                ;; $translationThreshold
+       local.get $methodCacheSize    ;; $methodCacheSize
+       i32.const 1001                ;; $nextIdentityHash
+       local.get $firstObject        ;; $firstObject
+       local.get $firstObject        ;; $lastObject
        struct.new $VirtualMachine
        local.set $vm
 
-       ;; Create class SmallInteger.
+       ;; The simplest virtual machine runs (3 squared). Create class SmallInteger.
        ;; First create a Metaclass to be the class of class SmallInteger.
        ;; First create class Class to be the superclass of (SmallInteger class).
-       ;; First create a Metaclass to be the class of class Class.
+       ;; First create (Class class) to be the class of class Class.
        ;; First create class Class to be the superclass of (Class class). We've been here before.
        ;; First create class Class with a null class, to be set later.
        ;; First create class Object to be the superclass of class Class.
-       ;; First create a Metaclass to be the class of class Object. We've been here before.
+       ;; First create (Object class) to be the class of class Object. We've been here before.
        ;; First create class Class with a null class and superclass, to be set later.
+       ;; First create the superclasses of class Class, with null classes and superclasses.
        ;; 
        ;; This is why $class and $superclass of $Class are nullable
        ;; ($class is also nullable because the class of class
@@ -286,173 +513,742 @@
        ;; $superclass is also nullable because the superclass of class
        ;; Object is nil).
 
+       ;; Create class Object.
+
+       ref.null eq                   ;; $class to be set later, to (Object class)
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null eq                   ;; $nextObject, to be set later, once there is one
+       ref.null eq                   ;; $superclass is nil
+       local.get $vm
+       call $newDictionary           ;; $methodDictionary
+       i32.const 2                   ;; $format
+
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+
+       ;; set subclasses array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray        
+       call $newArray                ;; $subclasses
+
+       ;; set name symbol
+       local.get $vm
+       ref.null $Class               ;; $class to be set later, to class Symbol
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject
+       i32.const 79                  ;; 'O'
+       i32.const 98                  ;; 'b'
+       i32.const 106                 ;; 'j'
+       i32.const 101                 ;; 'e'
+       i32.const 99                  ;; 'c'
+       i32.const 116                 ;; 't'
+       array.new_fixed $byteArray 6  ;; $slots
+       call $newByteArray
+       struct.new $Symbol            ;; $name
+
+       local.get $vm
+       call $newDictionary           ;; $classPool
+
+       ;; set shared pools array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $sharedPools
+
+       struct.new $Class
+       local.set $classObject
+
+       local.get $vm
+       local.get $classObject
+       struct.set $VirtualMachine $classObject
+       
        ;; Create class Behavior with a null class and superclass, to be set later.
 
-       ref.null eq                  ;; $class to be set later, to a Metaclass
+       ref.null eq                   ;; $class to be set later, to (Behavior class)
        local.get $vm
-       call $nextIdentityHash       ;; $identityHash
-       ref.null $Object             ;; nextObject
-       ref.null eq                  ;; default array element type
-       i32.const 0                  ;; empty
-       array.new $ObjectArray       ;; $slots
-       ref.null eq                  ;; $superclass to be set later, to class Object
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject, to be set later
+       ref.null eq                   ;; $superclass to be set later, to class Object
        local.get $vm
-       call $newDictionary          ;; $methodDictionary
-       i32.const 2                  ;; $format
-       ref.null eq                  ;; default array element type
-       i32.const 0                  ;; empty
-       array.new $ObjectArray       ;; $instanceVariableNames
-       ref.null $ByteArray          ;; $baseID to be set later (should be a $UUID)
-       ref.null eq                  ;; default array element type
-       i32.const 0                  ;; empty
-       array.new $ObjectArray       ;; $subclasses
+       call $newDictionary           ;; $methodDictionary
+       i32.const 2                   ;; $format
 
-       ;; create name symbol
-       ref.null $Class              ;; $class to be set later, to class Symbol
+       ;; set instance variable names array
        local.get $vm
-       call $nextIdentityHash
-       ref.null $Object             ;; $nextObject
-       ref.null eq                  ;; default array element
-       i32.const 0                  ;; empty
-       array.new $ObjectArray       ;; $slots
-       i32.const 67                 ;; 'C'
-       i32.const 108                ;; 'l'
-       i32.const 97                 ;; 'a'
-       i32.const 115                ;; 's'
-       i32.const 115                ;; 's'
-       array.new_fixed $ByteArray 5
-       struct.new $Symbol
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+
+       ;; set subclasses array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray        
+       call $newArray                ;; $subclasses
+
+       ;; set name symbol
+       local.get $vm
+       ref.null $Class               ;; $class to be set later, to class Symbol
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject
+       i32.const 66                  ;; 'B'
+       i32.const 101                 ;; 'e'
+       i32.const 104                 ;; 'h'
+       i32.const 97                  ;; 'a'
+       i32.const 118                 ;; 'v'
+       i32.const 105                 ;; 'i'
+       i32.const 111                 ;; 'o'
+       i32.const 114                 ;; 'r'
+       array.new_fixed $byteArray 8  
+       call $newByteArray            ;; $slots
+       struct.new $Symbol            ;; $name
 
        local.get $vm
-       call $newDictionary          ;; $classPool
-       ref.null eq                  ;; default array element type
-       i32.const 0                  ;; empty
-       array.new $ObjectArray       ;; $sharedPools
+       call $newDictionary           ;; $classPool
+
+       ;; set shared pools array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $sharedPools
+
        struct.new $Class
        local.set $classBehavior
 
        ;; Create class ClassDescription with a null class, to be set later.
 
+       ref.null eq                   ;; $class to be set later, to (ClassDescription class)
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject, to be set later
+       ref.null eq                   ;; $superclass to be set later, to class Behavior
+       local.get $vm
+       call $newDictionary           ;; $methodDictionary
+       i32.const 2                   ;; $format
+
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+
+       ;; set subclasses array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray        
+       call $newArray                ;; $subclasses
+
+       ;; set name symbol
+       local.get $vm
+       ref.null $Class               ;; $class to be set later, to class Symbol
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject
+       i32.const 67                  ;; 'C'
+       i32.const 108                 ;; 'l'
+       i32.const 97                  ;; 'a'
+       i32.const 115                 ;; 's'
+       i32.const 115                 ;; 's'
+       i32.const 68                  ;; 'D'
+       i32.const 101                 ;; 'e'
+       i32.const 115                 ;; 's'
+       i32.const 99                  ;; 'c'
+       i32.const 114                 ;; 'r'
+       i32.const 105                 ;; 'i'
+       i32.const 112                 ;; 'p'
+       i32.const 116                 ;; 't'
+       i32.const 105                 ;; 'i'
+       i32.const 111                 ;; 'o'
+       i32.const 110                 ;; 'n'
+       array.new_fixed $ByteArray 16 
+       call $newByteArray            ;; $slots
+       struct.new $Symbol            ;; $name
+
+       local.get $vm
+       call $newDictionary           ;; $classPool
+
+       ;; set shared pools array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $sharedPools
+
+       struct.new $Class
+       local.set $classClassDescription
+       
        ;; Create class Metaclass with a null class, to be set later.
 
+       ref.null eq                   ;; $class to be set later, to (Metaclass class)
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject, to be set later
+       ref.null eq                   ;; $superclass to be set later, to class ClassDescription
+       local.get $vm
+       call $newDictionary           ;; $methodDictionary
+       i32.const 2                   ;; $format
+
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+
+       ;; set subclasses array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray        
+       call $newArray                ;; $subclasses
+
+       ;; set name symbol
+       local.get $vm
+       ref.null $Class               ;; $class to be set later, to class Symbol
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject
+       i32.const 77                  ;; 'M'
+       i32.const 101                 ;; 'e'
+       i32.const 116                 ;; 't'
+       i32.const 97                  ;; 'a'
+       i32.const 99                  ;; 'c'
+       i32.const 108                 ;; 'l'
+       i32.const 97                  ;; 'a'
+       i32.const 115                 ;; 's'
+       i32.const 115                 ;; 's'
+       array.new_fixed $byteArray 9
+       call $newByteArray            ;; $slots
+       struct.new $Symbol            ;; $name
+
+       local.get $vm
+       call $newDictionary           ;; $classPool
+
+       ;; set shared pools array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $sharedPools
+
+       struct.new $Class
+       local.set $classMetaclass
+       
        ;; Create class Class with a null class and superclass, to be set later.
 
-       ref.null eq                  ;; $class to be set later, to (Class class)
+       ref.null eq                   ;; $class to be set later, to (Class class)
        local.get $vm
-       call $nextIdentityHash       ;; $identityHash
-       ref.null $Object             ;; nextObject
-       ref.null eq                  ;; default array element type
-       i32.const 0                  ;; empty
-       array.new $ObjectArray       ;; $slots
-       ref.null eq                  ;; $superclass to be set later
-       local.get $vm
-       call $newDictionary          ;; $methodDictionary
-       i32.const 2                  ;; $format
-       ref.null eq                  ;; default array element type
-       i32.const 0                  ;; empty
-       array.new $ObjectArray       ;; $instanceVariableNames
-       ref.null $ByteArray          ;; $baseID to be set later (should be a $UUID)
-       ref.null eq                  ;; default array element type
-       i32.const 0                  ;; empty
-       array.new $ObjectArray       ;; $subclasses
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject, to be set later
 
-       ;; create name symbol
-       ref.null $Class              ;; $class to be set later (to class Symbol)
+       ref.null eq                   ;; $superclass to be set later, to class ClassDescription
        local.get $vm
-       call $nextIdentityHash
-       ref.null $Object             ;; $nextObject
-       ref.null eq                  ;; default array element
-       i32.const 0                  ;; empty
-       array.new $ObjectArray       ;; $slots
-       i32.const 67                 ;; 'C'
-       i32.const 108                ;; 'l'
-       i32.const 97                 ;; 'a'
-       i32.const 115                ;; 's'
-       i32.const 115                ;; 's'
-       array.new_fixed $ByteArray 5
+       call $newDictionary           ;; $methodDictionary
+       i32.const 2                   ;; $format
+
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+
+       ;; set subclasses array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray        
+       call $newArray                ;; $subclasses
+
+       ;; set name symbol
+       local.get $vm
+       ref.null $Class               ;; $class to be set later, to class Symbol
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject
+       i32.const 67                  ;; 'C'
+       i32.const 108                 ;; 'l'
+       i32.const 97                  ;; 'a'
+       i32.const 115                 ;; 's'
+       i32.const 115                 ;; 's'
+       array.new_fixed $byteArray 5
+       call $newByteArray            ;; $slots
        struct.new $Symbol
 
        local.get $vm
-       call $newDictionary          ;; $classPool
-       ref.null eq                  ;; default array element type
-       i32.const 0                  ;; empty
-       array.new $ObjectArray       ;; $sharedPools
+       call $newDictionary           ;; $classPool
+
+       ;; set shared pools array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $sharedPools
+
        struct.new $Class
        local.set $classClass
 
-       ;; Create class Object.
-       ;; Create (Object class).
-       
+       ;; Create class Symbol.
 
+       ref.null eq                   ;; $class to be set later, to (Symbol class)
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject, to be set later
+       ref.null eq                   ;; $superclass to be set later, to class Object
+       local.get $vm
+       call $newDictionary           ;; $methodDictionary
+       i32.const 2                   ;; $format
 
-       
-       global.get $objectClass    ;; superclass (class Object)
-       local.get $emptyDict ;; methodDictionary (non-nullable)
-       local.get $emptyInstVarNames ;; instanceVariableNames (non-nullable $ObjectArray)
-       local.get $emptySymbol ;; name (non-nullable)
-       i32.const 0         ;; instanceSize
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+
+       ;; set subclasses array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray        
+       call $newArray                ;; $subclasses
+
+       ;; set name symbol
+       local.get $vm
+       ref.null $Class               ;; $class to be set later, to class Symbol
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject
+       i32.const 83                  ;; 'S'
+       i32.const 121                 ;; 'y'
+       i32.const 109                 ;; 'm'
+       i32.const 98                  ;; 'b'
+       i32.const 111                 ;; 'o'
+       i32.const 108                 ;; 'l'
+       array.new_fixed $byteArray 6  ;; $slots
+       call $newByteArray
+       struct.new $Symbol
+
+       local.get $vm
+       call $newDictionary           ;; $classPool
+
+       ;; set shared pools array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $sharedPools
+
        struct.new $Class
-       local.set $newObject
-       ;; Link this object to the chain
-       local.get $vm
-       struct.get $VirtualMachine $lastObject
-       ref.as_non_null
-       local.get $newObject
-       struct.set $Object $nextObject
-       local.get $newObject
-       local.get $vm
-       struct.set $VirtualMachine $lastObject
-       local.get $newObject
-       global.set $smallIntegerClass
+       local.set $classSymbol
 
-       ;; Create method dictionary for SmallInteger
-       global.get $objectClass ;; class (ref $Class)
-       call $nextIdentityHash
-       i32.const 2         ;; format (variable object)
-       i32.const 9         ;; size
-       ref.null $Object ;; nextObject (ref null $Object)
-       ref.null eq
-       i32.const 0
-       array.new $ObjectArray
-       ref.as_non_null      ;; $slots (non-nullable)
-       ref.null eq
-       i32.const 1
-       array.new $ObjectArray
-       ref.as_non_null      ;; $keys (non-nullable)
-       ref.null eq
-       i32.const 1
-       array.new $ObjectArray
-       ref.as_non_null      ;; $values (non-nullable)
-       i32.const 0         ;; count
-       struct.new $Dictionary
-       local.set $newObject
-       ;; Link this object to the chain
-       local.get $vm
-       struct.get $VirtualMachine $lastObject
-       ref.as_non_null
-       local.get $newObject
-       struct.set $Object $nextObject
-       local.get $newObject
-       local.get $vm
-       struct.set $VirtualMachine $lastObject
-       local.get $newObject
-       local.set $methodDictionary
+       ;; Create class SmallInteger
 
-
-
-       ;; Create minimal object memory for (3 workload) example.
+       ref.null eq                   ;; $class to be set later, to (SmallInteger class)
        local.get $vm
-       call $createMinimalBootstrap
-       )
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject, to be set later
+       ref.null eq                   ;; $superclass to be set later, to class Object
+       local.get $vm
+       call $newDictionary           ;; $methodDictionary
+       i32.const 2                   ;; $format
+
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+
+       ;; set subclasses array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray        
+       call $newArray                ;; $subclasses
+
+       ;; set name symbol
+       local.get $vm
+       ref.null $Class               ;; $class to be set later, to class Symbol
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject
+       i32.const 83                  ;; 'S'
+       i32.const 109                 ;; 'm'
+       i32.const 97                  ;; 'a'
+       i32.const 108                 ;; 'l'
+       i32.const 108                 ;; 'l'
+       i32.const 73                  ;; 'I'
+       i32.const 110                 ;; 'n'
+       i32.const 116                 ;; 't'
+       i32.const 101                 ;; 'e'
+       i32.const 103                 ;; 'g'
+       i32.const 101                 ;; 'e'
+       i32.const 104                 ;; 'r'
+       array.new_fixed $byteArray 12 ;; $slots
+       call $newByteArray
+       struct.new $Symbol
+
+       local.get $vm
+       call $newDictionary           ;; $classPool
+
+       ;; set shared pools array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $sharedPools
+
+       struct.new $Class
+       local.tee $classSmallInteger
+       struct.set $VirtualMachine $classSmallInteger
+       ;; Fix up all the fields that were to be set later.
+
+       ;; Set the class of class Object to a Metaclass (Object class).
+
+       local.get $classObject
+
+       ;; create metaclass (Object class)
+       
+       local.get $classMetaclass        ;; $class
+       local.get $vm
+       call $nextIdentityHash           ;; $identityHash
+       ref.null $Object                 ;; $nextObject to be set later
+       local.get $classClassDescription ;; $superclass
+       local.get $vm
+       call $newDictionary              ;; $methodDictionary
+       i32.const 152                    ;; $format
+       
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+       local.get $classMetaclass     ;; $thisClass
+       struct.new $Metaclass
+       struct.set $Class $class
+
+       ;; Set the class of class Object's name symbol
+
+       local.get $classObject
+       struct.get $Class $name
+       local.get $classSymbol
+       struct.set $Symbol $class
+
+       ;; Set the class of class Behavior.
+
+       local.get $classBehavior
+       
+       ;; create metaclass (Behavior class)
+
+       local.get $classMetaclass        ;; $class
+       local.get $vm
+       call $nextIdentityHash           ;; $identityHash
+       ref.null $Object                 ;; $nextObject to be set later
+       local.get $classClassDescription ;; $superclass
+       local.get $vm
+       call $newDictionary              ;; $methodDictionary
+       i32.const 152                    ;; $format
+       
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                      ;; default array element type
+       i32.const 0                      ;; empty
+       array.new $objectArray
+       call $newArray                   ;; $instanceVariableNames
+
+       ref.null $ByteArray              ;; $baseID to be set later (should be a $UUID)
+       local.get $classBehavior         ;; $thisClass
+       struct.new $Metaclass
+       struct.set $Class $class
+
+       ;; Set the superclass of class Behavior.
+       
+       local.get $classBehavior
+       local.get $classObject
+       struct.set $Class $superclass
+
+       ;; Set the class of class Behavior's name symbol.
+
+       local.get $classBehavior
+       struct.get $Class $name
+       local.get $classSymbol
+       struct.set $Symbol $class
+
+       ;; Set the class of class ClassDescription.
+
+       local.get $classClassDescription
+
+       ;; create metaclass (ClassDescription class)
+
+       local.get $classMetaclass        ;; $class
+       local.get $vm
+       call $nextIdentityHash           ;; $identityHash
+       ref.null $Object                 ;; $nextObject to be set later
+       local.get $classClassDescription ;; $superclass
+       local.get $vm
+       call $newDictionary              ;; $methodDictionary
+       i32.const 152                    ;; $format
+       
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+       local.get $classClass         ;; $thisClass
+       struct.new $Metaclass
+       struct.set $Class $class
+
+       ;; Set the superclass of class ClassDescription.
+       
+       local.get $classClassDescription
+       local.get $classBehavior
+       struct.set $Class $superclass
+
+       ;; Set the class of class ClassDescription's name symbol.
+
+       local.get $classClassDescription
+       struct.get $Class $name
+       local.get $classSymbol
+       struct.set $Symbol $class
+
+       ;; Set the class of class Class.
+
+       local.get $classClass
+       
+       ;; create metaclass (Class class)
+       
+       local.get $classMetaclass        ;; $class
+       local.get $vm
+       call $nextIdentityHash           ;; $identityHash
+       ref.null $Object                 ;; $nextObject to be set later
+       local.get $classClass            ;; $superclass
+       local.get $vm
+       call $newDictionary              ;; $methodDictionary
+       i32.const 152                    ;; $format
+       
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+       local.get $classClass         ;; $thisClass
+       struct.new $Metaclass
+       struct.set $Class $class
+
+       ;; Set the superclass of class Class.
+       local.get $classClass
+       local.get $classClassDescription
+       struct.set $Class $superclass
+
+       ;; Set the class of class Class's name symbol.
+
+       local.get $classBehavior
+       struct.get $Class $name
+       local.get $classSymbol
+       struct.set $Symbol $class
+
+       ;; Set the class of class Metaclass
+
+       local.get $classMetaclass
+       
+       ;; create metaclass (Metaclass class)
+       
+       local.get $classMetaclass        ;; $class
+       local.get $vm
+       call $nextIdentityHash           ;; $identityHash
+       ref.null $Object                 ;; $nextObject to be set later
+       local.get $classClass            ;; $superclass
+       local.get $vm
+       call $newDictionary              ;; $methodDictionary
+       i32.const 152                    ;; $format
+       
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+       local.get $classMetaclass        ;; $thisClass
+       struct.new $Metaclass
+       struct.set $Class $class
+
+       ;; Set the superclass of class Metaclass
+       local.get $classMetaclass
+       local.get $classObject
+       struct.set $Class $superclass
+
+       ;; Set the class of class Metaclass's name symbol.
+
+       local.get $classMetaclass
+       struct.get $Class $name
+       local.get $classSymbol
+       struct.set $Symbol $class
+
+       ;; Set the class of class Symbol
+
+       local.get $classSymbol
+       
+       ;; create metaclass (Symbol class)
+       
+       local.get $classMetaclass        ;; $class
+       local.get $vm
+       call $nextIdentityHash           ;; $identityHash
+       ref.null $Object                 ;; $nextObject to be set later
+       local.get $classClass            ;; $superclass
+       local.get $vm
+       call $newDictionary              ;; $methodDictionary
+       i32.const 152                    ;; $format
+       
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+       local.get $classSymbol        ;; $thisClass
+       struct.new $Metaclass
+       struct.set $Class $class
+
+       ;; Set the superclass of class Symbol
+       local.get $classSymbol
+       local.get $classObject
+       struct.set $Class $superclass
+
+       ;; Set the class of class Symbol's name symbol.
+
+       local.get $classSymbol
+       struct.get $Class $name
+       local.get $classSymbol
+       struct.set $Symbol $class
+
+       ;; Set the class of class SmallInteger
+
+       local.get $classSmallInteger
+       
+       ;; create metaclass (SmallInteger class)
+       
+       local.get $classMetaclass        ;; $class
+       local.get $vm
+       call $nextIdentityHash           ;; $identityHash
+       ref.null $Object                 ;; $nextObject to be set later
+       local.get $classClass            ;; $superclass
+       local.get $vm
+       call $newDictionary              ;; $methodDictionary
+       i32.const 152                    ;; $format
+       
+       ;; set instance variable names array
+       local.get $vm
+       ref.null eq                   ;; default array element type
+       i32.const 0                   ;; empty
+       array.new $objectArray
+       call $newArray                ;; $instanceVariableNames
+
+       ref.null $ByteArray           ;; $baseID to be set later (should be a $UUID)
+       local.get $classSmallInteger  ;; $thisClass
+       struct.new $Metaclass
+       struct.set $Class $class
+
+       ;; Set the superclass of class Symbol
+       local.get $classSmallInteger
+       local.get $classObject
+       struct.set $Class $superclass
+
+       ;; Set the class of class SmallInteger's name symbol.
+
+       local.get $classSmallInteger
+       struct.get $Class $name
+       local.get $classSymbol
+       struct.set $Symbol $class
+
+       ;; Link objects' $nextObject fields.
+       local.get $firstObject
+       
+       local.get $vm
+       local.get $classObject
+       struct.get $Class $class
+       call $linkMetaclassObjects
+
+       local.get $vm
+       local.get $classBehavior
+       struct.get $Class $class
+       call $linkMetaclassObjects
+
+       local.get $vm
+       local.get $classClassDescription
+       struct.get $Class $class
+       call $linkMetaclassObjects
+
+       local.get $vm
+       local.get $classClass
+       struct.get $Class $class
+       call $linkMetaclassObjects
+
+       local.get $vm
+       local.get $classMetaclass
+       struct.get $Class $class
+       call $linkMetaclassObjects
+
+       local.get $vm
+       local.get $classSymbol
+       struct.get $Class $class
+       call $linkMetaclassObjects
+
+       local.get $vm
+       local.get $classSmallInteger
+       struct.get $Class $class
+       call $linkMetaclassObjects
+)
 
  ;; utilities for method translation in JS
- (func (export "compiledMethodBytecodes")
+ (func (export "methodBytecodes")
        (param $method eqref)
        (result (ref $ByteArray))
        
        local.get $method
        ref.cast (ref $CompiledMethod)
-       struct.get $CompiledMethod $bytecodes)
+       struct.get $CompiledMethod $slots)
 
  (func (export "setMethodFunctionIndex")
        (param $method eqref)
@@ -564,11 +1360,12 @@
        i32.const 0
        return
        end
-       return 1
+       i32.const 1
+       end
        )
 
  (func $objectArrayAt
-       (param $array (ref $ObjectArray))
+       (param $array (ref $Array))
        (param $index i32)
        (result (ref null eq))
 
@@ -585,7 +1382,8 @@
        ;; Safe to access array
        local.get $array
        local.get $index
-       array.get $ObjectArray
+       array.get $Array
+       end
        )
  
  (func (export "byteArrayAt")
@@ -604,9 +1402,10 @@
        
        ;; Safe to access array
        local.get $array
-       ref.cast (ref $ByteArray)
+       ref.cast (ref $byteArray)
        local.get $index
-       array.get_s $ByteArray
+       array.get_s $byteArray
+       end
        )
 
  (func (export "byteArrayLength")
@@ -614,12 +1413,12 @@
        (result i32)
 
        local.get $array
-       ref.cast (ref $ByteArray)
+       ref.cast (ref $byteArray)
        array.len
        )
 
  (func (export "copyByteArrayToMemory")
-       (param (ref $ByteArray))
+       (param (ref $byteArray))
        (result i32)
        
        (local $len i32)
@@ -651,7 +1450,7 @@
        local.get 0
        ref.as_non_null
        local.get $i
-       array.get_u $ByteArray
+       array.get_u $byteArray
        i32.store8
        local.get $i
        i32.const 1
@@ -682,7 +1481,7 @@
        (param $context (ref $Context))
        (param $value eqref)
 
-       (local $stack (ref $ObjectArray))
+       (local $stack (ref $Array))
        (local $sp i32)
 
        local.get $context
@@ -704,7 +1503,7 @@
        local.get $stack
        local.get $sp
        local.get $value
-       array.set $ObjectArray
+       array.set $Array
 
        local.get $context
        local.get $sp
@@ -718,7 +1517,7 @@
        (param $context (ref null $Context))
        (result (ref null eq))
 
-       (local $stack (ref $ObjectArray))
+       (local $stack (ref $Array))
        (local $sp i32)
        
        ;; Get stack and stack pointer
@@ -751,7 +1550,7 @@
        local.get $sp
        i32.const 1
        i32.sub
-       array.get $ObjectArray
+       array.get $Array
        return
        ) ;; (func $popFromStack
  
@@ -759,7 +1558,7 @@
        (param $context (ref null $Context))
        (result (ref null eq))
 
-       (local $stack (ref $ObjectArray))
+       (local $stack (ref $Array))
        (local $sp i32)
        
        ;; Get stack and stack pointer
@@ -785,12 +1584,13 @@
        local.get $sp
        i32.const 1
        i32.sub
-       array.get $ObjectArray
+       array.get $Array
        return
        ) ;; (func $topOfStack
 
  ;; Get class of any object (including SmallIntegers)
  (func $classOfObject
+       (param $vm (ref $VirtualMachine))
        (param $obj (ref null eq))
        (result (ref $Class))
        
@@ -798,7 +1598,8 @@
        ref.test (ref i31)
        if (result (ref $Class))
        ;; SmallInteger
-       global.get $smallIntegerClass
+       local.get $vm
+       struct.get $VirtualMachine $classSmallInteger
        else
        ;; Regular object
        local.get $obj
@@ -815,8 +1616,8 @@
        (local $class (ref $Class))
        (local $currentClass (ref $Class))
        (local $methodDictionary (ref null $Dictionary))
-       (local $keys (ref null $ObjectArray))
-       (local $values (ref null $ObjectArray))
+       (local $keys (ref null $Array))
+       (local $values (ref null $Array))
        (local $count i32)
        (local $i i32)
        (local $key (ref null eq))
@@ -907,7 +1708,7 @@
        local.get $keys
        ref.as_non_null
        local.get $i
-       array.get $ObjectArray
+       array.get $Array
        local.set $key
        
        ;; Compare with selector
@@ -919,7 +1720,7 @@
        local.get $values
        ref.as_non_null
        local.get $i
-       array.get $ObjectArray
+       array.get $Array
        ref.cast (ref $CompiledMethod)
        return
        end ;; if
@@ -944,7 +1745,7 @@
        (param $receiverClass (ref $Class))
        (result (ref null $CompiledMethod))
 
-       (local $cache (ref null $ObjectArray))
+       (local $cache (ref null $Array))
        (local $cacheSize i32)
        (local $hash i32)
        (local $index i32)
@@ -970,8 +1771,9 @@
        ref.as_non_null
        struct.get $Class $identityHash
        i32.add
-       
-       global.get $methodCacheSize
+
+       local.get $vm
+       struct.get $VirtualMachine $methodCacheSize
        i32.rem_u
        local.set $index
        
@@ -993,7 +1795,7 @@
        local.get $cache
        ref.as_non_null
        local.get $index
-       array.get $ObjectArray
+       array.get $Array
        ref.cast (ref null $PICEntry)
        local.tee $entry
        ref.is_null
@@ -1034,7 +1836,8 @@
        local.get $index
        i32.const 1
        i32.add
-       global.get $methodCacheSize
+       local.get $vm
+       struct.get $VirtualMachine $methodCacheSize
        i32.rem_u
        local.set $index
        
@@ -1057,7 +1860,7 @@
        (param $receiverClass (ref $Class))
        (param $method (ref $CompiledMethod))
 
-       (local $cache (ref null $ObjectArray))
+       (local $cache (ref null $Array))
        (local $index i32)
        (local $entry (ref $PICEntry))
        
@@ -1080,7 +1883,8 @@
        struct.get $Class $identityHash
        i32.add
        
-       global.get $methodCacheSize
+       local.get $vm
+       struct.get $VirtualMachine $methodCacheSize
        i32.rem_u
        local.set $index
        
@@ -1097,7 +1901,7 @@
        ref.as_non_null
        local.get $index
        local.get $entry
-       array.set $ObjectArray
+       array.set $Array
        ) ;; (func $storeInCache
 
  ;; Create context for method call
@@ -1108,33 +1912,34 @@
        (param $selector eqref)
        (result (ref null $Context))
 
-       (local $stack (ref $ObjectArray))
-       (local $slots (ref $ObjectArray))
-       (local $args (ref $ObjectArray))
-       (local $temps (ref $ObjectArray))
+       (local $stack (ref $Array))
+       (local $slots (ref $Array))
+       (local $args (ref $Array))
+       (local $temps (ref $Array))
 
        ;; Create new stack for the method
        ref.null eq
        i32.const 20
-       array.new $ObjectArray
+       array.new $Array
        local.set $stack
 
        ;; Create empty arrays for slots, args, temps
        ref.null eq
        i32.const 0
-       array.new $ObjectArray
+       array.new $Array
        local.set $slots
        ref.null eq
        i32.const 0
-       array.new $ObjectArray
+       array.new $Array
        local.set $args
        ref.null eq
        i32.const 0
-       array.new $ObjectArray
+       array.new $Array
        local.set $temps
 
        ;; Create context for method
-       global.get $objectClass ;; class (Context is-a Object for now)
+       local.get $vm
+       struct.get $VirtualMachine $classContext
        local.get $vm
        call $nextIdentityHash
        i32.const 14         ;; format (MethodContext)
@@ -1208,22 +2013,22 @@
        (param $class eqref)
        (param $selector (ref $Symbol))
        
-       (local $bytecodes (ref null $ByteArray))
+       (local $slots (ref null $byteArray))
        (local $bytecodeLen i32)
        (local $functionIndexIndex i32)
        (local $memoryOffset i32)
        
        ;; Get bytecode array
        local.get $method
-       struct.get $CompiledMethod $bytecodes
-       local.tee $bytecodes
+       struct.get $CompiledMethod $slots
+       local.tee $slots
        ref.is_null
        if
        return  ;; No bytecodes to compile
        end ;; if
        
        ;; Get bytecode length
-       local.get $bytecodes
+       local.get $slots
        ref.as_non_null
        array.len
        local.set $bytecodeLen
@@ -1291,23 +2096,23 @@
        ) ;; if
 
  ;; Create minimal bootstrap environment for 3 workload
- (func $createMinimalBootstrap
+ (func (export "createMinimalBootstrap")
+       (param $vm (ref $VirtualMachine))
        (result i32)
        
-       (local $vm (ref $VirtualMachine))
        (local $workloadMethod (ref $CompiledMethod))
+       (local $mainBytecodes (ref $byteArray))
        (local $mainMethod (ref $CompiledMethod))
-       (local $mainBytecodes (ref $ByteArray))
-       (local $workloadBytecodes (ref $ByteArray))
+       (local $workloadBytecodes (ref $byteArray))
        (local $workloadSelector (ref $Symbol))
        (local $methodDictionary (ref $Dictionary))
        (local $newObject (ref $Object))
-       (local $slots (ref $ObjectArray))
-       (local $keys (ref $ObjectArray))
-       (local $values (ref $ObjectArray))
+       (local $slots (ref $Array))
+       (local $keys (ref $Array))
+       (local $values (ref $Array))
        (local $emptySymbol (ref $Symbol))
-       (local $emptyInstVarNames (ref $ObjectArray))
-       (local $workloadSlots (ref $ObjectArray))
+       (local $emptyInstVarNames (ref $Array))
+       (local $workloadSlots (ref $Array))
        
        ;; Create bytecodes for main method: [push_receiver, send_workload, return]
        i32.const 0x70      ;; push_receiver 
@@ -1413,18 +2218,12 @@
        array.new_fixed $ByteArray 62
        local.set $workloadBytecodes
 
-       ;; Create "workload" selector symbol with actual bytes
-       ;; Now create the Symbol with the byte array (push fields in correct order)
-       global.get $objectClass ;; $class
+       ;; set name symbol
        local.get $vm
-       call $nextIdentityHash ;; $identityHash
-       ref.null $Object ;; nextObject (ref null $Object)
-       ref.null eq
-       i32.const 0
-       array.new $ObjectArray
-       ref.as_non_null
-       ;; Create the byte array with ASCII values for "workload" as the last field
-       ;; 'w'=119, 'o'=111, 'r'=114, 'k'=107, 'l'=108, 'o'=111, 'a'=97, 'd'=100
+       ref.null $Class               ;; $class to be set later, to class Symbol
+       local.get $vm
+       call $nextIdentityHash        ;; $identityHash
+       ref.null $Object              ;; $nextObject
        i32.const 119       ;; 'w'
        i32.const 111       ;; 'o'
        i32.const 114       ;; 'r'
@@ -1433,49 +2232,68 @@
        i32.const 111       ;; 'o'
        i32.const 97        ;; 'a'
        i32.const 100       ;; 'd'
-       array.new_fixed $ByteArray 8
+       array.new_fixed $byteArray 8  ;; $slots
+       call $newByteArray
        struct.new $Symbol
-       local.set $workloadSelector
-       ;; Link selector to object chain
-       local.get $vm
-       struct.get $VirtualMachine $lastObject
-       ref.as_non_null
-       local.get $workloadSelector
-       ref.as_non_null
-       struct.set $Object $nextObject
-       local.get $workloadSelector
-       ref.as_non_null
-       local.get $vm
-       struct.set $VirtualMachine $lastObject
 
        ;; Create literals array with workload selector at index 0
        ref.null eq
        i32.const 1
-       array.new $ObjectArray
+       array.new $Array
        local.set $slots
        local.get $slots
        i32.const 0  ;; index 0
        local.get $workloadSelector
        ref.as_non_null
-       array.set $ObjectArray
+       array.set $Array
 
        ;; Create main method (sends >>workload message)
-       global.get $objectClass ;; class (ref $Class)
+       local.get $vm
+       struct.get $VirtualMachine $classObject
        call $nextIdentityHash  ;; identityHash (i32)
        i32.const 6         ;; format (i32)
        i32.const 14        ;; size (i32)
        ref.null $Object ;; nextObject (ref null $Object)
-       local.get $slots      ;; slots (ref $ObjectArray)
+       local.get $slots      ;; slots (ref $Array)
        i32.const 0         ;; header (i32)
-       local.get $mainBytecodes ;; bytecodes (ref null $ByteArray)
+       local.get $mainBytecodes ;; bytecodes (ref null $byteArray)
        i32.const 0         ;; invocationCount (i32)
        i32.const 0         ;; functionIndex (i32)
-       global.get $translationThreshold
+       local.get $vm
+       struct.get $VirtualMachine $translationThreshold
        i32.const 0         ;; isInstalled (i32)
        struct.new $CompiledMethod
        local.set $newObject
        local.get $newObject
        local.set $mainMethod
+
+       ;; Create initial context for main method
+       local.get $vm
+       struct.get $VirtualMachine $classContext
+       i32.const 2001       ;; identityHash
+       i32.const 14         ;; format (MethodContext)
+       i32.const 14         ;; size
+       ref.null $Object     ;; nextObject
+       local.get $slots     ;; slots (non-nullable)
+       ref.null $Context    ;; sender
+       i32.const 0          ;; pc
+       i32.const 0          ;; sp (stack pointer)
+       local.get $mainMethod ;; method
+       i32.const 100
+       ref.i31              ;; $receiver
+       ref.null eq          ;; default array element
+       i32.const 0          ;; empty
+       array.new $objectArray ;; $args
+       ref.null eq          ;; default array element
+       i32.const 0          ;; empty
+       array.new $objectArray ;; $temps
+       ref.null eq          ;; default array element
+       i32.const 0          ;; empty
+       array.new $objectArray ;; $stack (non-nullable)
+       struct.new $Context
+       local.get $vm
+       struct.set $VirtualMachine $activeContext
+
        ;; Link this object to the chain
        local.get $vm
        struct.get $VirtualMachine $lastObject
@@ -1489,7 +2307,7 @@
        ;; First create the literals array that the workload method needs
        ref.null eq
        i32.const 4          ;; Need 4 literal slots (0-3, but we only use 1-3)
-       array.new $ObjectArray
+       array.new $Array
        ref.as_non_null
        local.set $workloadSlots
        
@@ -1499,41 +2317,43 @@
        i32.const 0
        call $smallIntegerForValue
        ref.as_non_null
-       array.set $ObjectArray
+       array.set $Array
        
        local.get $workloadSlots
        i32.const 1  ;; literal[1] = 1
        i32.const 1
        call $smallIntegerForValue
        ref.as_non_null
-       array.set $ObjectArray
+       array.set $Array
        
        local.get $workloadSlots
        i32.const 2  ;; literal[2] = 2
        i32.const 2
        call $smallIntegerForValue
        ref.as_non_null
-       array.set $ObjectArray
+       array.set $Array
        
        local.get $workloadSlots
        i32.const 3  ;; literal[3] = 3
        i32.const 3
        call $smallIntegerForValue
        ref.as_non_null
-       array.set $ObjectArray
+       array.set $Array
        
        ;; Now create the workload method with proper slots
-       global.get $objectClass ;; class (ref $Class)
+       local.get $vm
+       struct.get $VirtualMachine $classObject ;; class (ref $Class)
        call $nextIdentityHash  ;; identityHash (i32)
        i32.const 6         ;; format (i32)
        i32.const 14        ;; size (i32)
-       ref.null $Object ;; nextObject (ref null $Object)
-       local.get $workloadSlots ;; slots (ref $ObjectArray) - now has proper literals
+       ref.null $Object ;; nextObject
+       local.get $workloadSlots ;; slots
        i32.const 0         ;; header (i32)
-       local.get $workloadBytecodes ;; bytecodes (ref null $ByteArray)
+       local.get $workloadBytecodes ;; bytecodes
        i32.const 0         ;; invocationCount (i32)
        i32.const 0         ;; functionIndex (i32)
-       global.get $translationThreshold
+       local.get $vm
+       struct.get $VirtualMachine $translationThreshold
        i32.const 0         ;; isInstalled (i32)
        struct.new $CompiledMethod
        local.set $newObject
@@ -1550,7 +2370,8 @@
        struct.set $VirtualMachine $lastObject
 
        ;; Install method dictionary in SmallInteger class
-       global.get $smallIntegerClass
+       local.get $vm
+       struct.get $VirtualMachine $classSmallInteger
        ref.as_non_null
        local.get $methodDictionary
        ref.as_non_null
@@ -1564,7 +2385,7 @@
        i32.const 0  ;; index 0
        local.get $workloadSelector
        ref.as_non_null
-       array.set $ObjectArray
+       array.set $Array
        
        ;; Install workload method in dictionary values array
        local.get $methodDictionary
@@ -1574,7 +2395,7 @@
        i32.const 0  ;; index 0
        local.get $workloadMethod
        ref.as_non_null
-       array.set $ObjectArray
+       array.set $Array
        
        ;; Set method dictionary count
        local.get $methodDictionary
@@ -1587,10 +2408,6 @@
        ref.as_non_null
        i32.const 1
        struct.set $CompiledMethod $isInstalled
-       
-       ;; Set as main method for execution
-       local.get $mainMethod
-       global.set $mainMethod
        
        ;; Return success
        i32.const 1
@@ -1614,7 +2431,7 @@
        (local $method (ref $CompiledMethod))
        (local $receiverClass (ref $Class))
        (local $selectorIndex i32)
-       (local $slots (ref $ObjectArray))
+       (local $slots (ref $Array))
        
        ;; Execute bytecode based on opcode
        
@@ -1658,7 +2475,7 @@
        local.get $context
        local.get $slots
        local.get $selectorIndex
-       array.get $ObjectArray
+       array.get $Array
        ref.as_non_null
        call $pushOnStack
        end ;; else
@@ -1844,7 +2661,7 @@
        ;; Get selector at index
        local.get $slots
        local.get $selectorIndex
-       array.get $ObjectArray
+       array.get $Array
        local.set $selector
        
        ;; No need to increment PC since we're not reading next byte
@@ -1915,59 +2732,34 @@
        (local $method (ref $CompiledMethod))
        (local $bytecode i32)
        (local $pc i32)
-       (local $stack (ref $ObjectArray))
-       (local $slots (ref $ObjectArray))
-       (local $args (ref $ObjectArray))
-       (local $temps (ref $ObjectArray))
+       (local $stack (ref $Array))
+       (local $args (ref $Array))
+       (local $temps (ref $Array))
        (local $receiver eqref)
        (local $resultValue eqref)
        (local $invocationCount i32)
-       (local $bytecodes (ref $ByteArray))
+       (local $slots (ref $byteArray))
        (local $funcIndex i32)
 
        ;; Create execution stack with proper size
        ref.null eq
        i32.const 20
-       array.new $ObjectArray
+       array.new $Array
        local.set $stack
        ;; Create empty arrays for slots, args, temps
        ref.null eq
        i32.const 0
-       array.new $ObjectArray
+       array.new $Array
        local.set $slots
        ref.null eq
        i32.const 0
-       array.new $ObjectArray
+       array.new $Array
        local.set $args
        ref.null eq
        i32.const 0
-       array.new $ObjectArray
+       array.new $Array
        local.set $temps
        
-       ;; Create SmallInteger 100 as receiver (for more intensive computation)
-       i32.const 100
-       ref.i31
-       local.set $receiver
-       
-       ;; Create initial context for main method
-       global.get $objectClass ;; class (Context is-a Object for now)
-       i32.const 2001       ;; identityHash
-       i32.const 14         ;; format (MethodContext)
-       i32.const 14         ;; size
-       ref.null $Object     ;; nextObject
-       local.get $slots     ;; slots (non-nullable)
-       ref.null $Context    ;; sender
-       i32.const 0          ;; pc
-       i32.const 0          ;; sp (stack pointer)
-       global.get $mainMethod ;; method
-       local.get $receiver   ;; receiver (SmallInteger 3)
-       local.get $args      ;; args (non-nullable)
-       local.get $temps     ;; temps (non-nullable)
-       local.get $stack     ;; stack (non-nullable)
-       struct.new $Context
-       local.get $vm
-       struct.set $VirtualMachine $activeContext
-
        block $finished
        
        ;; Main execution loop
@@ -2005,7 +2797,7 @@
        struct.get $CompiledMethod $translationThreshold
        i32.eq
        local.get $vm
-       struct.get $VirtualMachine $jitEnabled
+       struct.get $VirtualMachine $translationEnabled
        i32.and
        if
        ;; Check if method is installed in a method dictionary
@@ -2054,8 +2846,8 @@
        else
        ;; Bytecode interpreter loop for current method
        local.get $method
-       struct.get $CompiledMethod $bytecodes
-       local.tee $bytecodes
+       struct.get $CompiledMethod $slots
+       local.tee $slots
        ref.is_null
        if
        br $execution_loop
@@ -2079,8 +2871,8 @@
        ref.as_non_null
        struct.get $Context $method
        local.tee $method
-       struct.get $CompiledMethod $bytecodes
-       local.tee $bytecodes
+       struct.get $CompiledMethod $slots
+       local.tee $slots
        ref.as_non_null
        array.len
        
@@ -2097,7 +2889,7 @@
        end ;; if
        
        ;; Fetch next bytecode
-       local.get $bytecodes
+       local.get $slots
        ref.as_non_null
        local.get $pc
        array.get_u $ByteArray
