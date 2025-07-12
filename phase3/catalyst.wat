@@ -56,7 +56,7 @@
   ;; use them to define objects that wrap them (e.g.,
   ;; $Context$methodCache and $Symbol$bytes)
 
-  (type $objectArray (array (mut (ref null eq))))
+  (type $objectArray (array (mut (ref eq))))
   (type $byteArray (array (mut i8)))
   (type $wordArray (array (mut i32)))
 
@@ -123,8 +123,8 @@
 
 				  (field $identityHash (mut i32))
 				  (field $nextObject (mut (ref null eq)))
-				  (field $keys (ref $Array))
-				  (field $values (ref $Array))
+				  (field $keys (ref null $Array)) ;; make non-nullable
+				  (field $values (ref null $Array)) ;; make non-nullable
 				  (field $count (mut i32))
 				  )))
   
@@ -291,7 +291,7 @@
  (func $newByteArray
        (param $vm (ref $VirtualMachine))
        (param $array (ref $byteArray))
-       (result (ref $Array))
+       (result (ref $ByteArray))
 
        ref.null eq            ;; $class to be set later, to class Array
        local.get $vm
@@ -304,7 +304,7 @@
  (func $newWordArray
        (param $vm (ref $VirtualMachine))
        (param $array (ref $wordArray))
-       (result (ref $Array))
+       (result (ref $WordArray))
 
        ref.null eq            ;; $class to be set later, to class Array
        local.get $vm
@@ -322,58 +322,47 @@
        local.get $vm
        call $nextIdentityHash ;; $identityHash
        ref.null $Object       ;; $nextObject to be set later
-       ref.null eq            ;; default array element
-       i32.const 0            ;; empty
-       array.new $Array ;; $keys
-       ref.null eq            ;; default array element
-       i32.const 0            ;; empty
-       array.new $Array ;; $values
+       ref.null $Array            ;; $keys
+       ref.null $Array            ;; $values
        i32.const 0            ;; $count
        struct.new $Dictionary
        )
 
- ;; pop an element from the stack
- 
- (func $popObject
-       (param $element (ref $Object))
-       (result (ref $Object))
-
-       local.get $element)
- 
  ;; The stack has a bunch of $Objects pushed onto it that need to be
  ;; linked via their $nextObject fields.
 
  (func $linkObjects
        (param $vm (ref $VirtualMachine))
-       (param $numberOfLinks i32)
+       (param $objects (ref $objectArray))
        
        (local $previousObject (ref $Object))
        (local $nextObject (ref $Object))
-       (local $numberOfLinksRemaining i32)
+       (local $numberOfObjects i32)
+       (local $index i32)
 
-       local.get $numberOfLinks
-       i32.const 1
-       i32.lt_s
-       if
-       return
-       end
-
-       local.get $numberOfLinks
-       local.set $numberOfLinksRemaining
+       local.get $objects
+       array.len
+       local.set $numberOfObjects
+       
+       i32.const 0
+       local.set $index
 
        local.get $vm
        struct.get $VirtualMachine $lastObject
+       ref.as_non_null
        local.set $previousObject
 
        loop $link
-       local.get $numberOfLinksRemaining
-       i32.const 0
+       local.get $index
+       local.get $numberOfObjects
        i32.eq
        if
        return
        end
-       
-       call $popObject
+
+       local.get $objects
+       local.get $index
+       array.get
        local.set $nextObject
 
        local.get $vm
@@ -382,10 +371,10 @@
        struct.set $Object $nextObject
        struct.set $VirtualMachine $lastObject
        
-       local.get $numberOfLinksRemaining
+       local.get $index
        i32.const 1
-       i32.sub
-       local.set $numberOfLinksRemaining
+       i32.add
+       local.set $index
 
        local.get $nextObject
        local.set $previousObject
