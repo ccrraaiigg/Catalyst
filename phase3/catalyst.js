@@ -1,4 +1,4 @@
-// squeak-vm.js - JavaScript interface to SqueakWASM VM
+// catalyst.js - JavaScript interface to SqueakWASM VM
 
 class SqueakVM {
     constructor() {
@@ -42,7 +42,7 @@ class SqueakVM {
         if (this.vm) return this.vm
         
         return WebAssembly.instantiateStreaming(
-            fetch('squeak-vm-core.wasm?' + Date.now()),
+            fetch('catalyst.wasm?' + Date.now()),
             {
 		env: {
                     reportResult: (value) => {
