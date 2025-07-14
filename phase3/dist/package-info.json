@@ -14,13 +14,13 @@
     "Runtime JIT enable/disable controls",
     "Cross-origin isolation for 5μs timer resolution"
   ],
-  "buildDate": "2025-07-09T04:31:25.875Z",
+  "buildDate": "2025-07-13T20:30:46.507Z",
   "files": {
     "wasm": [
-      "squeak-vm-core.wasm"
+      "catalyst.wasm"
     ],
     "javascript": [
-      "squeak-vm.js"
+      "catalyst.js"
     ],
     "test": "test.html",
     "config": ".htaccess"

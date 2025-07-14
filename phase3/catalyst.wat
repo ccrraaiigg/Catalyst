@@ -1,5 +1,5 @@
 ;; catalyst.wat: multiple simultaneous Catalyst Smalltalk virtual
-;; machines with method translation
+;; machines, with method translation
 
 (module
  ;; imported external functions from JS
@@ -47,7 +47,7 @@
  ;; when anything at the Smalltalk level asks about them. This saves
  ;; us the effort of fixing up them up to be nil.
  
- (rec ;; recursive (mutually referential) type definitions
+ (rec ;; recursive (mutually referential) type definitionsox
 
   ;; Arrays created with these three array types are not Smalltalk
   ;; objects unto themselves. A $VirtualMachine uses them for things
@@ -102,6 +102,7 @@
 
 				      (field $identityHash (mut i32))
 				      (field $nextObject (mut (ref null eq)))
+				      
 				      ;; $Array, $ByteArray, or $WordArray
 				      (field $slots (mut (ref eq)))
 				      )))
@@ -112,6 +113,7 @@
 
 				      (field $identityHash (mut i32))
 				      (field $nextObject (mut (ref null eq)))
+				      
 				      ;; $Array, $ByteArray, or $WordArray
 				      (field $slots (mut (ref eq)))
 				      )))
@@ -133,6 +135,7 @@
 
 				(field $identityHash (mut i32))
 				(field $nextObject (mut (ref null eq)))
+				
 				;; a $Class or $Metaclass
 				(field $superclass (mut (ref null eq)))
 
@@ -146,6 +149,7 @@
 
 					  (field $identityHash (mut i32))
 					  (field $nextObject (mut (ref null eq)))
+					  
 					  ;; a $Class or $Metaclass
 					  (field $superclass (mut (ref null eq)))
 
@@ -161,6 +165,7 @@
 
 				       (field $identityHash (mut i32))
 				       (field $nextObject (mut (ref null eq)))
+				       
 				       ;; a $Class or $Metaclass
 				       (field $superclass (mut (ref null eq)))
 
@@ -180,6 +185,7 @@
 
 					   (field $identityHash (mut i32))
 					   (field $nextObject (mut (ref null eq)))
+					   
 					   ;; a $Class or $Metaclass
 					   (field $superclass (mut (ref null eq)))
 
@@ -196,6 +202,7 @@
 
 					      (field $identityHash (mut i32))
 					      (field $nextObject (mut (ref null eq)))
+					      
 					      ;; $Array, $ByteArray, or $WordArray
 					      (field $slots (mut (ref eq)))
 					      (field $literals (ref $Array))
@@ -467,7 +474,7 @@
        ref.null eq                   ;; $class to be set later, to (Object class)
        local.get $vm
        call $nextIdentityHash        ;; $identityHash
-       ref.null eq                   ;; $nextObject, to be set later, once there is one
+       ref.null eq                   ;; $nextObject, to be set later
        ref.null eq                   ;; $superclass is nil
        local.get $vm
        call $newDictionary           ;; $methodDictionary
@@ -573,7 +580,7 @@
        i32.const 1                   ;; translationEnabled
 
        ;; initialize method cache
-       ref.null $objectArray         ;; methodCache
+       ref.null $objectArray         ;; $methodCache
        i32.const 0                   ;; $functionTableBaseIndex
        i32.const 1000                ;; $translationThreshold
        local.get $methodCacheSize    ;; $methodCacheSize
@@ -630,7 +637,7 @@
        local.get $classObject
        struct.set $VirtualMachine $classObject
 
-       ;; Create class Behavior with a null class and superclass, to be set later.
+       ;; Create class Behavior.
 
        local.get $vm       
        i32.const 2                   ;; $format
@@ -653,7 +660,7 @@
        call $newClassOfFormatWithName
        local.set $classBehavior
 
-       ;; Create class ClassDescription with a null class, to be set later.
+       ;; Create class ClassDescription.
 
        local.get $vm       
        i32.const 2                   ;; $format
@@ -688,7 +695,7 @@
        local.get $classClassDescription
        struct.set $VirtualMachine $classClassDescription
        
-       ;; Create class Metaclass with a null class, to be set later.
+       ;; Create class Metaclass.
 
        local.get $vm       
        i32.const 2                   ;; $format
@@ -716,7 +723,7 @@
        local.get $classMetaclass
        struct.set $VirtualMachine $classMetaclass
        
-       ;; Create class Class with a null class and superclass, to be set later.
+       ;; Create class Class.
 
        local.get $vm       
        i32.const 2                   ;; $format
@@ -790,7 +797,7 @@
 
        ;; Fix up all the fields that were to be set later.
 
-       ;; Set the class of class Object to a Metaclass (Object class).
+       ;; Set the class of class Object to (Object class).
 
        local.get $classObject
 
@@ -800,7 +807,7 @@
        
        struct.set $Class $class
 
-       ;; Set the class of class Object's name symbol
+       ;; Set the class of class Object's name symbol.
 
        local.get $classObject
        struct.get $Class $name
@@ -928,7 +935,7 @@
        local.get $classSymbol
        struct.set $Symbol $class
 
-       ;; Set the class of class SmallInteger
+       ;; Set the class of class SmallInteger.
 
        local.get $classSmallInteger
 
@@ -940,7 +947,7 @@
 
        struct.set $Class $class
 
-       ;; Set the superclass of class Symbol
+       ;; Set the superclass of class Symbol.
        local.get $classSmallInteger
        local.get $classObject
        struct.set $Class $superclass
@@ -1046,15 +1053,6 @@
        
        local.get $value
        call $smallIntegerForValue)
- 
- (func (export "classOfObject")
-       (param $object eqref)
-       (result eqref)
-       
-       ;; Note: This exported function needs a VM instance, but doesn't have one
-       ;; We'll need to create a global VM or modify the interface
-       ;; For now, returning null as placeholder
-       ref.null eq)
  
  (func (export "contextReceiver")
        (param $context eqref)
@@ -1501,8 +1499,7 @@
        end ;; loop $search_loop
        end ;; loop $hierarchy_loop
        
-       ref.null $CompiledMethod
-       return
+       unreachable
        )
 
  ;; Polymorphic Inline Cache lookup
@@ -1547,7 +1544,7 @@
        ;; Linear probing with limit
        i32.const 8  ;; Max probe distance
        local.set $probeLimit
-       
+
        loop $probe_loop
        local.get $probeLimit
        i32.const 0
@@ -1615,9 +1612,8 @@
        
        br $probe_loop
        end ;; loop $probe_loop
-       
-       ref.null $CompiledMethod
-       return
+
+       unreachable
        )
 
  ;; Store method in cache
@@ -1714,7 +1710,7 @@
        ref.null $Object ;; nextObject
 
        local.get $vm
-       struct.get $VirtualMachine $activeContext  ;; sender (current context)
+       struct.get $VirtualMachine $activeContext  ;; sender
 
        i32.const 0          ;; pc
        i32.const 0          ;; sp
@@ -2462,7 +2458,7 @@
        )
  
  ;; Main interpreter loop
- (func $interpret (export "interpret")
+ (func (export "interpret")
        (param $vm (ref $VirtualMachine))
        (result i32)
        
