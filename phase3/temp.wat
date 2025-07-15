@@ -9,7 +9,7 @@
   (type $WordArray (sub $Object (struct (field $class (mut eqref)) (field $identityHash (mut i32)) (field $nextObject (mut eqref)) (field $array (ref $wordArray)))))
   (type $VariableObject (sub $Object (struct (field $class (mut eqref)) (field $identityHash (mut i32)) (field $nextObject (mut eqref)) (field $slots (mut (ref eq))))))
   (type $Symbol (sub $VariableObject (struct (field $class (mut eqref)) (field $identityHash (mut i32)) (field $nextObject (mut eqref)) (field $slots (mut (ref eq))))))
-  (type $Dictionary (sub $Object (struct (field $class (mut eqref)) (field $identityHash (mut i32)) (field $nextObject (mut eqref)) (field $keys (ref null $Array)) (field $values (ref null $Array)) (field $count (mut i32)))))
+  (type $Dictionary (sub $Object (struct (field $class (mut eqref)) (field $identityHash (mut i32)) (field $nextObject (mut eqref)) (field $keys (ref $Array)) (field $values (ref $Array)) (field $count (mut i32)))))
   (type $Behavior (sub $Object (struct (field $class (mut eqref)) (field $identityHash (mut i32)) (field $nextObject (mut eqref)) (field $superclass (mut eqref)) (field $methodDictionary (mut (ref $Dictionary))) (field $format (mut i32)))))
   (type $ClassDescription (sub $Behavior (struct (field $class (mut eqref)) (field $identityHash (mut i32)) (field $nextObject (mut eqref)) (field $superclass (mut eqref)) (field $methodDictionary (mut (ref $Dictionary))) (field $format (mut i32)) (field $instanceVariableNames (mut (ref $Array))) (field $baseID (mut (ref null $ByteArray))))))
   (type $Class (sub $ClassDescription (struct (field $class (mut eqref)) (field $identityHash (mut i32)) (field $nextObject (mut eqref)) (field $superclass (mut eqref)) (field $methodDictionary (mut (ref $Dictionary))) (field $format (mut i32)) (field $instanceVariableNames (mut (ref $Array))) (field $baseID (mut (ref null $ByteArray))) (field $subclasses (mut (ref $Array))) (field $name (mut (ref $Symbol))) (field $classPool (mut (ref $Dictionary))) (field $sharedPools (mut (ref $Array))))))
@@ -23,8 +23,8 @@
  (type $19 (func (param eqref) (result i32)))
  (type $20 (func (param (ref $VirtualMachine)) (result i32)))
  (type $21 (func (param eqref i32)))
- (type $22 (func (param i32) (result (ref i31))))
- (type $23 (func (param (ref null $Context)) (result eqref)))
+ (type $22 (func (param (ref null $Context)) (result eqref)))
+ (type $messageNotUnderstood (func (param (ref $Symbol))))
  (type $24 (func (param i32)))
  (type $25 (func (param i32 i32 i32)))
  (type $26 (func (param (ref $VirtualMachine) (ref $objectArray)) (result (ref $Array))))
@@ -41,18 +41,18 @@
  (type $37 (func (result (ref $VirtualMachine))))
  (type $38 (func (param eqref) (result (ref eq))))
  (type $39 (func (param eqref eqref)))
- (type $40 (func (param (ref i31)) (result i32)))
- (type $41 (func (param eqref i32) (result eqref)))
- (type $42 (func (param eqref i32) (result i32)))
- (type $43 (func (param (ref $objectArray) i32) (result eqref)))
- (type $44 (func (param (ref $byteArray) i32) (result i32)))
- (type $45 (func (param (ref $byteArray)) (result i32)))
- (type $46 (func (param (ref $Context) eqref)))
- (type $47 (func (param (ref $VirtualMachine) eqref) (result eqref)))
- (type $48 (func (param (ref $VirtualMachine) eqref eqref) (result (ref null $CompiledMethod))))
- (type $49 (func (param (ref $VirtualMachine) eqref (ref $Class)) (result (ref null $CompiledMethod))))
- (type $50 (func (param (ref $VirtualMachine) (ref $Symbol) (ref eq) (ref null $CompiledMethod))))
- (type $51 (func (param (ref $VirtualMachine) eqref (ref null $CompiledMethod) eqref) (result (ref $Context))))
+ (type $40 (func (param eqref i32) (result eqref)))
+ (type $41 (func (param eqref i32) (result i32)))
+ (type $42 (func (param (ref $objectArray) i32) (result eqref)))
+ (type $43 (func (param (ref $byteArray) i32) (result i32)))
+ (type $44 (func (param (ref $byteArray)) (result i32)))
+ (type $45 (func (param (ref $Context) eqref)))
+ (type $46 (func (param (ref $VirtualMachine) eqref) (result eqref)))
+ (type $47 (func (param (ref $VirtualMachine) eqref eqref) (result (ref null $CompiledMethod))))
+ (type $48 (func (param (ref $VirtualMachine) eqref (ref $Class)) (result (ref null $CompiledMethod))))
+ (type $49 (func (param (ref $VirtualMachine) (ref $Symbol) (ref eq) (ref null $CompiledMethod))))
+ (type $50 (func (param (ref $VirtualMachine) eqref (ref null $CompiledMethod) eqref) (result (ref $Context))))
+ (type $51 (func (param i32) (result (ref i31))))
  (type $52 (func (param (ref null $CompiledMethod)) (result i32)))
  (type $53 (func (param (ref null $Context) i32) (result i32)))
  (type $54 (func (param (ref null $CompiledMethod) i32)))
@@ -61,28 +61,29 @@
  (import "env" "reportResult" (func $reportResult (type $24) (param i32)))
  (import "env" "translateMethod" (func $translateMethod (type $21) (param eqref i32)))
  (import "env" "debugLog" (func $debugLog (type $25) (param i32 i32 i32)))
- (global $workloadSelector (mut eqref) (ref.null none))
  (global $byteArrayCopyPointer (mut i32) (i32.const 1024))
  (memory $0 1)
  (table $functionTable 100 funcref)
+ (tag $messageNotUnderstood (type $messageNotUnderstood) (param (ref $Symbol)))
  (export "bytes" (memory $0))
  (export "functionTable" (table $functionTable))
- (export "initialize" (func $0))
- (export "methodBytecodes" (func $1))
- (export "setMethodFunctionIndex" (func $2))
- (export "onContextPush" (func $3))
- (export "popFromContext" (func $4))
- (export "valueOfSmallInteger" (func $5))
- (export "smallIntegerForValue" (func $6))
- (export "contextReceiver" (func $7))
- (export "methodLiterals" (func $8))
- (export "contextLiteralAt" (func $9))
- (export "contextMethod" (func $10))
- (export "byteArrayAt" (func $11))
- (export "byteArrayLength" (func $12))
- (export "copyByteArrayToMemory" (func $13))
- (export "createMinimalBootstrap" (func $14))
- (export "interpret" (func $15))
+ (export "initialize" (func $interpret))
+ (export "methodBytecodes" (func $methodBytecodes))
+ (export "setMethodFunctionIndex" (func $setMethodFunctionIndex))
+ (export "onContextPush" (func $onContextPush))
+ (export "popFromContext" (func $popFromContext))
+ (export "valueOfSmallInteger" (func $valueOfSmallInteger))
+ (export "smallIntegerForValue" (func $smallIntegerForValue))
+ (export "classOfObject" (func $classOfObject))
+ (export "contextReceiver" (func $contextReceiver))
+ (export "methodLiterals" (func $methodLiterals))
+ (export "contextLiteralAt" (func $contextLiteralAt))
+ (export "contextMethod" (func $contextMethod))
+ (export "byteArrayAt" (func $byteArrayAt))
+ (export "byteArrayLength" (func $byteArrayLength))
+ (export "copyByteArrayToMemory" (func $copyByteArrayToMemory))
+ (export "createMinimalObjectMemory" (func $createMinimalObjectMemory))
+ (export "interpret" (func $interpret))
  (func $newArray (type $26) (param $vm (ref $VirtualMachine)) (param $array (ref $objectArray)) (result (ref $Array))
   (struct.new $Array
    (ref.null none)
@@ -327,7 +328,7 @@
    (local.get $bytes)
   )
  )
- (func $0 (type $37) (result (ref $VirtualMachine))
+ (func $initialize (type $37) (result (ref $VirtualMachine))
   (local $methodCacheSize i32)
   (local $firstObject eqref)
   (local $vm (ref $VirtualMachine))
@@ -694,14 +695,14 @@
   )
   (local.get $vm)
  )
- (func $1 (type $38) (param $method eqref) (result (ref eq))
+ (func $methodBytecodes (type $38) (param $method eqref) (result (ref eq))
   (struct.get $CompiledMethod $slots
    (ref.cast (ref $CompiledMethod)
     (local.get $method)
    )
   )
  )
- (func $2 (type $21) (param $method eqref) (param $index i32)
+ (func $setMethodFunctionIndex (type $21) (param $method eqref) (param $index i32)
   (struct.set $CompiledMethod $functionIndex
    (ref.cast (ref $CompiledMethod)
     (local.get $method)
@@ -709,7 +710,7 @@
    (local.get $index)
   )
  )
- (func $3 (type $39) (param $context eqref) (param $pushedObject eqref)
+ (func $onContextPush (type $39) (param $context eqref) (param $pushedObject eqref)
   (call $pushOnStack
    (ref.cast (ref $Context)
     (local.get $context)
@@ -717,38 +718,28 @@
    (local.get $pushedObject)
   )
  )
- (func $4 (type $18) (param $context eqref) (result eqref)
+ (func $popFromContext (type $18) (param $context eqref) (result eqref)
   (call $popFromStack
    (ref.cast (ref $Context)
     (local.get $context)
    )
   )
  )
- (func $5 (type $40) (param $smallInteger (ref i31)) (result i32)
-  (call $valueOfSmallInteger
-   (local.get $smallInteger)
-  )
- )
- (func $6 (type $22) (param $value i32) (result (ref i31))
-  (call $smallIntegerForValue
-   (local.get $value)
-  )
- )
- (func $7 (type $18) (param $context eqref) (result eqref)
+ (func $contextReceiver (type $18) (param $context eqref) (result eqref)
   (struct.get $Context $receiver
    (ref.cast (ref $Context)
     (local.get $context)
    )
   )
  )
- (func $8 (type $18) (param $method eqref) (result eqref)
+ (func $methodLiterals (type $18) (param $method eqref) (result eqref)
   (struct.get $CompiledMethod $literals
    (ref.cast (ref $CompiledMethod)
     (local.get $method)
    )
   )
  )
- (func $9 (type $41) (param $context eqref) (param $index i32) (result eqref)
+ (func $contextLiteralAt (type $40) (param $context eqref) (param $index i32) (result eqref)
   (call $objectArrayAt
    (ref.cast (ref none)
     (struct.get $CompiledMethod $literals
@@ -762,14 +753,14 @@
    (local.get $index)
   )
  )
- (func $10 (type $18) (param $context eqref) (result eqref)
+ (func $contextMethod (type $18) (param $context eqref) (result eqref)
   (struct.get $Context $method
    (ref.cast (ref $Context)
     (local.get $context)
    )
   )
  )
- (func $arrayOkayAt (type $42) (param $array eqref) (param $index i32) (result i32)
+ (func $arrayOkayAt (type $41) (param $array eqref) (param $index i32) (result i32)
   (local $length i32)
   (local.set $length
    (array.len
@@ -802,7 +793,7 @@
   )
   (i32.const 1)
  )
- (func $objectArrayAt (type $43) (param $array (ref $objectArray)) (param $index i32) (result eqref)
+ (func $objectArrayAt (type $42) (param $array (ref $objectArray)) (param $index i32) (result eqref)
   (if
    (i32.eqz
     (call $arrayOkayAt
@@ -825,7 +816,7 @@
    (local.get $index)
   )
  )
- (func $11 (type $44) (param $array (ref $byteArray)) (param $index i32) (result i32)
+ (func $byteArrayAt (type $43) (param $array (ref $byteArray)) (param $index i32) (result i32)
   (if
    (i32.eqz
     (call $arrayOkayAt
@@ -844,14 +835,14 @@
    (local.get $index)
   )
  )
- (func $12 (type $19) (param $array eqref) (result i32)
+ (func $byteArrayLength (type $19) (param $array eqref) (result i32)
   (array.len
    (ref.cast (ref $byteArray)
     (local.get $array)
    )
   )
  )
- (func $13 (type $45) (param $0 (ref $byteArray)) (result i32)
+ (func $copyByteArrayToMemory (type $44) (param $0 (ref $byteArray)) (result i32)
   (local $len i32)
   (local $i i32)
   (if
@@ -906,7 +897,7 @@
    )
    (br $copy)
   )
-  (i32.const 0)
+  (unreachable)
  )
  (func $nextIdentityHash (type $20) (param $vm (ref $VirtualMachine)) (result i32)
   (struct.set $VirtualMachine $nextIdentityHash
@@ -922,7 +913,7 @@
    (local.get $vm)
   )
  )
- (func $pushOnStack (type $46) (param $context (ref $Context)) (param $value eqref)
+ (func $pushOnStack (type $45) (param $context (ref $Context)) (param $value eqref)
   (local $stack (ref $Array))
   (local $sp i32)
   (local.set $stack
@@ -962,9 +953,8 @@
     (i32.const 1)
    )
   )
-  (return)
  )
- (func $popFromStack (type $23) (param $context (ref null $Context)) (result eqref)
+ (func $popFromStack (type $22) (param $context (ref null $Context)) (result eqref)
   (local $stack (ref $Array))
   (local $sp i32)
   (local.set $stack
@@ -1007,7 +997,7 @@
    )
   )
  )
- (func $topOfStack (type $23) (param $context (ref null $Context)) (result eqref)
+ (func $topOfStack (type $22) (param $context (ref null $Context)) (result eqref)
   (local $stack (ref $Array))
   (local $sp i32)
   (local.set $stack
@@ -1043,7 +1033,7 @@
    )
   )
  )
- (func $classOfObject (type $47) (param $vm (ref $VirtualMachine)) (param $obj eqref) (result eqref)
+ (func $classOfObject (type $46) (param $vm (ref $VirtualMachine)) (param $obj eqref) (result eqref)
   (if (result eqref)
    (ref.test (ref i31)
     (local.get $obj)
@@ -1062,12 +1052,12 @@
    )
   )
  )
- (func $lookupMethod (type $48) (param $vm (ref $VirtualMachine)) (param $receiver eqref) (param $selector eqref) (result (ref null $CompiledMethod))
+ (func $lookupMethod (type $47) (param $vm (ref $VirtualMachine)) (param $receiver eqref) (param $selector eqref) (result (ref null $CompiledMethod))
   (local $class eqref)
   (local $currentClass eqref)
-  (local $methodDictionary (ref null $Dictionary))
-  (local $keys (ref null $Array))
-  (local $values (ref null $Array))
+  (local $methodDictionary (ref $Dictionary))
+  (local $keys (ref $Array))
+  (local $values (ref $Array))
   (local $count i32)
   (local $i i32)
   (local $key eqref)
@@ -1090,67 +1080,25 @@
      )
     )
    )
-   (if
-    (ref.is_null
-     (local.tee $methodDictionary
-      (struct.get $Class $methodDictionary
-       (ref.cast (ref $Class)
-        (local.get $currentClass)
-       )
-      )
+   (local.set $methodDictionary
+    (struct.get $Class $methodDictionary
+     (ref.cast (ref $Class)
+      (local.get $currentClass)
      )
-    )
-    (then
-     (local.set $currentClass
-      (struct.get $Class $superclass
-       (ref.cast (ref $Class)
-        (local.get $currentClass)
-       )
-      )
-     )
-     (br $hierarchy_loop)
     )
    )
-   (if
-    (ref.is_null
-     (local.tee $keys
-      (struct.get $Dictionary $keys
-       (ref.as_non_null
-        (local.get $methodDictionary)
-       )
-      )
+   (local.set $keys
+    (struct.get $Dictionary $keys
+     (ref.as_non_null
+      (local.get $methodDictionary)
      )
-    )
-    (then
-     (local.set $currentClass
-      (struct.get $Class $superclass
-       (ref.cast (ref $Class)
-        (local.get $currentClass)
-       )
-      )
-     )
-     (br $hierarchy_loop)
     )
    )
-   (if
-    (ref.is_null
-     (local.tee $values
-      (struct.get $Dictionary $values
-       (ref.as_non_null
-        (local.get $methodDictionary)
-       )
-      )
+   (local.set $values
+    (struct.get $Dictionary $values
+     (ref.as_non_null
+      (local.get $methodDictionary)
      )
-    )
-    (then
-     (local.set $currentClass
-      (struct.get $Class $superclass
-       (ref.cast (ref $Class)
-        (local.get $currentClass)
-       )
-      )
-     )
-     (br $hierarchy_loop)
     )
    )
    (local.set $count
@@ -1215,11 +1163,9 @@
     (br $search_loop)
    )
   )
-  (return
-   (ref.null none)
-  )
+  (unreachable)
  )
- (func $lookupInCache (type $49) (param $vm (ref $VirtualMachine)) (param $selector eqref) (param $receiverClass (ref $Class)) (result (ref null $CompiledMethod))
+ (func $lookupInMethodCache (type $48) (param $vm (ref $VirtualMachine)) (param $selector eqref) (param $receiverClass (ref $Class)) (result (ref null $CompiledMethod))
   (local $cache (ref null $objectArray))
   (local $cacheSize i32)
   (local $hash i32)
@@ -1262,111 +1208,101 @@
   (local.set $probeLimit
    (i32.const 8)
   )
-  (return
-   (block $finished
-    (loop $probe_loop
-     (if
-      (i32.le_s
-       (local.get $probeLimit)
-       (i32.const 0)
-      )
-      (then
-       (return
-        (ref.null none)
-       )
-      )
+  (loop $probe_loop
+   (if
+    (i32.le_s
+     (local.get $probeLimit)
+     (i32.const 0)
+    )
+    (then
+     (return
+      (ref.null none)
      )
-     (if
-      (ref.is_null
-       (local.tee $entry
-        (ref.cast (ref null $PICEntry)
-         (array.get $objectArray
-          (ref.as_non_null
-           (local.get $cache)
-          )
-          (local.get $index)
-         )
+    )
+   )
+   (if
+    (ref.is_null
+     (local.tee $entry
+      (ref.cast (ref null $PICEntry)
+       (array.get $objectArray
+        (ref.as_non_null
+         (local.get $cache)
         )
-       )
-      )
-      (then
-       (return
-        (ref.null none)
-       )
-      )
-     )
-     (if
-      (i32.and
-       (ref.eq
-        (struct.get $PICEntry $selector
-         (local.tee $entry
-          (ref.cast (ref $PICEntry)
-           (local.get $entry)
-          )
-         )
-        )
-        (local.get $selector)
-       )
-       (ref.eq
-        (struct.get $PICEntry $receiverClass
-         (local.get $entry)
-        )
-        (local.get $receiverClass)
-       )
-      )
-      (then
-       (struct.set $PICEntry $hitCount
-        (local.get $entry)
-        (i32.add
-         (struct.get $PICEntry $hitCount
-          (local.get $entry)
-         )
-         (i32.const 1)
-        )
-       )
-       (return
-        (struct.get $PICEntry $method
-         (local.get $entry)
-        )
-       )
-      )
-     )
-     (local.set $index
-      (i32.rem_u
-       (i32.add
         (local.get $index)
-        (i32.const 1)
-       )
-       (struct.get $VirtualMachine $methodCacheSize
-        (local.get $vm)
        )
       )
      )
-     (local.set $probeLimit
-      (i32.sub
-       (local.get $probeLimit)
+    )
+    (then
+     (return
+      (ref.null none)
+     )
+    )
+   )
+   (if
+    (i32.and
+     (ref.eq
+      (struct.get $PICEntry $selector
+       (local.tee $entry
+        (ref.cast (ref $PICEntry)
+         (local.get $entry)
+        )
+       )
+      )
+      (local.get $selector)
+     )
+     (ref.eq
+      (struct.get $PICEntry $receiverClass
+       (local.get $entry)
+      )
+      (local.get $receiverClass)
+     )
+    )
+    (then
+     (struct.set $PICEntry $hitCount
+      (local.get $entry)
+      (i32.add
+       (struct.get $PICEntry $hitCount
+        (local.get $entry)
+       )
        (i32.const 1)
       )
      )
-     (br $probe_loop)
+     (return
+      (struct.get $PICEntry $method
+       (local.get $entry)
+      )
+     )
     )
    )
-  )
- )
- (func $storeInCache (type $50) (param $vm (ref $VirtualMachine)) (param $selector (ref $Symbol)) (param $receiverClass (ref eq)) (param $method (ref null $CompiledMethod))
-  (local $cache (ref null $objectArray))
-  (local $index i32)
-  (local $entry (ref $PICEntry))
-  (if
-   (ref.is_null
-    (local.tee $cache
-     (struct.get $VirtualMachine $methodCache
+   (local.set $index
+    (i32.rem_u
+     (i32.add
+      (local.get $index)
+      (i32.const 1)
+     )
+     (struct.get $VirtualMachine $methodCacheSize
       (local.get $vm)
      )
     )
    )
-   (then
-    (return)
+   (local.set $probeLimit
+    (i32.sub
+     (local.get $probeLimit)
+     (i32.const 1)
+    )
+   )
+   (br $probe_loop)
+  )
+  (unreachable)
+ )
+ (func $storeInMethodCache (type $49) (param $vm (ref $VirtualMachine)) (param $selector (ref $Symbol)) (param $receiverClass (ref eq)) (param $method (ref null $CompiledMethod))
+  (local $cache (ref $objectArray))
+  (local $index i32)
+  (local $entry (ref $PICEntry))
+  (local.set $cache
+   (struct.get $VirtualMachine $methodCache
+    (local.get $vm)
    )
   )
   (local.set $index
@@ -1404,35 +1340,7 @@
    (local.get $entry)
   )
  )
- (func $newContext (type $51) (param $vm (ref $VirtualMachine)) (param $receiver eqref) (param $method (ref null $CompiledMethod)) (param $selector eqref) (result (ref $Context))
-  (local $stack (ref $objectArray))
-  (local $slots (ref $objectArray))
-  (local $args (ref $objectArray))
-  (local $temps (ref $objectArray))
-  (local.set $stack
-   (array.new $objectArray
-    (ref.null none)
-    (i32.const 20)
-   )
-  )
-  (local.set $slots
-   (array.new $objectArray
-    (ref.null none)
-    (i32.const 0)
-   )
-  )
-  (local.set $args
-   (array.new $objectArray
-    (ref.null none)
-    (i32.const 0)
-   )
-  )
-  (local.set $temps
-   (array.new $objectArray
-    (ref.null none)
-    (i32.const 0)
-   )
-  )
+ (func $newContext (type $50) (param $vm (ref $VirtualMachine)) (param $receiver eqref) (param $method (ref null $CompiledMethod)) (param $selector eqref) (result (ref $Context))
   (struct.new $Context
    (struct.get $VirtualMachine $classContext
     (local.get $vm)
@@ -1450,19 +1358,28 @@
    (local.get $receiver)
    (call $newArray
     (local.get $vm)
-    (local.get $args)
+    (array.new $objectArray
+     (ref.null none)
+     (i32.const 0)
+    )
    )
+   (local.get $vm)
    (call $newArray
-    (local.get $vm)
-    (local.get $temps)
-   )
-   (call $newArray
-    (local.get $vm)
-    (local.get $stack)
+    (array.new $objectArray
+     (ref.null none)
+     (i32.const 0)
+    )
+    (call $newArray
+     (local.get $vm)
+     (array.new $objectArray
+      (ref.null none)
+      (i32.const 20)
+     )
+    )
    )
   )
  )
- (func $smallIntegerForValue (type $22) (param $value i32) (result (ref i31))
+ (func $smallIntegerForValue (type $51) (param $value i32) (result (ref i31))
   (ref.i31
    (local.get $value)
   )
@@ -1492,30 +1409,23 @@
    (i32.const 0)
   )
  )
- (func $executeTranslatedMethod (type $53) (param $context (ref null $Context)) (param $funcIndex i32) (result i32)
+ (func $executeTranslatedMethod (type $53) (param $context (ref null $Context)) (param $functionIndex i32) (result i32)
   (call_indirect $functionTable (type $19)
    (local.get $context)
-   (local.get $funcIndex)
+   (local.get $functionIndex)
   )
  )
  (func $triggerMethodTranslation (type $54) (param $method (ref null $CompiledMethod)) (param $identityHash i32)
   (local $slots eqref)
-  (local $bytecodeLen i32)
+  (local $bytecodeLength i32)
   (local $functionIndexIndex i32)
   (local $memoryOffset i32)
-  (if
-   (ref.is_null
-    (local.tee $slots
-     (struct.get $CompiledMethod $slots
-      (local.get $method)
-     )
-    )
-   )
-   (then
-    (return)
+  (local.set $slots
+   (struct.get $CompiledMethod $slots
+    (local.get $method)
    )
   )
-  (local.set $bytecodeLen
+  (local.set $bytecodeLength
    (array.len
     (ref.cast (ref $byteArray)
      (local.get $slots)
@@ -1550,9 +1460,7 @@
      (ref.as_non_null
       (local.get $sender)
      )
-     (ref.as_non_null
-      (local.get $result)
-     )
+     (local.get $result)
     )
     (struct.set $Context $pc
      (ref.as_non_null
@@ -1569,164 +1477,40 @@
     )
    )
   )
-  (if
-   (ref.is_null
-    (local.get $sender)
-   )
-   (then
-    (struct.set $VirtualMachine $activeContext
-     (local.get $vm)
-     (ref.null none)
-    )
-   )
-   (else
-    (struct.set $VirtualMachine $activeContext
-     (local.get $vm)
-     (local.get $sender)
-    )
-   )
+  (struct.set $VirtualMachine $activeContext
+   (local.get $vm)
+   (local.get $sender)
   )
   (local.get $result)
  )
- (func $14 (type $20) (param $vm (ref $VirtualMachine)) (result i32)
-  (local $workloadMethod (ref $CompiledMethod))
-  (local $mainBytecodes (ref $byteArray))
-  (local $mainMethod (ref $CompiledMethod))
-  (local $workloadBytecodes (ref $byteArray))
-  (local $workloadSelector (ref $Symbol))
+ (func $createMinimalObjectMemory (type $20) (param $vm (ref $VirtualMachine)) (result i32)
+  (local $benchmarkMethod (ref $CompiledMethod))
+  (local $benchmarkSelector (ref $Symbol))
   (local $methodDictionary (ref $Dictionary))
-  (local $newObject (ref $Object))
-  (local $literals (ref $Array))
-  (local $keys (ref $Array))
-  (local $values (ref $Array))
-  (local $emptySymbol (ref $Symbol))
-  (local $emptyInstVarNames (ref $Array))
-  (local $workloadLiterals (ref $objectArray))
-  (local.set $mainBytecodes
-   (array.new_fixed $byteArray 3
-    (i32.const 112)
-    (i32.const 208)
-    (i32.const 124)
-   )
-  )
-  (local.set $workloadBytecodes
-   (array.new_fixed $byteArray 62
-    (i32.const 112)
-    (i32.const 33)
-    (i32.const 176)
-    (i32.const 34)
-    (i32.const 184)
-    (i32.const 34)
-    (i32.const 176)
-    (i32.const 35)
-    (i32.const 184)
-    (i32.const 35)
-    (i32.const 176)
-    (i32.const 34)
-    (i32.const 184)
-    (i32.const 33)
-    (i32.const 176)
-    (i32.const 34)
-    (i32.const 184)
-    (i32.const 34)
-    (i32.const 176)
-    (i32.const 35)
-    (i32.const 184)
-    (i32.const 35)
-    (i32.const 176)
-    (i32.const 34)
-    (i32.const 184)
-    (i32.const 33)
-    (i32.const 176)
-    (i32.const 34)
-    (i32.const 184)
-    (i32.const 34)
-    (i32.const 176)
-    (i32.const 35)
-    (i32.const 184)
-    (i32.const 35)
-    (i32.const 176)
-    (i32.const 34)
-    (i32.const 184)
-    (i32.const 33)
-    (i32.const 176)
-    (i32.const 34)
-    (i32.const 184)
-    (i32.const 34)
-    (i32.const 176)
-    (i32.const 35)
-    (i32.const 184)
-    (i32.const 35)
-    (i32.const 176)
-    (i32.const 34)
-    (i32.const 184)
-    (i32.const 33)
-    (i32.const 176)
-    (i32.const 34)
-    (i32.const 184)
-    (i32.const 34)
-    (i32.const 176)
-    (i32.const 35)
-    (i32.const 184)
-    (i32.const 35)
-    (i32.const 176)
-    (i32.const 34)
-    (i32.const 184)
-    (i32.const 124)
-   )
-  )
-  (local.set $workloadSelector
+  (local $literalsOfUnboundMethod (ref $Array))
+  (local $benchmarkLiterals (ref $objectArray))
+  (local.get $vm)
+  (local.set $benchmarkSelector
    (call $newSymbolFromBytes
-    (local.get $vm)
+    (i32.const 98)
     (array.new_fixed $byteArray 8
-     (i32.const 119)
-     (i32.const 111)
+     (i32.const 101)
+     (i32.const 110)
+     (i32.const 99)
+     (i32.const 104)
+     (i32.const 109)
+     (i32.const 97)
      (i32.const 114)
      (i32.const 107)
-     (i32.const 108)
-     (i32.const 111)
-     (i32.const 97)
-     (i32.const 100)
     )
    )
   )
-  (local.set $literals
+  (local.set $literalsOfUnboundMethod
    (call $newArray
     (local.get $vm)
     (array.new $objectArray
-     (ref.null none)
+     (local.get $benchmarkSelector)
      (i32.const 1)
-    )
-   )
-  )
-  (array.set $objectArray
-   (struct.get $Array $array
-    (local.get $literals)
-   )
-   (i32.const 0)
-   (local.get $workloadSelector)
-  )
-  (local.set $mainMethod
-   (ref.cast (ref $CompiledMethod)
-    (local.tee $newObject
-     (struct.new $CompiledMethod
-      (struct.get $VirtualMachine $classObject
-       (local.get $vm)
-      )
-      (call $nextIdentityHash
-       (local.get $vm)
-      )
-      (ref.null none)
-      (local.get $mainBytecodes)
-      (local.get $literals)
-      (i32.const 0)
-      (i32.const 0)
-      (i32.const 0)
-      (struct.get $VirtualMachine $translationThreshold
-       (local.get $vm)
-      )
-      (i32.const 0)
-     )
     )
    )
   )
@@ -1737,18 +1521,39 @@
     (ref.i31
      (i32.const 100)
     )
-    (local.get $mainMethod)
-    (local.get $workloadSelector)
+    (struct.new $CompiledMethod
+     (struct.get $VirtualMachine $classObject
+      (local.get $vm)
+     )
+     (call $nextIdentityHash
+      (local.get $vm)
+     )
+     (ref.null none)
+     (array.new_fixed $byteArray 3
+      (i32.const 112)
+      (i32.const 208)
+      (i32.const 124)
+     )
+     (local.get $literalsOfUnboundMethod)
+     (i32.const 0)
+     (i32.const 0)
+     (i32.const 0)
+     (struct.get $VirtualMachine $translationThreshold
+      (local.get $vm)
+     )
+     (i32.const 0)
+    )
+    (local.get $benchmarkSelector)
    )
   )
-  (local.set $workloadLiterals
+  (local.set $benchmarkLiterals
    (array.new $objectArray
     (ref.null none)
     (i32.const 4)
    )
   )
   (array.set $objectArray
-   (local.get $workloadLiterals)
+   (local.get $benchmarkLiterals)
    (i32.const 0)
    (ref.as_non_null
     (call $smallIntegerForValue
@@ -1757,27 +1562,27 @@
    )
   )
   (array.set $objectArray
-   (local.get $workloadLiterals)
+   (local.get $benchmarkLiterals)
    (i32.const 1)
    (call $smallIntegerForValue
     (i32.const 1)
    )
   )
   (array.set $objectArray
-   (local.get $workloadLiterals)
+   (local.get $benchmarkLiterals)
    (i32.const 2)
    (call $smallIntegerForValue
     (i32.const 2)
    )
   )
   (array.set $objectArray
-   (local.get $workloadLiterals)
+   (local.get $benchmarkLiterals)
    (i32.const 3)
    (call $smallIntegerForValue
     (i32.const 3)
    )
   )
-  (local.set $workloadMethod
+  (local.set $benchmarkMethod
    (struct.new $CompiledMethod
     (struct.get $VirtualMachine $classObject
      (local.get $vm)
@@ -1786,10 +1591,73 @@
      (local.get $vm)
     )
     (ref.null none)
-    (local.get $workloadBytecodes)
+    (array.new_fixed $byteArray 62
+     (i32.const 112)
+     (i32.const 33)
+     (i32.const 176)
+     (i32.const 34)
+     (i32.const 184)
+     (i32.const 34)
+     (i32.const 176)
+     (i32.const 35)
+     (i32.const 184)
+     (i32.const 35)
+     (i32.const 176)
+     (i32.const 34)
+     (i32.const 184)
+     (i32.const 33)
+     (i32.const 176)
+     (i32.const 34)
+     (i32.const 184)
+     (i32.const 34)
+     (i32.const 176)
+     (i32.const 35)
+     (i32.const 184)
+     (i32.const 35)
+     (i32.const 176)
+     (i32.const 34)
+     (i32.const 184)
+     (i32.const 33)
+     (i32.const 176)
+     (i32.const 34)
+     (i32.const 184)
+     (i32.const 34)
+     (i32.const 176)
+     (i32.const 35)
+     (i32.const 184)
+     (i32.const 35)
+     (i32.const 176)
+     (i32.const 34)
+     (i32.const 184)
+     (i32.const 33)
+     (i32.const 176)
+     (i32.const 34)
+     (i32.const 184)
+     (i32.const 34)
+     (i32.const 176)
+     (i32.const 35)
+     (i32.const 184)
+     (i32.const 35)
+     (i32.const 176)
+     (i32.const 34)
+     (i32.const 184)
+     (i32.const 33)
+     (i32.const 176)
+     (i32.const 34)
+     (i32.const 184)
+     (i32.const 34)
+     (i32.const 176)
+     (i32.const 35)
+     (i32.const 184)
+     (i32.const 35)
+     (i32.const 176)
+     (i32.const 34)
+     (i32.const 184)
+     (i32.const 124)
+    )
     (call $newArray
      (local.get $vm)
-     (local.get $workloadLiterals)
+     (local.get $benchmarkLiterals)
     )
     (i32.const 0)
     (i32.const 0)
@@ -1818,7 +1686,7 @@
     )
    )
    (i32.const 0)
-   (local.get $workloadSelector)
+   (local.get $benchmarkSelector)
   )
   (array.set $objectArray
    (struct.get $Array $array
@@ -1827,14 +1695,14 @@
     )
    )
    (i32.const 0)
-   (local.get $workloadMethod)
+   (local.get $benchmarkMethod)
   )
   (struct.set $Dictionary $count
    (local.get $methodDictionary)
    (i32.const 1)
   )
   (struct.set $CompiledMethod $isInstalled
-   (local.get $workloadMethod)
+   (local.get $benchmarkMethod)
    (i32.const 1)
   )
   (i32.const 1)
@@ -1850,7 +1718,7 @@
   (local $selector (ref $Symbol))
   (local $method (ref null $CompiledMethod))
   (local $receiverClass (ref $Class))
-  (local $selectorIndex i32)
+  (local $index i32)
   (local $literals (ref $objectArray))
   (local.set $receiver
    (struct.get $Context $receiver
@@ -1878,35 +1746,17 @@
     )
    )
    (then
-    (local.set $selectorIndex
+    (local.set $index
      (i32.sub
       (local.get $bytecode)
       (i32.const 32)
      )
     )
-    (if
-     (i32.ge_u
-      (local.get $selectorIndex)
-      (array.len
-       (local.get $literals)
-      )
-     )
-     (then
-      (call $pushOnStack
-       (local.get $context)
-       (call $smallIntegerForValue
-        (i32.const 0)
-       )
-      )
-     )
-     (else
-      (call $pushOnStack
-       (local.get $context)
-       (array.get $objectArray
-        (local.get $literals)
-        (local.get $selectorIndex)
-       )
-      )
+    (call $pushOnStack
+     (local.get $context)
+     (array.get $objectArray
+      (local.get $literals)
+      (local.get $index)
      )
     )
     (return
@@ -1935,59 +1785,22 @@
     (i32.const 184)
    )
    (then
-    (if
-     (ref.is_null
-      (local.tee $value2
-       (call $popFromStack
-        (local.get $context)
-       )
-      )
-     )
-     (then
-      (return
-       (i32.const 0)
-      )
-     )
-    )
-    (if
-     (ref.is_null
-      (local.tee $value1
-       (call $popFromStack
-        (local.get $context)
-       )
-      )
-     )
-     (then
-      (call $pushOnStack
-       (local.get $context)
-       (local.get $value2)
-      )
-      (return
-       (i32.const 0)
-      )
-     )
-    )
-    (local.set $int1
-     (call $valueOfSmallInteger
-      (local.get $value1)
-     )
-    )
-    (local.set $int2
-     (call $valueOfSmallInteger
-      (local.get $value2)
-     )
-    )
-    (local.set $result
-     (i32.mul
-      (local.get $int1)
-      (local.get $int2)
-     )
-    )
     (call $pushOnStack
      (local.get $context)
      (ref.as_non_null
       (call $smallIntegerForValue
-       (local.get $result)
+       (i32.mul
+        (call $valueOfSmallInteger
+         (call $popFromStack
+          (local.get $context)
+         )
+        )
+        (call $valueOfSmallInteger
+         (call $popFromStack
+          (local.get $context)
+         )
+        )
+       )
       )
      )
     )
@@ -2002,58 +1815,21 @@
     (i32.const 176)
    )
    (then
-    (if
-     (ref.is_null
-      (local.tee $value2
-       (call $popFromStack
-        (local.get $context)
-       )
-      )
-     )
-     (then
-      (return
-       (i32.const 0)
-      )
-     )
-    )
-    (if
-     (ref.is_null
-      (local.tee $value1
-       (call $popFromStack
-        (local.get $context)
-       )
-      )
-     )
-     (then
-      (call $pushOnStack
-       (local.get $context)
-       (local.get $value2)
-      )
-      (return
-       (i32.const 0)
-      )
-     )
-    )
-    (local.set $int1
-     (call $valueOfSmallInteger
-      (local.get $value1)
-     )
-    )
-    (local.set $int2
-     (call $valueOfSmallInteger
-      (local.get $value2)
-     )
-    )
-    (local.set $result
-     (i32.add
-      (local.get $int1)
-      (local.get $int2)
-     )
-    )
     (call $pushOnStack
      (local.get $context)
      (call $smallIntegerForValue
-      (local.get $result)
+      (i32.add
+       (call $valueOfSmallInteger
+        (call $popFromStack
+         (local.get $context)
+        )
+       )
+       (call $valueOfSmallInteger
+        (call $popFromStack
+         (local.get $context)
+        )
+       )
+      )
      )
     )
     (return
@@ -2078,48 +1854,22 @@
     (i32.const 208)
    )
    (then
-    (if
-     (ref.is_null
-      (local.tee $receiver
-       (call $popFromStack
-        (local.get $context)
-       )
-      )
-     )
-     (then
-      (return
-       (i32.const 0)
-      )
+    (local.set $receiver
+     (call $popFromStack
+      (local.get $context)
      )
     )
-    (local.set $selectorIndex
+    (local.set $index
      (i32.and
       (local.get $bytecode)
       (i32.const 15)
-     )
-    )
-    (if
-     (i32.ge_u
-      (local.get $selectorIndex)
-      (array.len
-       (local.get $literals)
-      )
-     )
-     (then
-      (call $pushOnStack
-       (local.get $context)
-       (local.get $receiver)
-      )
-      (return
-       (i32.const 0)
-      )
      )
     )
     (local.set $selector
      (ref.cast (ref $Symbol)
       (array.get $objectArray
        (local.get $literals)
-       (local.get $selectorIndex)
+       (local.get $index)
       )
      )
     )
@@ -2134,7 +1884,7 @@
     (if
      (ref.is_null
       (local.tee $method
-       (call $lookupInCache
+       (call $lookupInMethodCache
         (local.get $vm)
         (local.get $selector)
         (local.get $receiverClass)
@@ -2153,16 +1903,12 @@
         )
        )
        (then
-        (call $pushOnStack
-         (local.get $context)
-         (local.get $receiver)
-        )
-        (return
-         (i32.const 0)
+        (throw $messageNotUnderstood
+         (local.get $selector)
         )
        )
       )
-      (call $storeInCache
+      (call $storeInMethodCache
        (local.get $vm)
        (local.get $selector)
        (local.get $receiverClass)
@@ -2170,7 +1916,8 @@
       )
      )
     )
-    (local.set $newContext
+    (struct.set $VirtualMachine $activeContext
+     (local.get $vm)
      (call $newContext
       (local.get $vm)
       (local.get $receiver)
@@ -2178,18 +1925,14 @@
       (local.get $selector)
      )
     )
-    (struct.set $VirtualMachine $activeContext
-     (local.get $vm)
-     (local.get $newContext)
-    )
     (return
      (i32.const 0)
     )
    )
   )
-  (i32.const 0)
+  (unreachable)
  )
- (func $15 (type $20) (param $vm (ref $VirtualMachine)) (result i32)
+ (func $interpret (type $20) (param $vm (ref $VirtualMachine)) (result i32)
   (local $context (ref null $Context))
   (local $method (ref null $CompiledMethod))
   (local $bytecode i32)
@@ -2198,7 +1941,7 @@
   (local $resultValue eqref)
   (local $invocationCount i32)
   (local $slots (ref $byteArray))
-  (local $funcIndex i32)
+  (local $functionIndex i32)
   (block $finished
    (loop $execution_loop
     (if
@@ -2252,11 +1995,8 @@
      )
      (then
       (if
-       (i32.eq
-        (struct.get $CompiledMethod $isInstalled
-         (local.get $method)
-        )
-        (i32.const 1)
+       (struct.get $CompiledMethod $isInstalled
+        (local.get $method)
        )
        (then
         (if
@@ -2287,24 +2027,33 @@
       )
      )
      (then
-      (local.set $funcIndex
+      (local.set $functionIndex
        (struct.get $CompiledMethod $functionIndex
         (local.get $method)
        )
       )
-      (drop
+      (if
        (call $executeTranslatedMethod
         (ref.as_non_null
          (local.get $context)
         )
-        (local.get $funcIndex)
+        (local.get $functionIndex)
        )
-      )
-      (local.set $resultValue
-       (call $handleMethodReturn
-        (local.get $vm)
-        (ref.as_non_null
-         (local.get $context)
+       (then
+        (struct.set $CompiledMethod $functionIndex
+         (local.get $method)
+         (i32.const 0)
+        )
+        (br $execution_loop)
+       )
+       (else
+        (local.set $resultValue
+         (call $handleMethodReturn
+          (local.get $vm)
+          (ref.as_non_null
+           (local.get $context)
+          )
+         )
         )
        )
       )
@@ -2435,13 +2184,7 @@
     )
    )
   )
-  (call $reportResult
-   (call $valueOfSmallInteger
-    (local.get $resultValue)
-   )
-  )
-  (return
-   (i32.const 1)
-  )
+  (unreachable)
  )
 )
+

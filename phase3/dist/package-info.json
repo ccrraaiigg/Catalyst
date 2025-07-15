@@ -14,7 +14,7 @@
     "Runtime JIT enable/disable controls",
     "Cross-origin isolation for 5μs timer resolution"
   ],
-  "buildDate": "2025-07-13T20:30:46.507Z",
+  "buildDate": "2025-07-15T07:54:59.109Z",
   "files": {
     "wasm": [
       "catalyst.wasm"

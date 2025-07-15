@@ -12,6 +12,10 @@ When you've changed code, always rebuild.
 
 This system's python executable is 'python3', not 'python'.
 
+## Using JavaScript
+
+If the resultant clause of an if statement is one line, don't put in curly braces.
+
 ## WASM Tools
 
 The only WASM tools you may use are 'wasm-tools' and 'wasm-opt'. You may not use wat2wasm or any other WASM tools.

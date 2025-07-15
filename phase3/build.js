@@ -41,7 +41,7 @@ function dumpWasm(wasmFile) {
     try {
         console.log(`🔍 Analyzing ${wasmFile}...`);
         
-        const dumpFile = wasmFile.replace('.wasm', '.dump.wat');
+        const dumpFile = wasmFile.replace('.wasm', '.dump');
         const result = spawnSync('wasm-tools', ['dump', wasmFile], {
             cwd: process.cwd()
         });
@@ -115,21 +115,17 @@ function main() {
     ensureDir(outputDir);
 
     // Compile WAT files to WASM
-    // WAT files to build - using the complete s-expression version
-    const watFiles = [
-        { source: 'catalyst.s-expressions-nearley.wat', output: 'catalyst.wasm' }
-    ];
+    const watFiles = ['catalyst.wat'];
     let allSuccess = true;
 
-    for (const watConfig of watFiles) {
-        const watFile = watConfig.source;
+    for (const watFile of watFiles) {
         if (!fs.existsSync(watFile)) {
             console.error(`✗ WAT file not found: ${watFile}`);
             allSuccess = false;
             continue;
         }
 
-        const wasmFile = path.join(outputDir, watConfig.output);
+        const wasmFile = path.join(outputDir, watFile.replace('.wat', '.wasm'));
         
         if (!compileWatToWasm(watFile, wasmFile)) {
             allSuccess = false;
@@ -208,7 +204,7 @@ function main() {
         ],
         buildDate: new Date().toISOString(),
         files: {
-            wasm: watFiles.map(f => f.output),
+            wasm: watFiles.map(f => f.replace('.wat', '.wasm')),
             javascript: jsFiles,
             test: 'test.html',
             config: '.htaccess'
