@@ -1,7 +1,7 @@
 {
   "name": "squeakwasm-phase3",
   "version": "3.0.0",
-  "description": "SqueakWASM VM Phase 3: JIT Compilation Support",
+  "description": "SqueakWASM VM Phase 3: Method Translation Support",
   "phase": 3,
   "scripts": {
     "build": "node build.js",
@@ -12,9 +12,9 @@
     "start-llm": "node start-with-llm.js"
   },
   "features": [
-    "Real bytecode-to-WASM JIT compilation using CDN-loaded WASM tools",
-    "Hot method detection and compilation",
-    "JIT compilation statistics",
+    "Real bytecode-to-WASM method translation using CDN-loaded WASM tools",
+    "Hot method detection and translation",
+    "method translation statistics",
     "Performance monitoring",
     "Debug mode support",
     "Enhanced 3 workload example with translated methods",

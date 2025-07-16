@@ -7,7 +7,7 @@ class SqueakVM {
 
         this.stats = {
             totalInvocations: 0,
-            compilations: 0,
+            translations: 0,
             cachedMethods: 0,
             executionTime: 0,
             optimizedMethods: 0,
@@ -57,7 +57,7 @@ class SqueakVM {
 
                         this.translateMethodToWASM(method, receiverIdentityHash).then(() => {
                             // Translation complete - function now available in function table.
-                            if (this.debugMode) console.log(`🔥 Translation complete for method ${method}.`)})},
+                            if (this.debugMode) console.log(`🔥 Translation complete for receiver with identity hash ${receiverIdentityHash}.`)})},
                     
                     debugLog: (level, message, messageLength) => {
 			if (this.debugMode) {
@@ -67,9 +67,9 @@ class SqueakVM {
 		this.coreWASMModule = wasmModule
 		this.coreWASMExports = this.coreWASMModule.instance.exports
 		this.vm = this.coreWASMExports.initialize()
+		this.coreWASMExports.createMinimalObjectMemory(this.vm)
 
 		if (!this.vm) throw new Error('WASM VM initialization failed')
-		this.coreWASMExports.createMinimalObjectMemory(this.vm)
 		console.log('✅ SqueakWASM VM initialized successfully')
 
 		this.functionTable = this.coreWASMExports.functionTable
@@ -217,7 +217,8 @@ class SqueakVM {
                 receivedResult = value}
 
             try {
-                // Run the VM interpreter (this will execute the workload example)
+                // Run the VM interpreter (this will execute the benchmark example)
+		this.coreWASMExports.resetMinimalMemory(this.vm)
                 const result = this.coreWASMExports.interpret(this.vm)
                 this.stats.totalInvocations++
                 
@@ -243,7 +244,7 @@ class SqueakVM {
 
     // method translation: Translate bytecode to WAT, compile to WASM function.
     async translateMethodToWASM(method, receiverIdentityHash) {
-        console.log(`🔍 [TRANSLATION DEBUG] translateMethodToWASM called: method=${method}, receiver identity hash=${receiverIdentityHash}, translationEnabled=${this.translationEnabled}`)
+        console.log(`🔍 [TRANSLATION DEBUG] translateMethodToWASM called: receiver identity hash=${receiverIdentityHash}, translationEnabled=${this.translationEnabled}`)
 
         try {
             const watCode = await this.translateMethodToWAT(method, receiverIdentityHash)
@@ -253,14 +254,14 @@ class SqueakVM {
                 if (this.debugMode) {
                     console.log(`❌ Translation failed - no optimized WAT available.`)
                     console.log(`🔄 Method will continue being interpreted`)}
-		// Return 0 to indicate no compiled method available
+		// Return 0 to indicate no translated method available
                 return 0}
 	    
 	    // Compile WAT to WASM function and store in function table
 	    const compiledFunction = await this.compileWATToFunction(watCode)
 	    
 	    // Get the next available function table index
-	    const functionIndex = this.stats.translations + 1 // Start at index 1
+	    const functionIndex = ++this.stats.translations // Start at index 1
 	    
 	    // Store the compiled function in the function table
 	    this.functionTable.set(functionIndex, compiledFunction)
@@ -269,18 +270,15 @@ class SqueakVM {
 	    this.methodTranslations.set(method, compiledFunction)
 	    
 	    // Set the compiledFunction field in the WASM $CompiledMethod struct
-	    if (this.coreWASMExports.setCompiledFunctionIndex) {
-                this.coreWASMExports.setCompiledFunctionIndex(method, functionIndex)}
+            this.coreWASMExports.setMethodFunctionIndex(method, functionIndex)
 	    
-	    const compilationTime = performance.now() - startTime
-	    this.stats.translations++
+	    const compilationTime = performance.now() - this.startTime
 	    this.stats.cachedMethods++
 	    
 	    // Debug log for translation
-	    console.log(`[TRANSLATION] Compiled method=${method} to functionIndex=${functionIndex} in ${compilationTime.toFixed(2)}ms`)
+	    console.log(`[TRANSLATION] Translated method to functionIndex=${functionIndex} in ${compilationTime.toFixed(2)}ms`)
 	    if (this.debugMode) {
-                console.log(`🔥 Translated method ${method} in ${compilationTime.toFixed(2)}ms.`)
-                console.log(`📄 Generated WAT:\n${watCode}`)
+                console.log(`🔥 Translated method in ${compilationTime.toFixed(2)}ms.`)
                 console.log(`📍 Stored in function table at index ${functionIndex}`)}
 	    
 	    // Return function table index for WASM to use with call_indirect
@@ -288,21 +286,21 @@ class SqueakVM {
 	catch (error) {
 	    console.error('❌ Translation failed:', error)
 
-	    // Return 0 to indicate no compiled method available -
+	    // Return 0 to indicate no translated method available -
 	    // VM will fall back to interpretation.
 	    return 0}}
 
     // Translate Squeak bytecode to WAT (WebAssembly Text format)
     async translateMethodToWAT(method, receiverIdentityHash) {
 	if (!this.translationEnabled) return 0
-	const startTime = performance.now()
+	this.startTime = performance.now()
 	
-	console.log(`🔍 [TRANSLATE DEBUG] translateMethodToWAT called with method:`, method, 'available')
+	console.log(`🔍 [TRANSLATE DEBUG] translateMethodToWAT available'`)
 	
 	// Get or generate interpreted result for this method
 	let cachedInterpretedResult = method ? this.interpretedResults.get(method) : null
 
-	if (!cachedInterpretedResult && method && method) {
+	if (!cachedInterpretedResult && method) {
 	    // Execute this method in interpretation mode to get the reference result
 	    try {
 		// Use receiver = 100
@@ -312,14 +310,14 @@ class SqueakVM {
 		    this.interpretedResults.set(method, cachedInterpretedResult)
 
 		    if (this.debugMode) {
-			console.log(`🔍 Cached new interpreted result for method ${method}: ${cachedInterpretedResult}`)}}}
+			console.log(`🔍 Cached new interpreted result for method: ${cachedInterpretedResult}`)}}}
 	    catch (error) {
 		if (this.debugMode) console.log(`⚠️ Failed to execute method in interpretation mode: ${error}`)}}
 
-	if (this.debugMode) console.log(`🔍 Using interpreted result for method ${method}:`, cachedInterpretedResult)
+	if (this.debugMode) console.log(`🔍 Using interpreted result for receiver with identity hash ${receiverIdentityHash}:`, cachedInterpretedResult)
 	
 	// Try cloud-powered semantic optimization
-	const bytecodesObject = this.coreWASMExports.getCompiledMethodBytecodes(method)
+	const bytecodesObject = this.coreWASMExports.methodBytecodes(method)
 
 	const optimization = await this.analyzeAndOptimize(
 	    Array.from(
@@ -466,7 +464,7 @@ class SqueakVM {
 	const analysis = this.analyzeBytecodeStructure(bytecodes)
 	
 	return {
-	    summary: this.generateSummary(operations, analysis, bytecodes),
+	    summary: '',
 	    operations: operations,
 	    analysis: analysis,
 	    bytecodes: bytecodes.map(b => `0x${b.toString(16)}`),
@@ -520,18 +518,6 @@ class SqueakVM {
 	    if (bytecode === 0x7D) analysis.returnType = 'receiver'}
 
 	return analysis}
-
-    /**
-     * Generate human-readable summary from analysis
-     */
-    generateSummary(operations, analysis, bytecodes) {
-	const opStr = operations.join(' → ')
-	
-	// Only provide generic summaries - no hints about functionality
-	if (analysis.hasFieldAccess && operations.length === 2 && operations[1] === 'return_top')
-	    return `Return field value from receiver`
-	
-	return `Execute bytecode sequence`}
 
     /**
      * Estimate computational complexity
@@ -818,7 +804,7 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	    
 	    // 2. Compile and execute WAT optimization
 	    console.log(`🤖 Executing WAT optimization...`)
-	    const optimizedResult = await this.executeWATOptimized(watCode, method, testReceiver)
+	    const optimizedResult = await this.executeWATOptimized(watCode, method)
 	    console.log(`🤖 WAT optimization returned: ${optimizedResult}`)
 	    
 	    // 3. Compare results
@@ -868,25 +854,28 @@ Please fix the errors above and generate ONLY the corrected function definition.
      * the VM's method cache, setting the method's $compiledFunc
      * field, running the VM normally, then comparing results
      */
-    async executeWATOptimized(watCode, method, receiver) {
+    async executeWATOptimized(watCode, method) {
 	try {
 	    if (!this.coreWASMModule || !this.coreWASMModule.instance) throw new Error('WASM VM not initialized')
 	    console.log(`🔧 Installing LLM-optimized method in VM method cache for validation`)
-	    
+
 	    // Compile the WAT code to a function
 	    const compiledFunction = await this.compileWATToFunction(watCode)
 	    
 	    // Store the compiled function in the VM's method cache,
-	    // and set the method's $compiledFinction field correctly.
+	    // and set the method's $compiledFunctionIndex field correctly.
 	    let originalCompiledFunctionIndex = null
 	    
 	    // Save original compiled function index
-	    originalCompiledFunctionIndex = this.coreWASMExports.getCompiledFunctionIndex(method)
+	    originalCompiledFunctionIndex = this.coreWASMExports.getMethodFunctionIndex(method)
+	    const originalFunction = this.functionTable.get(originalCompiledFunctionIndex)
+	    const functionIndex = this.stats.translations + 1
 	    
 	    // Set the new compiled function index
-	    this.coreWASMExports.setCompiledFunctionIndex(method, functionIndex)
+	    this.functionTable.set(functionIndex, compiledFunction)
+	    this.coreWASMExports.setMethodFunctionIndex(method, functionIndex)
 	    
-	    console.log(`🔧 Temporarily installed LLM function at index ${functionIndex} for method ${method}`)
+	    console.log(`🔧 Temporarily installed LLM function at index ${functionIndex}`)
 	    
 	    // Run the VM normally - it will use the cached compiled function
 	    const vmResult = await this.run()
@@ -897,12 +886,11 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	    console.log(`🔧 VM executed with LLM function, result: ${actualResult}`)
 	    
 	    // Restore the original state
-	    if (method && this.coreWASMExports.setCompiledFunctionIndex) {
-		this.coreWASMExports.setCompiledFunctionIndex(method, originalCompiledFunctionIndex)
-		console.log(`🔧 Restored original compiled function index ${originalCompiledFunctionIndex} for method ${method}`)}
+	    this.coreWASMExports.setMethodFunctionIndex(method, originalCompiledFunctionIndex)
+	    console.log(`🔧 Restored original compiled function index ${originalCompiledFunctionIndex} for method`)
 	    
 	    // Restore original function table entry
-	    this.functionTable.set(functionIndex, originalFunction)
+	    this.functionTable.set(originalCompiledFunctionIndex, originalFunction)
 	    
 	    if (actualResult === null || actualResult === undefined) throw new Error('VM execution produced null/undefined result')
 	    
@@ -1067,7 +1055,6 @@ Please fix the errors above and generate ONLY the corrected function definition.
   (import "env" "smallIntegerForValue" (func $smallIntegerForValue (param i32) (result eqref)))
   (import "env" "contextReceiver" (func $contextReceiver (param eqref) (result eqref)))
   (import "env" "contextLiteralAt" (func $contextLiteralAt (param eqref) (param i32) (result eqref)))
-  (import "env" "contextMethod" (func $contextMethod (param eqref) (result eqref)))
   (import "env" "debugLog" (func $debugLog (param i32)))
   
   ${preparedWatCode}
@@ -1375,7 +1362,7 @@ Please fix the errors above and generate ONLY the corrected function definition.
 		    wasmBytes.slice(
 			sectionStart,
 			Math.min(sectionStart + 16,sectionEnd)))
-		    
+		
 		const headerHex = Array.from(headerBytes)
 		      .map(b => b.toString(16).padStart(2, '0'))
 		      .join(' ')
@@ -1440,7 +1427,7 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	    let specificError = null
 	    
 	    try {
-		actualResult = await this.executeWATOptimized(watCode, testReceiver)}
+		actualResult = await this.executeWATOptimized(watCode, method)}
 	    catch (executionError) {
 		// CRITICAL FIX: Capture the specific execution error message
 		specificError = executionError.message || executionError.toString()
@@ -1482,17 +1469,17 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	    catch (wasmError) {
 		if (this.debugMode)
 		    console.log(`⚠️ Could not generate WASM analysis for error case: ${wasmError}`)}}
-	    
-	    return {
-		error: specificError,
-		// DON'T return expected result - LLM shouldn't see it
-		actualResult: null,
-		testReceiver: 100,
-		method: method ? 'available' : 'null',
-		// Include WASM analysis if available
-		wasmValidationError: wasmValidationResult?.error,
-		wasmDump: wasmValidationResult?.dump,
-		wasmValidationValid: wasmValidationResult?.valid}}
+	
+	return {
+	    error: specificError,
+	    // DON'T return expected result - LLM shouldn't see it
+	    actualResult: null,
+	    testReceiver: 100,
+	    method: method ? 'available' : 'null',
+	    // Include WASM analysis if available
+	    wasmValidationError: wasmValidationResult?.error,
+	    wasmDump: wasmValidationResult?.dump,
+	    wasmValidationValid: wasmValidationResult?.valid}}
 
     /**
      * Configure LLM settings (called from external config)
@@ -1509,7 +1496,7 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	    // Create a minimal WASM module with explicit signature matching
 	    const fullWatModule = this.buildFullWatModule(watCode)
 
-	    if (this.debugMode) console.log(`📝 Compiling JIT WAT module:\n${fullWatModule}`)
+	    if (this.debugMode) console.log(`📝 Compiling method translation WAT module:\n${fullWatModule}`)
 	    
 	    // Validate that the WAT doesn't contain nested modules
 	    if (fullWatModule.match(/\(module\s+\(module/))
@@ -1556,19 +1543,18 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	    // Instantiate with imports from main VM
 	    const wasmModule = await WebAssembly.instantiate(wasmBytes, {
 		env: {
-		    onContextPush: this.coreWASMExports.onContextPush || (() => {}),
-		    popFromContext: this.coreWASMExports.popFromContext || (() => null),
-		    valueOfSmallInteger: this.coreWASMExports.valueOfSmallInteger || (() => 0),
-		    smallIntegerForValue: this.coreWASMExports.smallIntegerForValue || (() => null),
-		    contextReceiver: this.coreWASMExports.contextReceiver || (() => null),
-		    contextLiteralAt: this.coreWASMExports.contextLiteralAt || (() => null),
-		    contextMethod: this.coreWASMExports.contextMethod || (() => null),
+		    onContextPush: this.coreWASMExports.onContextPush,
+		    popFromContext: this.coreWASMExports.popFromContext,
+		    valueOfSmallInteger: this.coreWASMExports.valueOfSmallInteger,
+		    smallIntegerForValue: this.coreWASMExports.smallIntegerForValue,
+		    contextReceiver: this.coreWASMExports.contextReceiver,
+		    contextLiteralAt: this.coreWASMExports.contextLiteralAt,
 		    debugLog: (level) => {
-			if (this.debugMode) console.log(`🐛 [${level}] JIT debugLog called`)}}})
+			if (this.debugMode) console.log(`🐛 [${level}] method translation debugLog called`)}}})
 
 	    // Extract the compiled function
 	    const exportNames = Object.keys(wasmModule.instance.exports)
-	    const expectedExport = `jit_method_${this.stats.translations}`
+	    const expectedExport = `translated_method_${this.stats.translations}`
 	    let compiledFunction = wasmModule.instance.exports[expectedExport]
 	    
 	    if (typeof compiledFunction !== 'function') {
@@ -1576,14 +1562,14 @@ Please fix the errors above and generate ONLY the corrected function definition.
 		    compiledFunction = wasmModule.instance.exports[exportNames[0]]}
 	    
 	    if (typeof compiledFunction !== 'function')
-		throw new Error(`JIT export not found. Available: ${exportNames.join(', ')}`)
+		throw new Error(`method translation export not found. Available: ${exportNames.join(', ')}`)
 
 	    if (this.debugMode)
-		console.log(`✅ JIT function compiled and validated with explicit signature (param eqref) (result i32)`)
+		console.log(`✅ method translation function compiled and validated with explicit signature (param eqref) (result i32)`)
 	    
 	    return compiledFunction}
 	catch (error) {
-	    console.error('❌ JIT WAT compilation failed:', error)
+	    console.error('❌ method translation WAT compilation failed:', error)
 	    throw error}}
 
     // Load js-wasm-tools from CDN
@@ -1753,7 +1739,7 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	    window.wabt = null}}
 
     // Configuration methods
-    setJITEnabled(enabled) {
+    setMethodTranslationEnabled(enabled) {
 	this.translationEnabled = enabled
 	if (this.debugMode) console.log(`🔧 Translation ${enabled ? 'enabled' : 'disabled'}`)}
 
@@ -1791,7 +1777,7 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	this.llmConfig.enabled = false
 	if (this.debugMode) console.log('☁️ LLM optimization disabled')}
 
-    getJITStatistics() {
+    getMethodTranslationStatistics() {
 	const totalValidations = this.stats.translationValidationsPassed + this.stats.translationValidationsFailed
 	const totalWasmValidations = this.stats.compilationValidationsPassed + this.stats.compilationValidationsFailed
 	return {
@@ -2286,39 +2272,74 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	// First attempt: Full detailed prompt
 	if (attempt === 1) {
 	    const englishInterpretation = this.generateEnglishInterpretation(bytecodes, method)
-	    const functionName = `jit_method_${this.stats.translations}`
-	    	    
-	    const prompt = `You are a compiler backend that takes a list of Smalltalk method bytecodes (described in English) from an active Smalltalk method context and emits an efficient WebAssembly GC-native function that implements the same algorithm. The goal is not to emulate the bytecodes, but to infer the underlying logic they express and compile that into correct, clean, direct WASM code using GC types, not a stack interpreter. Do not omit anything for brevity you are producing a function that must work.
+	    const functionName = `translated_method_${this.stats.translations}`
+	    
+	    const prompt = `You are a compiler backend that takes a list of Smalltalk method
+bytecodes (described in English) from an active Smalltalk method
+context and emits an efficient WebAssembly GC-native function that
+implements the same algorithm. The goal is not to emulate the
+bytecodes, but to infer the underlying logic they express and compile
+that into correct, clean, direct WASM code using GC types, not a
+bytecode interpreter. Do not omit anything for brevity; you are
+producing a function that must work.
 
 
 YOU MAY ASSUME:
 
-- All Smalltalk objects are of type eqref. You can get the integer value of a SmallInteger with a function having signature (func $extractIntegerValue (param eqref) (result i32)). You can create the SmallInteger corresponding to an i32 integer with a function having signature (func $createSmallInteger (param i32). If you're going to do math with integers and push a SmallInteger as your function's result, do the math in i32 space and create the SmallInteger at the end.
+- All Smalltalk objects are of type eqref. You can get the integer
+  value of a SmallInteger with a function having signature (func
+  $valueOfSmallInteger (param eqref) (result i32)). You can create the
+  SmallInteger corresponding to an i32 integer with a function having
+  signature (func $smallIntegerForValue (param i32).
 
-- The active Smalltalk method context is available as your function's parameter. The function you write will have the signature (func $${functionName} (param $context eqref)).
+- The active Smalltalk method context is available as your function's
+  parameter. The function you write will have the signature (func
+  $${functionName} (param $context eqref)).
 
-- You can get the context receiver with a function having signature (func $getContextReceiver (param eqref) (result eqref)). The first argument is $context, the result is a Smalltalk object.
+- You can get the context receiver with a function having signature
+  (func $contextReceiver (param eqref) (result eqref)). The first
+  argument is $context, the result is a Smalltalk object.
 
-- You can get context literals with a imported function having signature (func $getContextLiteral (param eqref) (param i32) (result eqref)). The first argument is $context, the second is the index of the literal you want.
+- You can get context literals with a imported function having
+  signature (func $contextLiteralAt (param eqref) (param i32) (result
+  eqref)). The first argument is $context, the second is the index of
+  the literal you want.
 
-- You can push a Smalltalk object onto the Smalltalk context's stack with a function having signature (func $onContextPush (param eqref) (param eqref)). The first argument is $context, the second is the Smalltalk object you want to push.
+- You can push a Smalltalk object onto the Smalltalk context's stack
+  with a function having signature (func $onContextPush (param eqref)
+  (param eqref)). The first argument is $context, the second is the
+  Smalltalk object you want to push.
 
-- You can pop a Smalltalk object from the Smalltalk context's stack with a function having signature (func $popFromContext (param eqref) (result eqref)). The argument is $context, the result is a Smalltalk object.
+- You can pop a Smalltalk object from the Smalltalk context's stack
+  with a function having signature (func $popFromContext (param eqref)
+  (result eqref)). The argument is $context, the result is a Smalltalk
+  object.
 
 
 YOUR JOB:
 
-Analyze the list of bytecodes to determine what the method does semantically.
+Analyze the list of bytecodes to determine what the method does
+semantically.
 
-Eliminate redundant stack-based mechanics. Translate the algorithm itself, not the mechanism of bytecode execution.
+Eliminate redundant stack-based mechanics. Translate the algorithm
+itself, not the mechanism of bytecode execution. If you detect
+repetition, use a WASM loop if you can.
 
-Do not substitute a simplified example for the method's algorithm. Implement a precise expression of the method's algorithm.
+If you're going to do math with integers, do the math in i32 space and
+create the SmallInteger at the end. If you need to get the i32 value
+of a SmallInteger object, you should only need to do it once.
 
-Output a valid WAT function using WASM GC instructions to represent the inferred algorithm, with clean control flow and no unnecessary indirection.
+Do not substitute a simplified example for the method's
+algorithm. Implement a precise expression of the method's algorithm.
+
+Output a valid WAT function using WASM GC instructions to represent
+the inferred algorithm, with clean control flow and no unnecessary
+indirection.
 
 Use locals where needed for intermediate values.
 
-At the end of the function, push the result onto the Smalltalk context's stack.
+Make sure the result is at the top of the Smalltalk context's stack at
+the end of the function.
 
 
 BYTECODE ARRAY: [${bytecodes.map(b => '0x' + b.toString(16).padStart(2, '0')).join(', ')}]
@@ -2333,46 +2354,79 @@ ${englishInterpretation}
 
 
 REVERSE ENGINEERING REQUIREMENTS:
-1. **Trace the Execution**: Follow each stack operation to understand the program logic. Calculate what is on the stack after every instruction, and use that to infer what computation the method is doing.
-2. **No Placeholders**: Do not use simplified examples, assumptions, or demonstrations
-3. **Execute Precisely**: The bytecode operations represent a specific deterministic computation
+
+1. **Trace the Execution**: Follow each stack operation to understand
+the program logic. Calculate what is on the stack after every
+instruction, and use that to infer what computation the method is
+doing.
+
+2. **No Placeholders**: Do not use simplified examples, assumptions,
+or demonstrations
+
+3. **Execute Precisely**: The bytecode operations represent a specific
+deterministic computation
 
 
 ANALYSIS FRAMEWORK:
+
 - What operations occur in sequence?
+
 - How do the literals and receiver values interact?
+
 - What is the final result being computed?
+
 - How can this exact computation be implemented efficiently in WAT?
 
 
 TYPE INVARIANTS:
+
 - NEVER USE type externref. Use type eqref instead. $receiver is of always of type eqref.
 
 
 WEBASSEMBLY STACK MANAGEMENT:
-- Every value pushed to the WASM stack must be consumed or explicitly dropped.
-- The most common error is an unbalanced stack, from not consuming all of a function's output, or pushing the wrong number of arguments for a function. Check a function's signature before calling it!
-- Your function should not leave anything on the WASM stack. Do not use a return type in the function signature. NEVER USE the 'drop' instruction. Instead, make sure the stack is balanced. Do not confuse the WASM stack with the Smalltalk context stack they are different things.
+
+- Every value pushed to the WASM stack must be consumed or explicitly
+  dropped.
+
+- The most common error is an unbalanced stack, from not consuming all
+  of a function's output, or pushing the wrong number of arguments for
+  a function. Check a function's signature before calling it!
+
+- Your function should not leave anything on the WASM stack. Do not
+  use a return type in the function signature. NEVER USE the 'drop'
+  instruction. Instead, make sure the stack is balanced. Do not
+  confuse the WASM stack with the Smalltalk context stack; they are
+  different things.
 
 
 WEBASSEMBLY SPECIFICATION REFERENCE:
-For complete WebAssembly language details, refer to: https://webassembly.github.io/spec/versions/core/WebAssembly-3.0-draft.pdf
+
+For complete WebAssembly language details, refer to:
+https://webassembly.github.io/spec/versions/core/WebAssembly-3.0-draft.pdf
 
 
 SMALLTALK INVARIANTS:
 
-- You must always end the function by pushing your result on the Smalltalk stack. Do not leave anything on the WASM stack your function's signature has no return type.
+- You must always end the function by pushing your result on the
+  Smalltalk stack. Do not leave anything on the WASM stack your
+  function's signature has no return type.
 
 
 VALIDATION MINDSET:
 
 After an attempt that fails validation, don't just fix syntax errors:
+
 - Check WebAssembly stack balance are you leaving extra values?
-- Ensure your function signature matches the requirements exactly
-- Focus on correctness of the end result, not bytecode fidelity
+
+- Ensure your function signature matches the requirements exactly.
+
+- Focus on correctness of the end result, not bytecode fidelity.
 
 
-REMEMBER: This is reverse engineering. The bytecode sequence performs a specific computation. Your job is to determine what that computation is and implement it correctly - not to create a simplified demonstration or placeholder.
+REMEMBER: This is reverse engineering. The bytecode sequence performs
+a specific computation. Your job is to determine what that computation
+is and implement it correctly - not to create a simplified
+demonstration or placeholder.
 
 Generate ONLY the function definition.`
 
@@ -2385,6 +2439,7 @@ Generate ONLY the function definition.`
 	
 	// Subsequent attempts: Include error feedback in the prompt
 	// Single comprehensive prompt with all error details
+
 	let prompt = `Please try again with a corrected WAT function. If you only have a validation error (no parsing error), then you're on the right track with the algorithm you just need to fix your WAT. The most common error is an unbalanced stack, from not consuming all of a function's output, or pushing the wrong number of arguments for a function. Check a function's signature before calling it! Your function should not leave anything on the WASM stack. Do not use a return type in the function signature. NEVER USE the 'drop' instruction. Instead, make sure the stack is balanced. NEVER USE type externref. Use type eqref instead. $receiver is of type eqref. Here's what went wrong with the previous attempt:
 
 `

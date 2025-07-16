@@ -109,7 +109,7 @@ function copyFile(src, dest) {
 }
 
 function main() {
-    console.log('🚀 Building SqueakWASM Phase 3 with JIT Compilation...\n');
+    console.log('🚀 Building SqueakWASM Phase 3 with Method Translation...\n');
 
     const outputDir = './dist';
     ensureDir(outputDir);
@@ -189,17 +189,17 @@ function main() {
     const packageInfo = {
         name: 'squeakwasm-phase3',
         version: '3.0.0',
-        description: 'SqueakWASM VM Phase 3: JIT Compilation Support',
+        description: 'SqueakWASM VM Phase 3: Method Translation Support',
         phase: 3,
         features: [
-            'Real bytecode-to-WASM JIT compilation',
+            'Real bytecode-to-WASM method translation',
             'Hot method detection and compilation',
-            'JIT compilation statistics',
+            'method translation statistics',
             'Performance monitoring',
             'Debug mode support',
             'Enhanced 3 workload example with translated methods',
             'Proper UTF-8 character encoding for emoji and symbols',
-            'Runtime JIT enable/disable controls',
+            'Runtime translation enable/disable controls',
             'Cross-origin isolation for 5μs timer resolution'
         ],
         buildDate: new Date().toISOString(),
@@ -220,15 +220,15 @@ function main() {
 
     if (allSuccess) {
         console.log('\n🎉 Phase 3 build completed successfully!');
-        console.log('\nTo test the JIT compilation:');
+        console.log('\nTo test the method translation:');
         console.log('1. Start a web server: python -m http.server 8000');
         console.log('2. Open: http://localhost:8000/dist/test.html');
-        console.log('3. Click "Run (3 workload) with JIT" to execute the basic example');
-        console.log('4. Use "Run Multiple Times" to trigger JIT compilation (threshold: 1000 invocations)');
+        console.log('3. Click "Run (3 workload) with translation" to execute the basic example');
+        console.log('4. Use "Run Multiple Times" to trigger method translation (threshold: 1000 invocations)');
         console.log('\nPhase 3 Features:');
         console.log('• ⚡ Bytecode-to-WASM translation during execution');
-        console.log('• 📊 JIT compilation statistics and monitoring');
-        console.log('• 🔧 Runtime JIT enable/disable toggle');
+        console.log('• 📊 method translation statistics and monitoring');
+        console.log('• 🔧 Runtime translation enable/disable toggle');
         console.log('• 🐛 Debug mode for detailed compilation logs');
         console.log('• 🚀 Performance improvements for hot methods');
         console.log('• 🎨 Proper UTF-8 character display for all emoji and symbols');

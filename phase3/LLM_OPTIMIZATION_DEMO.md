@@ -1,6 +1,6 @@
 # LLM Optimization Demo 🤖
 
-This demonstrates the Squeak VM's **LLM-powered bytecode optimization** feature. The VM can automatically generate optimized WebAssembly code using either **OpenAI GPT** or **Anthropic Claude** models instead of traditional manual compilation.
+This demonstrates the Squeak VM's **LLM-powered bytecode optimization** feature. The VM can automatically generate optimized WebAssembly code using either **OpenAI GPT** or **Anthropic Claude** models instead of traditional manual translation.
 
 ## 🎯 What This Does
 
@@ -11,7 +11,7 @@ The LLM optimizer:
 4. **Validates** the optimization produces correct results
 5. **Falls back** to interpretation if optimization fails
 
-This is **true AI-assisted compilation** - the LLM acts as an expert WebAssembly programmer.
+This is **true AI-assisted translation** - the LLM acts as an expert WebAssembly programmer.
 
 ## 🚀 Quick Start
 
@@ -98,7 +98,7 @@ Bytecodes → English Analysis → LLM Reasoning → Optimized WAT → Advanced 
 
 **LLM-Generated WAT:**
 ```wat
-(func $jit_method_0 (param $ctx i32) (result i32)
+(func $translated_method_0 (param $ctx i32) (result i32)
   (call $pushOnStack (local.get $ctx) (call $createSmallInteger (i32.const 2)))
   (return (i32.const 1)))
 ```
@@ -165,7 +165,7 @@ async callLLMAPI(prompt) {
 
 LLM optimization can provide:
 - **10-100x speedup** for mathematical computations
-- **Constant-time execution** for compile-time-calculable expressions  
+- **Constant-time execution** for translation-time-calculable expressions  
 - **Reduced memory allocation** through direct value computation
 - **Better instruction-level parallelism** through optimized instruction ordering
 
@@ -177,11 +177,11 @@ LLM optimization can provide:
 - **Profile-guided optimization**: Use runtime data to improve generated code
 - **Local model support**: Integration with local LLMs for privacy/cost
 
-This represents the **future of dynamic compilation** - AI systems that understand code intent and generate optimal implementations automatically.
+This represents the **future of dynamic translation** - AI systems that understand code intent and generate optimal implementations automatically.
 
 ## 💡 Tips
 
 - LLM optimization works best on **mathematical** and **computational** bytecode sequences
-- **Control flow heavy** code still benefits from traditional compilation
+- **Control flow heavy** code still benefits from traditional translation
 - The system **validates** all optimizations, so incorrect LLM outputs are automatically discarded
 - **Cost**: Each optimization costs ~$0.01-0.02 in API credits 

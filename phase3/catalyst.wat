@@ -19,19 +19,25 @@
  
  (import "env" "debugLog"
 	 (func $debugLog
-	       (param i32)          ;; level
-	       (param i32)          ;; message
-	       (param i32)))        ;; message length
+	       (param i32)))          ;; level
 
  ;; linear memory for efficient byte transfer between WASM and JS
  (export "bytes" (memory $0))
 
- ;; functions exported to JS
- 
  (export "functionTable" (table $functionTable))
+
+ ;; functions exported to JS (in roughly the order JS uses them).
+
  (export "initialize" (func $initialize))
+ (export "createMinimalObjectMemory" (func $createMinimalObjectMemory))
+ (export "resetMinimalMemory" (func $resetMinimalMemory))
+ (export "interpret" (func $interpret))
+ (export "byteArrayAt" (func $byteArrayAt))
+ (export "byteArrayLength" (func $byteArrayLength))
+ (export "copyByteArrayToMemory" (func $copyByteArrayToMemory))
  (export "methodBytecodes" (func $methodBytecodes))
  (export "setMethodFunctionIndex" (func $setMethodFunctionIndex))
+ (export "getMethodFunctionIndex" (func $getMethodFunctionIndex))
  (export "onContextPush" (func $onContextPush))
  (export "popFromContext" (func $popFromContext))
  (export "valueOfSmallInteger" (func $valueOfSmallInteger))
@@ -40,12 +46,6 @@
  (export "contextReceiver" (func $contextReceiver))
  (export "methodLiterals" (func $methodLiterals))
  (export "contextLiteralAt" (func $contextLiteralAt))
- (export "contextMethod" (func $contextMethod))
- (export "byteArrayAt" (func $byteArrayAt))
- (export "byteArrayLength" (func $byteArrayLength))
- (export "copyByteArrayToMemory" (func $copyByteArrayToMemory))
- (export "createMinimalObjectMemory" (func $createMinimalObjectMemory))
- (export "interpret" (func $interpret))
 
  ;; types defining Smalltalk classes
  ;;
@@ -57,8 +57,10 @@
  ;; reference type i31, each instance of every other class is of a
  ;; reference type using a user-defined struct type. The common
  ;; supertype of all those reference types is built-in reference type
- ;; eqref. The type for arrays of bytes has built-in type i8 as its
- ;; default type.
+ ;; eqref. The type for raw arrays of bytes has built-in type i8 as
+ ;; its default type, and $ByteArray is a Smalltalk object type that
+ ;; wraps it. There's a similar relationship between $wordArray and
+ ;; $WordArray, and between $objectArray and $Array.
  ;; 
  ;; For Smalltalk, we use the terms "slots" and "methods". For WASM,
  ;; we use "fields" and "functions". Smalltalk source is "compiled" to
@@ -147,8 +149,8 @@
 			  
 			  (field $identityHash (mut i32)) 
 			  (field $nextObject (mut eqref)) 
-			  (field $keys (ref $Array)) 
-			  (field $values (ref $Array)) 
+			  (field $keys (mut (ref $Array))) 
+			  (field $values (mut (ref $Array))) 
 			  (field $count (mut i32)))))
 
   (type $Behavior (sub $Object 
@@ -298,6 +300,8 @@
  ;; limitations, but are enforced to be non-null after object memory
  ;; creation.
 
+ (global $benchmarkSelector (mut (ref null $Symbol)) (ref.null none))
+ 
  ;; start of staging bytes
  (global $byteArrayCopyPointer (mut i32) (i32.const 1024))
 
@@ -306,7 +310,101 @@
 
  ;; translated methods function table (the only table in this module)
  (table $functionTable 100 funcref)
+
+ ;; Return whether two $byteArrays are equivalent.
  
+ (func $byteArrayIsEquivalentTo
+       (param $firstObject (ref $ByteArray))
+       (param $secondObject (ref $ByteArray))
+       (result i32)
+
+       (local $firstArray (ref $byteArray))
+       (local $secondArray (ref $byteArray))
+       (local $length i32)
+       (local $index i32)
+
+       ;; Quick reference equality check first
+       (if (result i32)
+	   (ref.eq
+	    (local.get $firstObject)
+	    (local.get $secondObject))
+	   (then
+	    (return
+	      (i32.const 1)))
+	   (else
+	    (local.set $firstArray
+		       (struct.get $ByteArray $array
+				   (local.get $firstObject)))
+
+	    (local.set $secondArray
+		       (struct.get $ByteArray $array
+				   (local.get $secondObject)))
+
+	    (if (result i32)
+		(ref.eq
+		 (local.get $firstArray)
+		 (local.get $secondArray))
+		(then
+		 (return
+		   (i32.const 1)))
+		(else
+		 ;; Check lengths
+		 (if (result i32)
+		     (i32.ne 
+		      (local.tee $length
+				 (array.len (local.get $firstArray)))
+		      (array.len
+		       (local.get $secondArray)))
+		     (then
+		      (return
+			(i32.const 0)))
+		     (else
+		      ;; Compare elements
+		      (loop $loop (result i32)
+			    (if (result i32)
+				(i32.eq
+				 (local.get $index)
+				 (local.get $length))
+				(then (return (i32.const 1)))  ;; All elements equal
+				(else
+				 ;; Compare current elements
+				 (if (result i32)
+				     (i32.ne
+				      (array.get_u $byteArray
+						   (local.get $firstArray)
+						   (local.get $index))
+				      (array.get_u $byteArray
+						   (local.get $secondArray)
+						   (local.get $index)))
+				     (then (return (i32.const 0)))  ;; Elements different
+				     (else
+				      (local.set $index
+						 (i32.add
+						  (local.get $index)
+						  (i32.const 1)))
+				      (br $loop)))))))))))))
+
+ (func $symbolIsEquivalentTo
+       (param $firstSymbol (ref $Symbol))
+       (param $secondSymbol (ref $Symbol))
+       (result i32)
+
+       (if (result i32)
+	   (ref.eq
+	    (local.get $firstSymbol)
+	    (local.get $secondSymbol))
+	   (then
+	    (return
+	      (i32.const 1)))
+	   (else
+	    (call $byteArrayIsEquivalentTo
+		  (ref.cast (ref $ByteArray)
+			    (struct.get $Symbol $slots
+					(local.get $firstSymbol)))
+		  (ref.cast (ref $ByteArray)
+			    (struct.get $Symbol $slots
+					(local.get $secondSymbol)))))))
+       
  (func $newArray
        (param $vm (ref $VirtualMachine)) 
        (param $array (ref $objectArray)) 
@@ -356,13 +454,134 @@
 			 (local.get $vm)
 			 (array.new $objectArray
 				    (ref.null none)
-				    (i32.const 0)))
+				    (i32.const 10)))        ;; initial capacity 10
 		   (call $newArray                  ;; $values
 			 (local.get $vm)
 			 (array.new $objectArray
 				    (ref.null none)
-				    (i32.const 0)))         
+				    (i32.const 10)))        ;; initial capacity 10         
 		   (i32.const 0)))                  ;; $count
+
+ (func $dictionaryAdd
+       (param $vm (ref $VirtualMachine))
+       (param $dictionary (ref $Dictionary))
+       (param $key eqref)
+       (param $value eqref)
+       
+       (local $keys (ref $Array))
+       (local $values (ref $Array))
+       (local $count i32)
+       (local $capacity i32)
+       (local $newKeys (ref $Array))
+       (local $newValues (ref $Array))
+       (local $newKeysArray (ref $objectArray))
+       (local $newValuesArray (ref $objectArray))
+       (local $i i32)
+       (local $existingKey eqref)
+       
+       (local.set $keys
+		  (struct.get $Dictionary $keys
+			      (local.get $dictionary)))
+       (local.set $values
+		  (struct.get $Dictionary $values
+			      (local.get $dictionary)))
+       (local.set $count
+		  (struct.get $Dictionary $count
+			      (local.get $dictionary)))
+       (local.set $capacity
+		  (array.len
+		   (struct.get $Array $array
+			       (local.get $keys))))
+       
+       ;; Check if we need to grow
+       (if (i32.ge_u (local.get $count) (local.get $capacity))
+	   (then
+	    ;; Need to grow - create new arrays with capacity + 10
+	    (local.set $newKeysArray
+		       (array.new $objectArray
+				  (ref.null none)
+				  (i32.add (local.get $capacity) (i32.const 10))))
+	    (local.set $newValuesArray
+		       (array.new $objectArray
+				  (ref.null none)
+				  (i32.add (local.get $capacity) (i32.const 10))))
+	    
+	    ;; Copy existing elements
+	    (local.set $i (i32.const 0))
+	    (block $done_copying
+	      (loop $copy_loop
+		    (br_if $done_copying
+			   (i32.ge_u (local.get $i) (local.get $count)))
+		    
+		    (array.set $objectArray
+			       (local.get $newKeysArray)
+			       (local.get $i)
+			       (array.get $objectArray
+					  (struct.get $Array $array (local.get $keys))
+					  (local.get $i)))
+		    (array.set $objectArray
+			       (local.get $newValuesArray)
+			       (local.get $i)
+			       (array.get $objectArray
+					  (struct.get $Array $array (local.get $values))
+					  (local.get $i)))
+		    
+		    (local.set $i (i32.add (local.get $i) (i32.const 1)))
+		    (br $copy_loop)))
+	    
+	    ;; Create new Array objects and update dictionary
+	    (local.set $newKeys (call $newArray (local.get $vm) (local.get $newKeysArray)))
+	    (local.set $newValues (call $newArray (local.get $vm) (local.get $newValuesArray)))
+	    
+	    (struct.set $Dictionary $keys (local.get $dictionary) (local.get $newKeys))
+	    (struct.set $Dictionary $values (local.get $dictionary) (local.get $newValues))
+	    
+	           (local.set $keys (local.get $newKeys))
+       (local.set $values (local.get $newValues))))
+       
+       ;; Check if key is a Symbol and if an equivalent Symbol already exists
+       (if (ref.test (ref $Symbol) (local.get $key))
+	   (then
+	    ;; Key is a Symbol - check for equivalent existing Symbol
+	    (local.set $i (i32.const 0))
+	    (block $check_done
+	      (loop $check_loop
+		    (br_if $check_done
+			   (i32.ge_u (local.get $i) (local.get $count)))
+		    
+		    ;; Get existing key at index i
+		    (local.set $existingKey
+			       (array.get $objectArray
+					  (struct.get $Array $array (local.get $keys))
+					  (local.get $i)))
+		    
+		    ;; Check if existing key is also a Symbol and is equivalent
+		    (if (ref.test (ref $Symbol) (local.get $existingKey))
+			(then
+			 (if (call $symbolIsEquivalentTo
+				   (ref.cast (ref $Symbol) (local.get $key))
+				   (ref.cast (ref $Symbol) (local.get $existingKey)))
+			     (then
+			      ;; Found equivalent Symbol - don't add, just return
+			      (return)))))
+		    
+		    (local.set $i (i32.add (local.get $i) (i32.const 1)))
+		    (br $check_loop)))))
+       
+       ;; Add the new key/value pair
+       (array.set $objectArray
+		  (struct.get $Array $array (local.get $keys))
+		  (local.get $count)
+		  (local.get $key))
+       (array.set $objectArray
+		  (struct.get $Array $array (local.get $values))
+		  (local.get $count)
+		  (local.get $value))
+       
+       ;; Increment count
+       (struct.set $Dictionary $count
+		   (local.get $dictionary)
+		   (i32.add (local.get $count) (i32.const 1))))
 
  ;; Link $objects via their $nextObject fields.
  
@@ -585,7 +804,7 @@
 			      (i32.const 1)                ;; translationEnabled
 			      (array.new $objectArray      ;; $methodCache
 					 (ref.null none)
-					 (i32.const 0))              
+					 (local.get $methodCacheSize))              
 			      (i32.const 0)                ;; $functionTableBaseIndex
 			      (i32.const 1000)             ;; $translationThreshold
 			      (local.get $methodCacheSize) ;; $methodCacheSize
@@ -929,12 +1148,22 @@
  
  (func $methodBytecodes
        (param $method eqref) 
-       (result (ref eq))
+       (result (ref $byteArray))
+
+       (struct.get $ByteArray $array
+		   (ref.cast (ref $ByteArray)
+			     (struct.get $CompiledMethod $slots
+					 (ref.cast (ref $CompiledMethod)
+						   (local.get $method))))))
+
+ (func $getMethodFunctionIndex
+       (param $method eqref) 
+       (result i32)
        
-       (struct.get $CompiledMethod $slots
+       (struct.get $CompiledMethod $functionIndex
 		   (ref.cast (ref $CompiledMethod)
 			     (local.get $method))))
- 
+  
  (func $setMethodFunctionIndex
        (param $method eqref) 
        (param $index i32)
@@ -981,13 +1210,12 @@
        (param $context eqref) 
        (param $index i32) 
        (result eqref)
-       
-       (call $objectArrayAt
-	     (ref.cast (ref none)
-		       (struct.get $CompiledMethod $literals
-				   (struct.get $Context $method
-					       (ref.cast (ref $Context)
-							 (local.get $context)))))
+
+       (call $arrayAt
+	     (struct.get $CompiledMethod $literals
+			 (struct.get $Context $method
+				     (ref.cast (ref $Context)
+					       (local.get $context))))
 	     (local.get $index)))
  
  (func $contextMethod
@@ -1029,16 +1257,22 @@
        
        (i32.const 1))
  
- (func $objectArrayAt
-       (param $array (ref $objectArray)) 
+ (func $arrayAt
+       (param $array (ref $Array)) 
        (param $index i32) 
        (result eqref)
-       
+
+       (local $objectArray (ref $objectArray))
+
+       (local.set $objectArray
+		  (struct.get $Array $array
+			      (local.get $array)))
+
        (if
 	(i32.eqz
 	 (call $arrayOkayAt
 	       (ref.cast (ref $objectArray)
-			 (local.get $array))
+			 (local.get $objectArray))
 	       (local.get $index)))
 	(then
 	 (return
@@ -1047,9 +1281,9 @@
 
        ;; Safe to access array.
        (array.get $objectArray
-		  (local.get $array)
+		  (local.get $objectArray)
 		  (local.get $index)))
- 
+
  (func $byteArrayAt
        (param $array (ref $byteArray)) 
        (param $index i32) 
@@ -1256,15 +1490,15 @@
        (result eqref)
 
        (if (result eqref)
-	(ref.test (ref i31)
-		  (local.get $obj))
-	(then
-	 (struct.get $VirtualMachine $classSmallInteger
-		     (local.get $vm)))
-	(else
-	 (struct.get $Object $class
-		     (ref.cast (ref $Object)
-			       (local.get $obj))))))
+	   (ref.test (ref i31)
+		     (local.get $obj))
+	   (then
+	    (struct.get $VirtualMachine $classSmallInteger
+			(local.get $vm)))
+	   (else
+	    (struct.get $Object $class
+			(ref.cast (ref $Object)
+				  (local.get $obj))))))
  
  (func $lookupMethod
        (param $vm (ref $VirtualMachine)) 
@@ -1527,7 +1761,7 @@
        (param $method (ref null $CompiledMethod)) ;; $vm was created with null $activeContext
        (param $selector eqref) 
        (result (ref $Context))
-        
+       
        (struct.new $Context
 		   (struct.get $VirtualMachine $classContext  ;; $class
 			       (local.get $vm))
@@ -1544,13 +1778,13 @@
 		   (call $newArray                            ;; $args
 			 (local.get $vm)
 			 (array.new $objectArray
-			     (ref.null none)
-			     (i32.const 0)))
+				    (ref.null none)
+				    (i32.const 0)))
 		   (call $newArray                            ;; $temps
 			 (local.get $vm)
 			 (array.new $objectArray
-			     (ref.null none)
-			     (i32.const 0)))
+				    (ref.null none)
+				    (i32.const 0)))
 		   (call $newArray                            ;; $stack
 			 (local.get $vm)
 			 (array.new $objectArray
@@ -1559,25 +1793,39 @@
  
  (func $smallIntegerForValue
        (param $value i32) 
-       (result (ref i31))
+       (result eqref)
        
        (ref.i31
 	(local.get $value)))
+
+ (func $isSmallInteger
+       (param $obj eqref)
+       (result i32)
+
+       (if (result i32)
+	   (ref.test (ref i31)
+		     (local.get $obj))
+	   (then
+	    (return
+	      (i32.const 1)))
+	   (else
+	    (return
+	      (i32.const 0)))))
  
  (func $valueOfSmallInteger
        (param $obj eqref) 
        (result i32)
        
        (if (result i32)
-	(ref.test (ref i31)
-		  (local.get $obj))
-	(then
-	 (i31.get_s
-	  (ref.cast (ref i31)
-		    (local.get $obj))))
-	(else
-	 ;; Not a SmallInteger; return 0 for safety.
-	 (i32.const 0))))
+	   (call $isSmallInteger
+		 (local.get $obj))
+	   (then
+	    (i31.get_s
+	     (ref.cast (ref i31)
+		       (local.get $obj))))
+	   (else
+	    ;; Not a SmallInteger; return 0 for safety.
+	    (i32.const 0))))
  
  (func $isTranslated
        (param $method (ref null $CompiledMethod)) 
@@ -1597,30 +1845,6 @@
        (call_indirect $functionTable (param eqref) (result i32)
 		      (local.get $context)
 		      (local.get $functionIndex)))
- 
- (func $triggerMethodTranslation
-       (param $method (ref null $CompiledMethod))
-       (param $receiverIdentityHash i32)
-       
-       (local $slots eqref)
-       (local $bytecodeLength i32)
-       (local $functionIndexIndex i32)
-       (local $memoryOffset i32)
-       
-       (local.set $slots
-		    (struct.get $CompiledMethod $slots
-				(local.get $method)))
-
-       (local.set $bytecodeLength
-		  (array.len
-		   (ref.cast (ref $byteArray)
-			     (local.get $slots))))
-
-       ;; JS does the translation; it's easier to implement and debug
-       ;; there, and it doesn't need to be fast.
-       (call $translateMethod
-	     (local.get $method)
-	     (local.get $receiverIdentityHash)))
  
  (func $handleMethodReturn
        (param $vm (ref $VirtualMachine)) 
@@ -1669,11 +1893,10 @@
        (result i32)
        
        (local $benchmarkMethod (ref $CompiledMethod))
-       (local $benchmarkSelector (ref $Symbol))
        (local $methodDictionary (ref $Dictionary))
        (local $benchmarkLiterals (ref $objectArray))
        
-       (local.set $benchmarkSelector
+       (global.set $benchmarkSelector
 		  (call $newSymbolFromBytes
 			(local.get $vm)
 			(array.new_fixed $byteArray 9
@@ -1687,40 +1910,7 @@
 					 (i32.const 114)    ;; 'r'
 					 (i32.const 107)))) ;; 'k'
 
-       ;; Set $vm's $activeContext to run an unbound method which runs (100 benchmark).
-       (struct.set $VirtualMachine $activeContext
-		   (local.get $vm)
-		   (call $newContext
-			 (local.get $vm)                  ;; $vm
-			 (ref.i31                         ;; $receiver
-			  (i32.const 100))           
-			 (struct.new $CompiledMethod      ;; $method
-				     (struct.get $VirtualMachine $classObject ;; $class
-						 (local.get $vm))
-				     (call $nextIdentityHash                  ;; $identityHash
-					   (local.get $vm))
-				     (ref.null none)                          ;; $nextObject
-				     (call $newByteArray                      ;; $slots
-					   (local.get $vm)
-					   (array.new_fixed $byteArray 3            
-						      (i32.const 112)
-						      (i32.const 208)
-						      (i32.const 124)))
-				     ;; $literals
-				     (call $newArray
-					   (local.get $vm)
-					   (array.new_fixed $objectArray 1
-							    (local.get $benchmarkSelector)))
-				     (i32.const 0)                            ;; $header
-				     (i32.const 0)                            ;; $invocationCount
-				     (i32.const 0)                            ;; $functionIndex
-                                     ;; $translationThreshold
-				     (struct.get $VirtualMachine $translationThreshold
-						 (local.get $vm))
-				     (i32.const 0))                           ;; $isInstalled
-			 (local.get $benchmarkSelector))) ;; $selector
-
-       ;; Create the workload method.
+       ;; Create the benchmark method.
        
        (local.set $benchmarkLiterals
 		  (array.new $objectArray
@@ -1756,7 +1946,7 @@
        ;; Create a simple repetitive benchmark computation: iterative
        ;; arithmetic progression (~100μs runtime)
        ;;
-       ;; This workload method performs a simple iterative arithmetic
+       ;; This benchmark method performs a simple iterative arithmetic
        ;; progression that's easy for LLMs to understand and optimize.
        ;; 
        ;; Pattern (repeated 5 times):
@@ -1788,76 +1978,78 @@
 			      (call $nextIdentityHash                  ;; $identityHash
 				    (local.get $vm))
 			      (ref.null none)                          ;; $nextObject
-			      (array.new_fixed $byteArray 62           ;; $slots
-				   (i32.const 0x70)  ;; push receiver
+			      (call $newByteArray                      ;; $slots
+				    (local.get $vm)                    
+				    (array.new_fixed $byteArray 62           
+						     (i32.const 0x70)  ;; push receiver
 
-				   (i32.const 0x21)  ;; push literal 1 (0-based)
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB8)  ;; multiply
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x23)  ;; push literal 3
-				   (i32.const 0xB8)  ;; multiply
-				   (i32.const 0x23)  ;; push literal 3
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x21)  ;; push literal 1 (0-based)
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x23)  ;; push literal 3
+						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x23)  ;; push literal 3
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB8)  ;; multiply
 
-				   ;; sequence repeats five times in total
-				   (i32.const 0x21)  ;; push literal 1
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB8)  ;; multiply
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x23)  ;; push literal 3
-				   (i32.const 0xB8)  ;; multiply
-				   (i32.const 0x23)  ;; push literal 3
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB8)  ;; multiply
-				   
-				   (i32.const 0x21)  ;; push literal 1
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB8)  ;; multiply
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x23)  ;; push literal 3
-				   (i32.const 0xB8)  ;; multiply
-				   (i32.const 0x23)  ;; push literal 3
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB8)  ;; multiply
-				   
-				   (i32.const 0x21)  ;; push literal 1
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB8)  ;; multiply
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x23)  ;; push literal 3
-				   (i32.const 0xB8)  ;; multiply
-				   (i32.const 0x23)  ;; push literal 3
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB8)  ;; multiply
-				   
-				   (i32.const 0x21)  ;; push literal 1
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB8)  ;; multiply
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x23)  ;; push literal 3
-				   (i32.const 0xB8)  ;; multiply
-				   (i32.const 0x23)  ;; push literal 3
-				   (i32.const 0xB0)  ;; add
-				   (i32.const 0x22)  ;; push literal 2
-				   (i32.const 0xB8)  ;; multiply
+						     ;; sequence repeats five times in total
+						     (i32.const 0x21)  ;; push literal 1
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x23)  ;; push literal 3
+						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x23)  ;; push literal 3
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB8)  ;; multiply
+						     
+						     (i32.const 0x21)  ;; push literal 1
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x23)  ;; push literal 3
+						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x23)  ;; push literal 3
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB8)  ;; multiply
+						     
+						     (i32.const 0x21)  ;; push literal 1
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x23)  ;; push literal 3
+						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x23)  ;; push literal 3
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB8)  ;; multiply
+						     
+						     (i32.const 0x21)  ;; push literal 1
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x23)  ;; push literal 3
+						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x23)  ;; push literal 3
+						     (i32.const 0xB0)  ;; add
+						     (i32.const 0x22)  ;; push literal 2
+						     (i32.const 0xB8)  ;; multiply
 
-				   (i32.const 0x7C)) ;; return top of stack
+						     (i32.const 0x7C))) ;; return top of stack
 			      (call $newArray                       ;; $literals
 				    (local.get $vm)
 				    (local.get $benchmarkLiterals))
@@ -1868,7 +2060,9 @@
 			      (struct.get $VirtualMachine $translationThreshold
 					  (local.get $vm))
 			      (i32.const 0)))                       ;; $isInstalled
-       
+
+       ;; Add the key/value pair of ($benchmarkSelector ->
+       ;; $benchmarkMethod) to $vm$classSmallInteger$methodDictionary.
        (local.set $methodDictionary
 		  (call $newDictionary
 			(local.get $vm)))
@@ -1878,23 +2072,11 @@
 			       (local.get $vm))
 		   (local.get $methodDictionary))
 
-       (array.set $objectArray
-		  (struct.get $Array $array
-			      (struct.get $Dictionary $keys
-					  (local.get $methodDictionary)))
-		  (i32.const 0)
-		  (local.get $benchmarkSelector))
-
-       (array.set $objectArray
-		  (struct.get $Array $array
-			      (struct.get $Dictionary $values
-					  (local.get $methodDictionary)))
-		  (i32.const 0)
-		  (local.get $benchmarkMethod))
-       
-       (struct.set $Dictionary $count
-		   (local.get $methodDictionary)
-		   (i32.const 1))
+       (call $dictionaryAdd
+	     (local.get $vm)
+	     (local.get $methodDictionary)
+	     (global.get $benchmarkSelector)
+	     (local.get $benchmarkMethod))
        
        (struct.set $CompiledMethod $isInstalled
 		   (local.get $benchmarkMethod)
@@ -1902,6 +2084,42 @@
 
        ;; success
        (i32.const 1))
+
+ (func $resetMinimalMemory
+       (param $vm (ref $VirtualMachine))
+       
+       ;; Set $vm's $activeContext to run an unbound method which runs (100 benchmark).
+       (struct.set $VirtualMachine $activeContext
+		   (local.get $vm)
+		   (call $newContext
+			 (local.get $vm)                  ;; $vm
+			 (ref.i31                         ;; $receiver
+			  (i32.const 100))           
+			 (struct.new $CompiledMethod      ;; $method
+				     (struct.get $VirtualMachine $classObject ;; $class
+						 (local.get $vm))
+				     (call $nextIdentityHash                  ;; $identityHash
+					   (local.get $vm))
+				     (ref.null none)                          ;; $nextObject
+				     (call $newByteArray                      ;; $slots
+					   (local.get $vm)
+					   (array.new_fixed $byteArray 3            
+							    (i32.const 112)   ;; push receiver
+							    (i32.const 208)   ;; send first literal
+							    (i32.const 124))) ;; return top
+				     ;; $literals
+				     (call $newArray
+					   (local.get $vm)
+					   (array.new_fixed $objectArray 1
+							    (global.get $benchmarkSelector)))
+				     (i32.const 0)                            ;; $header
+				     (i32.const 0)                            ;; $invocationCount
+				     (i32.const 0)                            ;; $functionIndex
+                                     ;; $translationThreshold
+				     (struct.get $VirtualMachine $translationThreshold
+						 (local.get $vm))
+				     (i32.const 0))                           ;; $isInstalled
+			 (global.get $benchmarkSelector)))) ;; $selector
 
  ;; Interpret single bytecode; return 1 if method should return, 0 to continue.
  (func $interpretBytecode
@@ -2060,19 +2278,19 @@
 	     ;; message not understood
 	     (local.get $selector)
 	     (throw $messageNotUnderstood)))
-	  (call $storeInMethodCache
-		(local.get $vm)
-		(local.get $selector)
-		(local.get $receiverClass)
-		(local.get $method))))
+	   (call $storeInMethodCache
+		 (local.get $vm)
+		 (local.get $selector)
+		 (local.get $receiverClass)
+		 (local.get $method))))
 
 	 (struct.set $VirtualMachine $activeContext
-		    (local.get $vm)
-		    (call $newContext
-			  (local.get $vm)
-			  (local.get $receiver)
-			  (local.get $method)
-			  (local.get $selector)))
+		     (local.get $vm)
+		     (call $newContext
+			   (local.get $vm)
+			   (local.get $receiver)
+			   (local.get $method)
+			   (local.get $selector)))
 
 	 (return
 	   (i32.const 0))))
@@ -2091,7 +2309,7 @@
        (local $receiver eqref)
        (local $resultValue eqref)
        (local $invocationCount i32)
-       (local $slots (ref $byteArray))
+       (local $bytecodes (ref $byteArray))
        (local $functionIndex i32)
        
        (block $finished
@@ -2135,19 +2353,26 @@
 			     (local.get $vm)))
 		(then
 		 (if
-		   (struct.get $CompiledMethod $isInstalled
-			       (local.get $method))
+		  (struct.get $CompiledMethod $isInstalled
+			      (local.get $method))
 		  (then
 		   (if
 		    (i32.eqz
 		     (call $isTranslated
 			   (local.get $method)))
 		    (then
-		     (call $triggerMethodTranslation
+		     (call $translateMethod
 			   (local.get $method)
-			   (struct.get $Object $identityHash
-				       (ref.cast (ref $Object)
-						 (local.get $receiver))))))))))
+			   (if (result i32)
+			    (call $isSmallInteger
+				  (local.get $receiver))
+			    (then
+			     (call $valueOfSmallInteger
+				   (local.get $receiver)))
+			    (else
+			     (struct.get $Object $identityHash
+					 (ref.cast (ref $Object)
+						   (local.get $receiver))))))))))))
 	       (if
 		(call $isTranslated
 		      (ref.as_non_null
@@ -2176,7 +2401,7 @@
 		 (br $execution_loop)))
 
 	       ;; $method has no translation; interpret its bytecodes.
-	       (local.set $slots
+	       (local.set $bytecodes
 			  (struct.get $ByteArray $array
 				      (ref.cast (ref $ByteArray)
 						(struct.get $CompiledMethod $slots
@@ -2199,7 +2424,7 @@
 		     (if
 		      (i32.le_u
 		       (array.len
-			(local.tee $slots
+			(local.tee $bytecodes
 				   (struct.get $ByteArray $array
 					       (ref.cast (ref $ByteArray)
 							 (struct.get $CompiledMethod $slots
@@ -2221,7 +2446,7 @@
 		     ;; Interpret the next $bytecode.
 		     (local.set $bytecode
 				(array.get_u $byteArray
-					     (local.get $slots)
+					     (local.get $bytecodes)
 					     (local.get $pc)))
 
 		     (if

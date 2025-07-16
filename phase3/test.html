@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>🚀 Phase 3 JIT Compilation Test Interface</title>
+    <title>🚀 Phase 3 Method Translation Test Interface</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -179,23 +179,23 @@
   <script type="module" src="./catalyst.js"></script>
 
     <div class="container">
-        <h1>🚀 Phase 3 JIT Compilation Test Interface</h1>
-        <p class="subtitle">SqueakWASM Virtual Machine with Runtime Bytecode Compilation</p>
+        <h1>🚀 Phase 3 Method Translation Test Interface</h1>
+        <p class="subtitle">SqueakWASM Virtual Machine with Runtime Bytecode Translation</p>
         
         <div class="info-box">
             <h3>🎯 Test Features</h3>
             <ul>
                 <li><strong>Runtime bytecode translation to WebAssembly</strong></li>
-                <li><strong>Hot method detection and automatic compilation</strong></li>
+                <li><strong>Hot method detection and automatic translation</strong></li>
                 <li><strong>Performance monitoring and statistics</strong></li>
-                <li><strong>Debug mode with detailed compilation logs</strong></li>
+                <li><strong>Debug mode with detailed translation logs</strong></li>
             </ul>
             
             <h3>🚀 Getting Started</h3>
             <ul>
-                <li>Click "Run (3 workload) with JIT" to execute the basic example</li>
-                <li>Use "Trigger JIT Compilation" to reach the JIT threshold of 1000 invocations (first click) and see optimized execution (subsequent clicks)</li>
-                <li>Toggle JIT compilation and debug modes to see different behaviors</li>
+                <li>Click "Run (3 workload) with method translation" to execute the basic example</li>
+                <li>Use "Trigger method translation" to reach the method translation threshold of 1000 invocations (first click) and see optimized execution (subsequent clicks)</li>
+                <li>Toggle method translation and debug modes to see different behaviors</li>
                 <li>View statistics to monitor performance improvements</li>
             </ul>
         </div>
@@ -206,8 +206,8 @@
                 <div class="stat-label">Execution Time (μs)</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="jitCount">0</div>
-                <div class="stat-label">JIT Compilations</div>
+                <div class="stat-value" id="methodTranslationCount">0</div>
+                <div class="stat-label">Method Translations</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="optimizedMethods">0</div>
@@ -218,8 +218,8 @@
                 <div class="stat-label">Cached Methods</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="jitStatus">ENABLED</div>
-                <div class="stat-label">JIT Status</div>
+                <div class="stat-value" id="methodTranslationStatus">ENABLED</div>
+                <div class="stat-label">Method Translation Status</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="llmSuccessRate">0%</div>
@@ -238,16 +238,16 @@
         <div class="controls">
             <div class="control-group">
                 <h3>🎮 Execution Controls</h3>
-                <button id="runExample">Run (3 workload) with JIT</button>
-                <button id="runMultiple" class="run-multiple">Trigger JIT Compilation</button>
+                <button id="runExample">Run (3 workload) with Method Translation</button>
+                <button id="runMultiple" class="run-multiple">Trigger Method Translation</button>
                 <button id="runIntensive" class="run-intensive">🔥 Run Intensive Computation</button>
             </div>
             
             <div class="control-group">
                 <h3>⚙️ VM Configuration</h3>
                 <label>
-                    <input type="checkbox" id="jitToggle" checked>
-                    Enable JIT Compilation
+                    <input type="checkbox" id="methodTranslationToggle" checked>
+                    Enable Method Translation
                 </label>
                 <label>
                     <input type="checkbox" id="debugToggle" checked>
@@ -276,15 +276,15 @@
 
     <script type="module">
         let vm = null;
-        let jitEnabled = true;
+        let methodTranslationEnabled = true;
         let debugMode = true;
         let llmEnabled = true;
         
         const stats = {
             executionTime: 0,
-            jitCompilations: 0,
+            methodTranslations: 0,
             cachedMethods: 0,
-            jitEnabled: true
+            methodTranslationEnabled: true
         };
 
         function initVM() {
@@ -331,10 +331,10 @@
 
         function updateStats(newStats) {
             document.getElementById('execTime').textContent = newStats.executionTime.toFixed(2);
-            document.getElementById('jitCount').textContent = newStats.jitCompilations;
+            document.getElementById('methodTranslationCount').textContent = newStats.methodTranslation;
             document.getElementById('optimizedMethods').textContent = newStats.optimizedMethods || 0;
             document.getElementById('cacheHits').textContent = newStats.cachedMethods;
-            document.getElementById('jitStatus').textContent = newStats.jitEnabled ? 'ENABLED' : 'DISABLED';
+            document.getElementById('methodTranslationStatus').textContent = newStats.methodTranslationEnabled ? 'ENABLED' : 'DISABLED';
             document.getElementById('llmSuccessRate').textContent = (newStats.llmSuccessRate || 0) + '%';
             document.getElementById('llmAttempts').textContent = newStats.llmAttempts || 0;
             document.getElementById('wasmValidationRate').textContent = (newStats.wasmValidationSuccessRate || 0) + '%';
@@ -347,29 +347,29 @@
             initVM()
                 .then(() => {
                 addOutput('<strong>🔥 Brief warmup...</strong>');
-                vm.setJITEnabled(jitEnabled);
+                vm.setMethodTranslationEnabled(methodTranslationEnabled);
                 vm.setDebugMode(debugMode);
                 // Single warmup run to eliminate cold start
                 return vm.run().then(() => {
-                    addOutput('<strong>🚀 Running 3 workload with JIT compilation...</strong>');
+                    addOutput('<strong>🚀 Running 3 workload with Method Translation...</strong>');
                     const startTime = performance.now();
                     return vm.run().then(result => {
                         const endTime = performance.now();
                         const success = result.success;
-                        const vmStats = vm.getJITStatistics();
+                        const vmStats = vm.getMethodTranslationStatistics();
                         addOutput(`
                             <strong>📊 Execution Result:</strong> ${success ? '✅ PASSED' : '❌ FAILED'}<br>
                             • Result: ${result.results ? result.results.join(', ') : 'No results'}<br>
                             • Execution Time: ${((endTime - startTime) * 1000).toFixed(1)}μs<br>
-                            • JIT Compilations: ${result.jitCompilations || 0}<br>
-                            • JIT Status: ${jitEnabled ? 'Enabled' : 'Disabled'}
+                            • Method Translations: ${result.methodTranslation || 0}<br>
+                            • Method Translation Status: ${methodTranslationEnabled ? 'Enabled' : 'Disabled'}
                         `, success ? 'result' : 'error');
                         updateStats({
                             executionTime: (endTime - startTime) * 1000, // Convert to microseconds
-                            jitCompilations: result.jitCompilations || 0,
+                            methodTranslations: result.methodTranslations || 0,
                             optimizedMethods: vmStats.optimizedMethods || 0,
                             cachedMethods: vmStats.cachedMethods || 0,
-                            jitEnabled: jitEnabled,
+                            methodTranslationEnabled: methodTranslationEnabled,
                             llmSuccessRate: vmStats.llmSuccessRate || 0,
                             llmAttempts: vmStats.llmAttempts || 0,
                             wasmValidationSuccessRate: vmStats.wasmValidationSuccessRate || 0
@@ -386,17 +386,17 @@
             try {
                 await initVM();
                 
-                vm.setJITEnabled(jitEnabled);
+                vm.setMethodTranslationEnabled(methodTranslationEnabled);
                 vm.setDebugMode(debugMode);
                 
-                // Check if methods are already compiled
-                const initialStats = vm.getJITStatistics();
-                const alreadyCompiled = initialStats.jitCompilations > 0 || initialStats.cachedMethods > 0;
+                // Check if methods are already translated
+                const initialStats = vm.getMethodTranslationStatistics();
+                const alreadyTranslated = initialStats.methodTranslations > 0 || initialStats.cachedMethods > 0;
                 
-                if (alreadyCompiled) {
-                    // Methods already compiled - run optimized demo
-                    addOutput('<strong>⚡ Methods already JIT-compiled! Running optimized version...</strong>', 'result');
-                    addOutput('<strong>💾 Using cached compiled methods from previous run</strong>');
+                if (alreadyTranslated) {
+                    // Methods already translated - run optimized demo
+                    addOutput('<strong>⚡ Methods already translated! Running optimized version...</strong>', 'result');
+                    addOutput('<strong>💾 Using cached translated methods from previous run</strong>');
                     
                     // Warmup phase to eliminate cold start effects
                     addOutput('<strong>🔥 Warming up (eliminating cold start effects)...</strong>');
@@ -427,13 +427,13 @@
                     const totalTime = results.reduce((sum, r) => sum + r.executionTime, 0);
                     const avgTime = totalTime / runs;
                     const lastResult = results[results.length - 1];
-                    const vmStats = vm.getJITStatistics();
+                    const vmStats = vm.getMethodTranslationStatistics();
                     
                     addOutput(`
                         <strong>🏁 Optimized Execution Results:</strong><br>
-                        • Total Runs: ${runs} (all using JIT-compiled methods)<br>
+                        • Total Runs: ${runs} (all using translated methods)<br>
                         • Average Time: ${(avgTime * 1000).toFixed(1)}μs<br>
-                        • JIT Compilations: ${lastResult.jitCompilations || 0}<br>
+                        • Method Translations: ${lastResult.methodTranslations || 0}<br>
                         • Optimized Methods: ${vmStats.optimizedMethods || 0}<br>
                         • Cached Methods: ${vmStats.cachedMethods || 0}<br>
                         • Performance: ${avgTime < 0.001 ? '🚀 Excellent' : avgTime < 0.005 ? '✅ Good' : '⚠️ Slow'}<br>
@@ -442,15 +442,15 @@
                     
                     updateStats({
                         executionTime: avgTime,
-                        jitCompilations: lastResult.jitCompilations || 0,
+                        methodTranslations: lastResult.methodTranslations || 0,
                         optimizedMethods: vmStats.optimizedMethods || 0,
                         cachedMethods: vmStats.cachedMethods || 0,
-                        jitEnabled: jitEnabled
+                        methodTranslationEnabled: methodTranslationEnabled
                     });
                     
                 } else {
-                    // First time - run compilation demo
-                    addOutput('<strong>🔄 Running tests to trigger JIT compilation...</strong>');
+                    // First time - run translation demo
+                    addOutput('<strong>🔄 Running tests to trigger translation...</strong>');
                     
                     // Warmup phase to eliminate cold start effects
                     addOutput('<strong>🔥 Warming up (eliminating cold start effects)...</strong>');
@@ -477,9 +477,9 @@
                             addOutput(`Run ${i + 1}: ${result.results ? result.results.join(', ') : 'No result'} (${((endTime - startTime) * 1000).toFixed(1)}μs)`);
                         }
                         
-                        // Show JIT compilation trigger
-                        if (i === 999) { // JIT threshold is 1000, so this should trigger compilation
-                            addOutput('<strong>🔥 JIT compilation threshold reached! Starting async compilation...</strong>', 'result');
+                        // Show method translation trigger
+                        if (i === 999) { // method translation threshold is 1000, so this should trigger translation
+                            addOutput('<strong>🔥 method translation threshold reached! Starting async translation...</strong>', 'result');
                         }
                         
                         // Progress indicator for long batch (reduced frequency)
@@ -491,25 +491,25 @@
                     const totalTime = results.reduce((sum, r) => sum + r.executionTime, 0);
                     const avgTime = totalTime / runs;
                     const lastResult = results[results.length - 1];
-                    const vmStats = vm.getJITStatistics();
+                    const vmStats = vm.getMethodTranslationStatistics();
                     
                     addOutput(`
-                        <strong>🏁 JIT Compilation Demo Results:</strong><br>
-                        • Total Runs: ${runs} (all interpreted - compilation triggered)<br>
+                        <strong>🏁 Method Translation Demo Results:</strong><br>
+                        • Total Runs: ${runs} (all interpreted - translation triggered)<br>
                         • Average Time: ${(avgTime * 1000).toFixed(1)}μs<br>
-                        • JIT Compilations: ${lastResult.jitCompilations || 0}<br>
+                        • Method Translations: ${lastResult.methodTranslations || 0}<br>
                         • Optimized Methods: ${vmStats.optimizedMethods || 0}<br>
                         • Cache Hit Rate: ${vmStats.cacheHitRate || 0}%<br>
-                        • Status: Method compilation started (click again to use compiled version)<br>
+                        • Status: Method translation started (click again to use translated version)<br>
                         ${vmStats.optimizedMethods > 0 ? `• 🧠 <strong>Semantic Analysis:</strong> Methods analyzed and optimized using ${document.getElementById('llmToggle').checked ? 'AI-powered cloud' : 'local pattern'} analysis` : ''}
                     `, 'result');
                     
                     updateStats({
                         executionTime: avgTime * 1000, // Convert to microseconds
-                        jitCompilations: lastResult.jitCompilations || 0,
+                        methodTranslations: lastResult.methodTranslations || 0,
                         optimizedMethods: vmStats.optimizedMethods || 0,
                         cachedMethods: vmStats.cachedMethods || 0,
-                        jitEnabled: jitEnabled
+                        methodTranslationEnabled: methodTranslationEnabled
                     });
                 }
                 
@@ -523,7 +523,7 @@
             try {
                 await initVM();
                 
-                vm.setJITEnabled(jitEnabled);
+                vm.setMethodTranslationEnabled(methodTranslationEnabled);
                 vm.setDebugMode(debugMode);
                 
                 addOutput('<strong>🔥 Running intensive computation benchmark...</strong>');
@@ -587,8 +587,8 @@
                 const interpretedAvg = interpretedTimes.reduce((a, b) => a + b, 0) / interpretedTimes.length;
                 addOutput(`<strong>📊 Interpreted Average:</strong> ${(interpretedAvg * 1000).toFixed(2)}μs`);
                 
-                // Now force JIT compilation by running 1000+ times
-                addOutput('<strong>🔥 Phase 2: Triggering JIT compilation...</strong>');
+                // Now force method translation by running 1000+ times
+                addOutput('<strong>🔥 Phase 2: Triggering method translation...</strong>');
                 
                 for (let i = 0; i < 1000; i++) {
                     await vm.run();
@@ -597,9 +597,9 @@
                     }
                 }
                 
-                const stats = vm.getJITStatistics();
-                if (stats.jitCompilations > 0) {
-                    addOutput('<strong>⚡ JIT compilation triggered! Testing optimized performance...</strong>');
+                const stats = vm.getMethodTranslationStatistics();
+                if (stats.methodTranslation > 0) {
+                    addOutput('<strong>⚡ method translation triggered! Testing optimized performance...</strong>');
                     
                     // Test optimized execution
                     const optimizedTimes = [];
@@ -625,17 +625,17 @@
                     addOutput(`<strong>🏆 Performance Classification:</strong> ${perfClass}`);
                     
                 } else {
-                    addOutput('<strong>⚠️ JIT compilation not triggered - may need LLM optimization enabled</strong>');
+                    addOutput('<strong>⚠️ method translation not triggered - may need LLM optimization enabled</strong>');
                 }
                 
                 // Update final statistics with properly scoped variables
-                const finalAvg = stats.jitCompilations > 0 && typeof optimizedAvg !== 'undefined' ? optimizedAvg : interpretedAvg;
+                const finalAvg = stats.methodTranslation > 0 && typeof optimizedAvg !== 'undefined' ? optimizedAvg : interpretedAvg;
                 updateStats({
                     executionTime: finalAvg * 1000,
-                    jitCompilations: stats.jitCompilations,
+                    methodTranslations: stats.methodTranslations,
                     optimizedMethods: stats.optimizedMethods,
                     cachedMethods: stats.cachedMethods,
-                    jitEnabled: jitEnabled
+                    methodTranslationEnabled: methodTranslationEnabled
                 });
                 
             } catch (error) {
@@ -644,13 +644,13 @@
         });
 
         // Configuration toggles
-        document.getElementById('jitToggle').addEventListener('change', (e) => {
-            jitEnabled = e.target.checked;
+        document.getElementById('methodTranslationToggle').addEventListener('change', (e) => {
+            methodTranslationEnabled = e.target.checked;
             if (vm) {
-                vm.setJITEnabled(jitEnabled);
+                vm.setMethodTranslationEnabled(methodTranslationEnabled);
             }
-            updateStats({ ...stats, jitEnabled });
-            addOutput(`<strong>⚙️ JIT compilation ${jitEnabled ? 'enabled' : 'disabled'}</strong>`);
+            updateStats({ ...stats, methodTranslationEnabled });
+            addOutput(`<strong>⚙️ method translation ${methodTranslationEnabled ? 'enabled' : 'disabled'}</strong>`);
         });
 
         document.getElementById('debugToggle').addEventListener('change', (e) => {
@@ -670,7 +670,7 @@
                         vm.llmConfig.enabled = true;
                         addOutput(`<strong>☁️ LLM optimization enabled (${vm.llmConfig.provider?.toUpperCase() || 'OpenAI'} API)</strong>`);
                         addOutput(`<strong>🤖 Ready to generate optimized WAT using real AI analysis</strong>`);
-                        addOutput(`<strong>🎯 Strategy: LLM-optimized methods only (no traditional compilation)</strong>`);
+                        addOutput(`<strong>🎯 Strategy: LLM-optimized methods only (no traditional translation)</strong>`);
                     } else {
                         // Fallback to mock mode if no API key
                         vm.llmConfig.enabled = true;
@@ -700,10 +700,10 @@
                 vm.resetStatistics();
                 updateStats({
                     executionTime: 0, // Already in microseconds
-                    jitCompilations: 0,
+                    methodTranslations: 0,
                     optimizedMethods: 0,
                     cachedMethods: 0,
-                    jitEnabled: jitEnabled
+                    methodTranslationEnabled: methodTranslationEnabled
                 });
                 addOutput('<strong>📊 Statistics reset</strong>');
             }
@@ -900,7 +900,7 @@
                 
                 // Parse WAT to binary
                 const wasmBytes = window.wasmTools.parseWat(testWat);
-                addOutput(`✅ WAT compiled successfully! Generated ${wasmBytes.length} bytes of WASM`);
+                addOutput(`✅ WAT translated successfully! Generated ${wasmBytes.length} bytes of WASM`);
                 
                 // Test the enhanced dump functionality
                 addOutput('🔍 Generating enhanced WASM dump...');
@@ -1032,9 +1032,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             initVM()
                 .then(() => {
-                    addOutput('<strong>🎯 Phase 3 JIT Compilation Test Interface loaded!</strong>');
-                    addOutput('<strong>💡 Tip:</strong> Use "Trigger JIT Compilation" to see the method get compiled after 1000 invocations. Click again to see optimized execution using cached compiled methods.');
-                    addOutput('<strong>☁️ NEW:</strong> Enable "LLM Optimization" for AI-powered JIT compilation. When disabled, methods stay interpreted (no traditional compilation)!');
+                    addOutput('<strong>🎯 Phase 3 Method Translation Test Interface loaded!</strong>');
+                    addOutput('<strong>💡 Tip:</strong> Use "Trigger Method Translation" to see the method get translated after 1000 invocations. Click again to see optimized execution using cached translated methods.');
+                    addOutput('<strong>☁️ NEW:</strong> Enable "LLM Optimization" for AI-powered method translation. When disabled, methods stay interpreted (no traditional translation)!');
                     addOutput('<strong>⏱️ Timer Resolution:</strong> Click "Detect Timer Resolution" to check your browser\'s timing precision. For best results, serve this page with cross-origin isolation headers.');
                 })
                 .catch(error => {
@@ -1063,7 +1063,7 @@
                 console.log('📊 Check console for result comparison');
                 
                 // Display current validation statistics
-                const stats = window.squeakVM.getJITStatistics();
+                const stats = window.squeakVM.getMethodTranslationStatistics();
                 console.log('📈 Current Validation Statistics:');
                 console.log(`   Validations passed: ${stats.validationsPassed}`);
                 console.log(`   Validations failed: ${stats.validationsFailed}`);
