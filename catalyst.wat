@@ -72,7 +72,9 @@
  ;; For Smalltalk, we use the terms "slots" and "methods". For WASM,
  ;; we use "fields" and "functions". Smalltalk source is "compiled" to
  ;; a struct of type $CompiledMethod. A $CompiledMethod is
- ;; "translated" to a WASM function.
+ ;; "translated" to a WASM function. In the case of this virtual
+ ;; machine code, Smalltalk source can be compiled to a compiled
+ ;; method and decompiled into this source.
  ;; 
  ;; The nullable fields are only nullable because their initial values
  ;; aren't always knowable at creation time.
