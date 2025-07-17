@@ -1,7 +1,7 @@
 # Catalyst Smalltalk Virtual Machine
 
 A WebAssembly implementation of the SqueakJS Smalltalk virtual machine
-with integrated Just-In-Time compilation from bytecodes to WASM.
+with integrated method translation from bytecodes to WASM.
 
 See squeakjs_wasm_conversion.md for the complete roadmap (it will
 become this document soon).
