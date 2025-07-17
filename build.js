@@ -109,7 +109,7 @@ function copyFile(src, dest) {
 }
 
 function main() {
-    console.log('🚀 Building SqueakWASM Phase 3 with Method Translation...\n');
+    console.log('🚀 Building Catalyst Phase 3 with Method Translation...\n');
 
     const outputDir = './dist';
     ensureDir(outputDir);
@@ -187,9 +187,9 @@ function main() {
 
     // Create package info
     const packageInfo = {
-        name: 'squeakwasm-phase3',
+        name: 'catalyst',
         version: '3.0.0',
-        description: 'SqueakWASM VM Phase 3: Method Translation Support',
+        description: 'Catalyst Smalltalk virtual machine',
         phase: 3,
         features: [
             'Real bytecode-to-WASM method translation',

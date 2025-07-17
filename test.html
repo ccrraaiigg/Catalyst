@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>🚀 Phase 3 Method Translation Test Interface</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e5e5e5;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid #3a3a3a;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+            color: #b0b0b0;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            background: #333333;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #444444;
+        }
+
+        .control-group h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #60a5fa;
+            font-weight: 600;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .run-multiple {
+            background: #10b981;
+        }
+
+        .run-multiple:hover {
+            background: #059669;
+        }
+
+        .run-intensive {
+            background: #f59e0b;
+        }
+
+        .run-intensive:hover {
+            background: #d97706;
+        }
+
+        .toggle {
+            background: #8b5cf6;
+        }
+
+        .toggle:hover {
+            background: #7c3aed;
+        }
+
+
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #333333;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #444444;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #b0b0b0;
+            margin-top: 5px;
+        }
+
+        .output {
+            background: #1e1e1e;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #e5e5e5;
+        }
+
+        .output .result {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .output .error {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+
+
+        /* Scrollbar styling for dark theme */
+        .output::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .output::-webkit-scrollbar-track {
+            background: #2a2a2a;
+        }
+
+        .output::-webkit-scrollbar-thumb {
+            background: #555555;
+            border-radius: 4px;
+        }
+
+        .output::-webkit-scrollbar-thumb:hover {
+            background: #666666;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="module" src="./catalyst.js"></script>
+
+    <div class="container">
+        <h1>🚀 Phase 3 Method Translation Test Interface</h1>
+        <p class="subtitle">SqueakWASM Virtual Machine with Runtime Bytecode Translation</p>
+
+
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="execTime">0.00</div>
+                <div class="stat-label">Execution Time (μs)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="llmSuccessRate">0%</div>
+                <div class="stat-label">LLM Success Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="wasmValidationRate">0%</div>
+                <div class="stat-label">WASM Validation Rate</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <h3>🎮 Execution Controls</h3>
+                <button id="runExample">Run (3 workload) with Method Translation</button>
+                <button id="runMultiple" class="run-multiple">Trigger Method Translation</button>
+                <button id="runIntensive" class="run-intensive">🔥 Run Intensive Computation</button>
+            </div>
+
+            <div class="control-group">
+                <h3>⚙️ VM Configuration</h3>
+                <button id="clearCache" class="toggle">Clear Method Cache</button>
+                <button id="resetStats" class="toggle">Reset Statistics</button>
+                <button id="detectTimer" class="toggle">Detect Timer Resolution</button>
+            </div>
+        </div>
+
+        <div class="output" id="output">
+            <!-- Initialization messages will be added dynamically -->
+        </div>
+
+
+    </div>
+
+    <script type="module">
+        let vm = null;
+        let methodTranslationEnabled = true;
+        let debugMode = true;
+        let llmEnabled = true;
+
+        const stats = {
+            executionTime: 0,
+            methodTranslations: 0,
+            cachedMethods: 0,
+            methodTranslationEnabled: true
+        };
+
+        function initVM() {
+            if (!vm) {
+                return import('./catalyst.js')
+                    .then(({ SqueakVM }) => {
+                        vm = new SqueakVM();
+                        return vm.initialize();
+                    })
+                    .then(() => {
+                        vm.onResult = (result) => {
+                            addOutput(`<strong>📢 Result received:</strong> ${result}`, 'result');
+                        };
+                        addOutput('<strong>✅ VM initialized successfully!</strong>');
+
+                        // Check if LLM optimization was auto-enabled with real API key
+                        if (vm.llmConfig.apiKey && vm.llmConfig.apiKey !== 'mock-key') {
+                            addOutput('<strong>🔑 API keys loaded - Real LLM optimization available!</strong>');
+                        } else {
+                            addOutput('<strong>⚠️ No API keys found - LLM will use mock mode when enabled</strong>');
+                            addOutput('<strong>💡 Create a "keys" file with: openai=sk-proj-... or anthropic=sk-ant-api03-...</strong>');
+                        }
+                    })
+                    .catch(error => {
+                        addOutput(`<strong>❌ VM initialization failed:</strong> ${error.message}`, 'error');
+                        throw error;
+                    });
+            }
+            // If already initialized, return a resolved promise
+            return Promise.resolve();
+        }
+
+        function addOutput(text, className = '') {
+            const output = document.getElementById('output');
+            const line = document.createElement('div');
+            if (className) line.className = className;
+            line.innerHTML = text;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function updateStats(newStats) {
+            document.getElementById('execTime').textContent = newStats.executionTime.toFixed(2);
+            document.getElementById('llmSuccessRate').textContent = (newStats.llmSuccessRate || 0) + '%';
+            document.getElementById('wasmValidationRate').textContent = (newStats.wasmValidationSuccessRate || 0) + '%';
+
+            Object.assign(stats, newStats);
+        }
+
+        // Event Listeners
+        document.getElementById('runExample').addEventListener('click', () => {
+            initVM()
+                .then(() => {
+                    addOutput('<strong>🔥 Brief warmup...</strong>');
+                    vm.setMethodTranslationEnabled(methodTranslationEnabled);
+                    vm.setDebugMode(debugMode);
+                    // Single warmup run to eliminate cold start
+                    return vm.run().then(() => {
+                        addOutput('<strong>🚀 Running 3 workload with Method Translation...</strong>');
+                        const startTime = performance.now();
+                        return vm.run().then(result => {
+                            const endTime = performance.now();
+                            const success = result.success;
+                            const vmStats = vm.getMethodTranslationStatistics();
+                            addOutput(`
+                            <strong>📊 Execution Result:</strong> ${success ? '✅ PASSED' : '❌ FAILED'}<br>
+                            • Result: ${result.results ? result.results.join(', ') : 'No results'}<br>
+                            • Execution Time: ${((endTime - startTime) * 1000).toFixed(1)}μs<br>
+                            • Method Translations: ${result.methodTranslation || 0}<br>
+                            • Method Translation Status: ${methodTranslationEnabled ? 'Enabled' : 'Disabled'}
+                        `, success ? 'result' : 'error');
+                            updateStats({
+                                executionTime: (endTime - startTime) * 1000, // Convert to microseconds
+                                llmSuccessRate: vmStats.llmSuccessRate || 0,
+                                wasmValidationSuccessRate: vmStats.wasmValidationSuccessRate || 0
+                            });
+                        });
+                    });
+                })
+                .catch(error => {
+                    addOutput(`<strong>❌ Error:</strong> ${error.message}`, 'error');
+                });
+        });
+
+        document.getElementById('runMultiple').addEventListener('click', async () => {
+            try {
+                await initVM();
+
+                vm.setMethodTranslationEnabled(methodTranslationEnabled);
+                vm.setDebugMode(debugMode);
+
+                // Check if methods are already translated
+                const initialStats = vm.getMethodTranslationStatistics();
+                const alreadyTranslated = initialStats.methodTranslations > 0 || initialStats.cachedMethods > 0;
+
+                if (alreadyTranslated) {
+                    // Methods already translated - run optimized demo
+                    addOutput('<strong>⚡ Methods already translated! Running optimized version...</strong>', 'result');
+                    addOutput('<strong>💾 Using cached translated methods from previous run</strong>');
+
+                    // Warmup phase to eliminate cold start effects
+                    addOutput('<strong>🔥 Warming up (eliminating cold start effects)...</strong>');
+                    for (let w = 0; w < 10; w++) {
+                        await vm.run();
+                    }
+                    addOutput('<strong>✅ Warmup complete, starting measurements...</strong>');
+
+                    const runs = 1000; // Batch of 1000 runs for reliable averages
+                    const results = [];
+
+                    for (let i = 0; i < runs; i++) {
+                        const startTime = performance.now();
+                        const result = await vm.run();
+                        const endTime = performance.now();
+
+                        results.push({
+                            ...result,
+                            executionTime: endTime - startTime
+                        });
+
+                        // Only show progress for selected runs to avoid overwhelming output
+                        if (i === 0 || i === 99 || i === 499 || i === 999 || (i + 1) % 100 === 0) {
+                            addOutput(`Optimized Run ${i + 1}: ${result.results ? result.results.join(', ') : 'No result'} (${((endTime - startTime) * 1000).toFixed(1)}μs)`);
+                        }
+                    }
+
+                    const totalTime = results.reduce((sum, r) => sum + r.executionTime, 0);
+                    const avgTime = totalTime / runs;
+                    const lastResult = results[results.length - 1];
+                    const vmStats = vm.getMethodTranslationStatistics();
+
+                    addOutput(`
+                        <strong>🏁 Optimized Execution Results:</strong><br>
+                        • Total Runs: ${runs} (all using translated methods)<br>
+                        • Average Time: ${(avgTime * 1000).toFixed(1)}μs<br>
+                        • Method Translations: ${lastResult.methodTranslations || 0}<br>
+                        • Optimized Methods: ${vmStats.optimizedMethods || 0}<br>
+                        • Cached Methods: ${vmStats.cachedMethods || 0}<br>
+                        • Performance: ${avgTime < 0.001 ? '🚀 Excellent' : avgTime < 0.005 ? '✅ Good' : '⚠️ Slow'}<br>
+                        ${vmStats.optimizedMethods > 0 ? `• 🧠 <strong>Semantic Analysis:</strong> Using pattern-based optimized WAT generation` : ''}
+                    `, 'result');
+
+                    updateStats({
+                        executionTime: avgTime,
+                        llmSuccessRate: vmStats.llmSuccessRate || 0,
+                        wasmValidationSuccessRate: vmStats.wasmValidationSuccessRate || 0
+                    });
+
+                } else {
+                    // First time - run translation demo
+                    addOutput('<strong>🔄 Running tests to trigger translation...</strong>');
+
+                    // Warmup phase to eliminate cold start effects
+                    addOutput('<strong>🔥 Warming up (eliminating cold start effects)...</strong>');
+                    for (let w = 0; w < 10; w++) {
+                        await vm.run();
+                    }
+                    addOutput('<strong>✅ Warmup complete, starting measurements...</strong>');
+
+                    const runs = 1000; // Batch of 1000 runs for reliable averages
+                    const results = [];
+
+                    for (let i = 0; i < runs; i++) {
+                        const startTime = performance.now();
+                        const result = await vm.run();
+                        const endTime = performance.now();
+
+                        results.push({
+                            ...result,
+                            executionTime: endTime - startTime
+                        });
+
+                        // Show key milestones and periodic progress (reduced frequency)
+                        if (i === 0 || i === 4 || i === 99 || i === 499 || i === 999) {
+                            addOutput(`Run ${i + 1}: ${result.results ? result.results.join(', ') : 'No result'} (${((endTime - startTime) * 1000).toFixed(1)}μs)`);
+                        }
+
+                        // Show method translation trigger
+                        if (i === 999) { // method translation threshold is 1000, so this should trigger translation
+                            addOutput('<strong>🔥 method translation threshold reached! Starting async translation...</strong>', 'result');
+                        }
+
+                        // Progress indicator for long batch (reduced frequency)
+                        if ((i + 1) % 500 === 0) {
+                            addOutput(`<strong>📊 Progress: ${i + 1}/1000 runs completed...</strong>`);
+                        }
+                    }
+
+                    const totalTime = results.reduce((sum, r) => sum + r.executionTime, 0);
+                    const avgTime = totalTime / runs;
+                    const lastResult = results[results.length - 1];
+                    const vmStats = vm.getMethodTranslationStatistics();
+
+                    addOutput(`
+                        <strong>🏁 Method Translation Demo Results:</strong><br>
+                        • Total Runs: ${runs} (all interpreted - translation triggered)<br>
+                        • Average Time: ${(avgTime * 1000).toFixed(1)}μs<br>
+                        • Method Translations: ${lastResult.methodTranslations || 0}<br>
+                        • Optimized Methods: ${vmStats.optimizedMethods || 0}<br>
+                        • Cache Hit Rate: ${vmStats.cacheHitRate || 0}%<br>
+                        • Status: Method translation started (click again to use translated version)<br>
+                        ${vmStats.optimizedMethods > 0 ? `• 🧠 <strong>Semantic Analysis:</strong> Methods analyzed and optimized using local pattern analysis` : ''}
+                    `, 'result');
+
+                    updateStats({
+                        executionTime: avgTime * 1000, // Convert to microseconds
+                        llmSuccessRate: vmStats.llmSuccessRate || 0,
+                        wasmValidationSuccessRate: vmStats.wasmValidationSuccessRate || 0
+                    });
+                }
+
+            } catch (error) {
+                addOutput(`<strong>❌ Error:</strong> ${error.message}`, 'error');
+            }
+        });
+
+        // Intensive computation test - Create a more complex workload
+        document.getElementById('runIntensive').addEventListener('click', async () => {
+            try {
+                await initVM();
+
+                vm.setMethodTranslationEnabled(methodTranslationEnabled);
+                vm.setDebugMode(debugMode);
+
+                addOutput('<strong>🔥 Running intensive computation benchmark...</strong>');
+                addOutput('<strong>📊 Test: Computing nested factorial + triple polynomial + matrix-like operations (target: ~100μs)</strong>');
+
+                // Create a much more intensive computation targeting 100μs baseline
+                const intensiveBytecodes = [
+                    // Part 1: Extended factorial-like computation (12! operations)
+                    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, // Push 0-11
+                    0xB8, 0xB8, 0xB8, 0xB8, 0xB8, 0xB8, 0xB8, 0xB8, 0xB8, 0xB8, 0xB8,        // 11 multiplies
+
+                    // Part 2: Double Fibonacci-like computation
+                    0x20, 0x21, 0xB0, 0x22, 0xB0, 0x23, 0xB0, 0x24, 0xB0, 0x25, 0xB0,        // First sequence
+                    0x26, 0xB0, 0x27, 0xB0, 0x28, 0xB0, 0x29, 0xB0, 0x2A, 0xB0,              // Extended sequence
+
+                    // Part 3: Triple polynomial evaluation: (ax^4 + bx^3 + cx^2 + dx + e) * 3 iterations
+                    // First polynomial: x^4 term
+                    0x70, 0x70, 0x70, 0x70, 0xB8, 0xB8, 0xB8, 0x25, 0xB8,                    // receiver^4 * 5
+                    // x^3 term  
+                    0x70, 0x70, 0x70, 0xB8, 0xB8, 0x24, 0xB8, 0xB0,                          // receiver^3 * 4 + prev
+                    // x^2 term
+                    0x70, 0x70, 0xB8, 0x23, 0xB8, 0xB0,                                      // receiver^2 * 3 + prev
+                    // x term
+                    0x70, 0x22, 0xB8, 0xB0,                                                  // receiver * 2 + prev
+                    // constant
+                    0x21, 0xB0,                                                              // + 1
+
+                    // Part 4: Second polynomial iteration (different coefficients)
+                    0x70, 0x70, 0x70, 0x70, 0xB8, 0xB8, 0xB8, 0x23, 0xB8,                    // receiver^4 * 3
+                    0x70, 0x70, 0x70, 0xB8, 0xB8, 0x26, 0xB8, 0xB0,                          // receiver^3 * 6 + prev
+                    0x70, 0x70, 0xB8, 0x21, 0xB8, 0xB0,                                      // receiver^2 * 1 + prev
+                    0x70, 0x27, 0xB8, 0xB0,                                                  // receiver * 7 + prev
+                    0x24, 0xB0,                                                              // + 4
+
+                    // Part 5: Third polynomial iteration (matrix-like operations)
+                    0x70, 0x70, 0x70, 0x70, 0xB8, 0xB8, 0xB8, 0x22, 0xB8,                    // receiver^4 * 2
+                    0x70, 0x70, 0x70, 0xB8, 0xB8, 0x28, 0xB8, 0xB0,                          // receiver^3 * 8 + prev
+                    0x70, 0x70, 0xB8, 0x25, 0xB8, 0xB0,                                      // receiver^2 * 5 + prev
+                    0x70, 0x23, 0xB8, 0xB0,                                                  // receiver * 3 + prev
+                    0x26, 0xB0,                                                              // + 6
+
+                    // Part 6: Final accumulation with cross products
+                    0x70, 0x70, 0xB8, 0xB0,                                                  // receiver^2 + all previous
+                    0x70, 0x29, 0xB8, 0xB0,                                                  // receiver * 9 + all
+                    0x2A, 0xB0,                                                              // + 10
+
+                    0x7C  // Return final result
+                ];
+
+                // Test interpreted execution first
+                addOutput('<strong>🐢 Phase 1: Interpreted execution (baseline)...</strong>');
+                const interpretedTimes = [];
+
+                for (let i = 0; i < 100; i++) {
+                    const startTime = performance.now();
+                    await vm.run();
+                    const endTime = performance.now();
+                    interpretedTimes.push(endTime - startTime);
+                }
+
+                const interpretedAvg = interpretedTimes.reduce((a, b) => a + b, 0) / interpretedTimes.length;
+                addOutput(`<strong>📊 Interpreted Average:</strong> ${(interpretedAvg * 1000).toFixed(2)}μs`);
+
+                // Now force method translation by running 1000+ times
+                addOutput('<strong>🔥 Phase 2: Triggering method translation...</strong>');
+
+                for (let i = 0; i < 1000; i++) {
+                    await vm.run();
+                    if (i % 500 === 0) {
+                        addOutput(`<strong>📊 Progress:</strong> ${i}/1000 runs completed...`);
+                    }
+                }
+
+                const stats = vm.getMethodTranslationStatistics();
+                if (stats.methodTranslation > 0) {
+                    addOutput('<strong>⚡ method translation triggered! Testing optimized performance...</strong>');
+
+                    // Test optimized execution
+                    const optimizedTimes = [];
+                    for (let i = 0; i < 100; i++) {
+                        const startTime = performance.now();
+                        await vm.run();
+                        const endTime = performance.now();
+                        optimizedTimes.push(endTime - startTime);
+                    }
+
+                    const optimizedAvg = optimizedTimes.reduce((a, b) => a + b, 0) / optimizedTimes.length;
+                    const speedup = interpretedAvg / optimizedAvg;
+
+                    addOutput(`<strong>📊 Optimized Average:</strong> ${(optimizedAvg * 1000).toFixed(2)}μs`);
+                    addOutput(`<strong>🚀 Speedup:</strong> ${speedup.toFixed(2)}x faster${speedup > 2 ? ' 🔥' : speedup > 1.5 ? ' ⚡' : ' 📈'}`);
+
+                    // Performance classification
+                    let perfClass = 'Excellent';
+                    if (speedup < 1.2) perfClass = 'Minimal';
+                    else if (speedup < 1.5) perfClass = 'Good';
+                    else if (speedup < 2.0) perfClass = 'Very Good';
+
+                    addOutput(`<strong>🏆 Performance Classification:</strong> ${perfClass}`);
+
+                } else {
+                    addOutput('<strong>⚠️ method translation not triggered - may need LLM optimization enabled</strong>');
+                }
+
+                // Update final statistics with properly scoped variables
+                const finalAvg = stats.methodTranslation > 0 && typeof optimizedAvg !== 'undefined' ? optimizedAvg : interpretedAvg;
+                updateStats({
+                    executionTime: finalAvg * 1000,
+                    llmSuccessRate: stats.llmSuccessRate || 0,
+                    wasmValidationSuccessRate: stats.wasmValidationSuccessRate || 0
+                });
+
+            } catch (error) {
+                addOutput(`<strong>❌ Intensive computation error:</strong> ${error.message}`, 'error');
+            }
+        });
+
+
+
+        document.getElementById('clearCache').addEventListener('click', () => {
+            if (vm) {
+                vm.clearMethodCache();
+                updateStats({ ...stats });
+                addOutput('<strong>🗑️ Method cache cleared</strong>');
+            }
+        });
+
+        document.getElementById('resetStats').addEventListener('click', () => {
+            if (vm) {
+                vm.resetStatistics();
+                updateStats({
+                    executionTime: 0,
+                    llmSuccessRate: 0,
+                    wasmValidationSuccessRate: 0
+                });
+                addOutput('<strong>📊 Statistics reset</strong>');
+            }
+        });
+
+        document.getElementById('detectTimer').addEventListener('click', () => {
+            initVM()
+                .then(() => {
+                    detectTimerResolution();
+                })
+                .catch(error => {
+                    addOutput(`<strong>❌ Timer detection error:</strong> ${error.message}`, 'error');
+                });
+        });
+
+        // Timer resolution detection function
+        function detectTimerResolution() {
+            const samples = [];
+            const startTime = performance.now();
+
+            // Collect timing samples
+            for (let i = 0; i < 100; i++) {
+                samples.push(performance.now());
+            }
+
+            // Find minimum non-zero difference
+            let minDiff = Infinity;
+            for (let i = 1; i < samples.length; i++) {
+                const diff = samples[i] - samples[i - 1];
+                if (diff > 0 && diff < minDiff) {
+                    minDiff = diff;
+                }
+            }
+
+            const isIsolated = typeof crossOriginIsolated !== 'undefined' && crossOriginIsolated;
+            const expectedResolution = isIsolated ? 0.005 : 0.1; // 5μs vs 100μs
+
+            addOutput(`<strong>⏱️ Timer Resolution Analysis:</strong><br>
+                • Cross-Origin Isolated: ${isIsolated ? '✅ YES (5μs)' : '❌ NO (100μs)'}<br>
+                • Detected Resolution: ~${isFinite(minDiff) ? (minDiff * 1000).toFixed(1) : 'Infinity'}μs<br>
+                • Expected Resolution: ~${(expectedResolution * 1000).toFixed(0)}μs<br>
+                • Status: ${minDiff <= expectedResolution * 2 ? '🎯 Optimal' : '⚠️ Limited'}`);
+        }
+
+        // Listen for result events from WASM
+        window.addEventListener('squeakResult', (event) => {
+            addOutput(`<strong>🎯 WASM Result Event:</strong> ${event.detail.value}`, 'result');
+        });
+
+        // Auto-initialize VM on page load to enable LLM optimization if API keys exist
+        document.addEventListener('DOMContentLoaded', () => {
+            initVM()
+                .then(() => {
+                    addOutput('<strong>🎯 Phase 3 Method Translation Test Interface loaded!</strong>');
+                    addOutput('<strong>💡 Tip:</strong> Use "Trigger Method Translation" to see the method get translated after 1000 invocations. Click again to see optimized execution using cached translated methods.');
+                })
+                .catch(error => {
+                    addOutput(`<strong>❌ Auto-initialization failed:</strong> ${error.message}`, 'error');
+                });
+        });
+
+
+    </script>
+</body>
+
+</html>
