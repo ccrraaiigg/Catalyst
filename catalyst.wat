@@ -1,6 +1,9 @@
 ;; catalyst.wat: multiple simultaneous Catalyst Smalltalk virtual
 ;; machines, with method translation
 ;;
+;; This source code was generated from a decompilation of the
+;; Smalltalk implementation.
+;;
 ;; Craig Latta, July 2025
 
 (module
@@ -50,17 +53,21 @@
  ;; types defining Smalltalk classes
  ;;
  ;; To start, we only define classes with functions which must exist
- ;; for the virtual machine to operate, and the superclasses of such
- ;; classes which define instance variables.
+ ;; for the virtual machine to operate (and perform a minimal demo),
+ ;; and the superclasses of such classes which define instance
+ ;; variables. We can dynamically add more classes and methods
+ ;; remotely from SqueakJS later, through behavior similar to
+ ;; $createMinimalObjectMemory, using the exported linear memory as a
+ ;; communication channel.
  ;;
  ;; Instances of Smalltalk class SmallInteger are of built-in
  ;; reference type i31, each instance of every other class is of a
  ;; reference type using a user-defined struct type. The common
  ;; supertype of all those reference types is built-in reference type
  ;; eqref. The type for raw arrays of bytes has built-in type i8 as
- ;; its default type, and $ByteArray is a Smalltalk object type that
- ;; wraps it. There's a similar relationship between $wordArray and
- ;; $WordArray, and between $objectArray and $Array.
+ ;; its default element type, and $ByteArray is a Smalltalk object
+ ;; type that wraps it. There's a similar relationship between
+ ;; $wordArray and $WordArray, and between $objectArray and $Array.
  ;; 
  ;; For Smalltalk, we use the terms "slots" and "methods". For WASM,
  ;; we use "fields" and "functions". Smalltalk source is "compiled" to
