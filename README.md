@@ -1,7 +1,10 @@
-# Catalyst VM - Phase 3: Method Translation Support
+# Catalyst Smalltalk Virtual Machine
 
 A WebAssembly implementation of the SqueakJS Smalltalk virtual machine
 with integrated Just-In-Time compilation from bytecodes to WASM.
+
+See squeakjs_wasm_conversion.md for the complete roadmap (it will
+become this document soon).
 
 ## 🚀 Phase 3 Overview
 
