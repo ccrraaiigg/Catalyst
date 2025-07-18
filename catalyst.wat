@@ -1505,6 +1505,7 @@
 	    (struct.get $VirtualMachine $classSmallInteger
 			(local.get $vm)))
 	   (else
+	    ;; TODO: For all nulls, return class UndefinedObject.
 	    (struct.get $Object $class
 			(ref.cast (ref $Object)
 				  (local.get $obj))))))
