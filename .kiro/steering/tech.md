@@ -2,71 +2,59 @@
 
 ## Core Technologies
 
-- **WebAssembly (WASM)**: Core VM implementation using WASM GC for object memory
-- **WebAssembly Text (WAT)**: Hand-written WASM source code in text format
-- **JavaScript**: Runtime interface, method translation engine, and browser integration
-- **Node.js**: Build system and development server
+- **WebAssembly GC**: Core VM implementation using WASM GC features
+- **WebAssembly Text (WAT)**: Hand-written VM source code in WAT format
+- **JavaScript**: VM interface, method translation engine, and host integration
+- **Node.js 16+**: Build system and development tooling
+- **Smalltalk**: Original VM implementation language (decompiled to WAT)
 
-## Build System
+## Build Tools
 
-### Required Tools
+- **wasm-tools**: Primary WASM toolchain for parsing, validation, and analysis
+- **wasm-opt**: Optional WASM optimization (not currently used in build)
+- **Node.js**: Build scripts and development server
 
-- **wasm-tools**: Primary WASM toolchain for compilation and analysis
-  - Used for WAT to WASM compilation (`wasm-tools parse`)
-  - Used for WASM module analysis (`wasm-tools dump`)
-- **wasm-opt**: WASM optimization (optional)
-- **Node.js 16+**: Build system and development server
+## Key Files
 
-### Installation
+- `catalyst.wat`: Main WASM source code (WebAssembly Text format)
+- `catalyst.js`: JavaScript VM interface and method translation engine  
+- `catalyst.wasm`: Compiled WASM binary (generated from WAT)
+- `build.js`: Main build script
+- `test.html`: Interactive test interface
 
-```bash
-# Install wasm-tools
-cargo install wasm-tools
-# OR
-brew install wasm-tools
-
-# Install dependencies
-npm install
-```
-
-## Common Commands
-
-### Build and Development
+## Build Commands
 
 ```bash
 # Build the project (compiles WAT to WASM)
 npm run build
 
-# Serve development version
+# Start development server
 npm run serve
 
-# Build and serve in one command
+# Start with LLM integration
+npm run start-llm
+
+# Development with auto-rebuild
 npm run dev
 
-# Development with LLM proxy support
+# Development with LLM proxy
 npm run dev-with-llm
-
-# Start LLM integration
-npm run start-llm
 ```
 
-### Build Process
+## Build Process
 
-The build system (`build.js`) performs:
 1. Compiles `catalyst.wat` to `catalyst.wasm` using `wasm-tools parse`
-2. Copies JavaScript files to `dist/`
-3. Generates WASM module analysis dump
+2. Copies JavaScript files to `dist/` directory
+3. Generates WASM module analysis dump for debugging
 4. Updates package metadata with build timestamp
 
-### Testing
+## Development Server
 
-- Manual testing via `test.html` in browser
-- No automated test suite currently
-- Testing requires human interaction with the web interface
+Uses Cross-Origin-Isolation headers required for WASM GC and SharedArrayBuffer:
+- `serve-coi.js`: Development server with proper COOP/COEP headers
+- `.htaccess`: Apache configuration for production deployment
+- Port 8000 default for development
 
-## Key Constraints
+## Testing
 
-- **WASM Tools Only**: Use only `wasm-tools` and `wasm-opt` - no `wat2wasm` or other tools
-- **WASM GC Types**: Use `eqref` as common supertype, never `externref`
-- **No Python**: All tooling is Node.js/JavaScript based
-- **JavaScript Style**: Single-line if statements don't need curly braces
+Manual testing via `test.html` in web browser - no automated test suite currently implemented.

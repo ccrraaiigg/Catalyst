@@ -1,19 +1,19 @@
-# Catalyst Smalltalk Virtual Machine
+# Product Overview
 
-Catalyst is a WebAssembly implementation of the SqueakJS Smalltalk virtual machine with integrated runtime method translation from bytecodes to WASM. The project demonstrates hot method detection and translation, converting frequently-executed Smalltalk methods to optimized WebAssembly code at runtime.
+Catalyst is a self-hosted Smalltalk virtual machine written in Smalltalk and compiled to WebAssembly GC for web browsers. It implements AI-assisted dynamic method translation to optimize performance by converting frequently-executed Smalltalk bytecode to optimized WASM at runtime.
 
-## Key Features
+## Key Capabilities
 
-- **Runtime Bytecode-to-WASM Translation**: Translates Smalltalk bytecodes to WebAssembly Text (WAT) format at runtime
-- **Hot Method Detection**: Automatically identifies frequently-executed methods for translation
-- **Performance Monitoring**: Tracks method translation activity and performance metrics
-- **Debug Support**: Detailed logging and single-step debugging capabilities
-- **SqueakJS Compatibility**: Maintains compatibility with SqueakJS architecture while adding method translation
+- **Runtime Bytecode Translation**: Converts Smalltalk bytecode to WebAssembly Text (WAT) format during execution
+- **Hot Method Detection**: Automatically identifies and optimizes frequently-executed methods
+- **AI-Assisted Optimization**: Uses LLM integration for intelligent method translation and optimization
+- **Multi-System Support**: Each Catalyst module can run multiple concurrent Smalltalk systems
+- **Open Smalltalk Compatibility**: Maintains compatibility with Open Smalltalk VM architecture
 
 ## Current Phase
 
-Phase 3 - Method Translation Foundation Complete. The VM now demonstrates runtime bytecode-to-WASM translation, establishing the foundation for significant performance improvements.
+Phase 3 (Complete): Method Translation Foundation with runtime bytecode-to-WASM translation, hot method detection, and performance comparison between interpretation and translated methods.
 
-## Architecture
+## Target Audience
 
-The system uses a hybrid approach where methods start as interpreted bytecode and get translated to optimized WASM when they become "hot" (frequently executed). This provides the flexibility of interpretation with the performance of compiled code.
+Research project exploring WebAssembly-based virtual machine implementation with AI-assisted optimization for the Smalltalk community and WebAssembly researchers.

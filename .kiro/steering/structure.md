@@ -1,70 +1,53 @@
 # Project Structure
 
-## Root Directory
+## Root Directory Layout
 
-### Core Files
-- `catalyst.wat` - Main WASM source code (WebAssembly Text format)
-- `catalyst.js` - JavaScript VM interface and method translation engine
-- `catalyst.wasm` - Compiled WASM binary (generated from .wat)
-- `catalyst.dump` - WASM module analysis output (generated)
+```
+catalyst/
+├── catalyst.wat          # Main WASM source (WebAssembly Text format)
+├── catalyst.js           # JavaScript VM interface & translation engine
+├── catalyst.wasm         # Compiled WASM binary (generated)
+├── build.js              # Main build script
+├── test.html             # Interactive test page
+├── serve-coi.js          # Development server with Cross-Origin-Isolation
+├── api-proxy.js          # Proxy server for LLM API integration
+├── start-with-llm.js     # LLM integration startup script
+├── package.json          # Node.js dependencies and scripts
+├── .htaccess             # Apache config for COOP/COEP headers
+└── dist/                 # Build output directory
+```
 
-### Build System
-- `build.js` - Main build script (compiles WAT to WASM)
-- `package.json` - Node.js project configuration and scripts
-- `serve-coi.js` - Development server with Cross-Origin-Isolation headers
-- `api-proxy.js` - Proxy server for LLM API integration
-- `start-with-llm.js` - LLM integration startup script
+## Key File Purposes
 
-### Testing & Demo
-- `test.html` - Interactive test page for VM functionality
-- `keys` - API keys file (not in source control)
+### Core Implementation
+- **catalyst.wat**: Hand-written WebAssembly Text source code containing the VM implementation
+- **catalyst.js**: JavaScript interface providing method translation, caching, and host integration
+- **catalyst.wasm**: Generated binary from WAT compilation
+
+### Build & Development
+- **build.js**: Compiles WAT to WASM, copies files to dist/, generates analysis dumps
+- **serve-coi.js**: HTTP server with required Cross-Origin-Isolation headers
+- **test.html**: Browser-based test interface for manual VM testing
+
+### Configuration
+- **package.json**: Defines build scripts, dependencies, and project metadata
+- **.htaccess**: Apache configuration for production deployment headers
+- **.gitignore**: Standard Git ignore patterns
 
 ### Documentation
-- `README.md` - Main project documentation
-- `AGENT.md` - AI assistant instructions and workflow
-- `squeakjs_wasm_conversion.md` - Technical roadmap and architecture
-- `FUNCTION_TABLE_APPROACH.md` - Implementation details
-- `LLM_OPTIMIZATION_DEMO.md` - LLM integration documentation
+- **README.md**: Comprehensive project documentation
+- **AGENT.md**: AI assistant workflow and coding guidelines
+- **LICENSE**: Project license information
 
-## Build Output (`dist/`)
+## Generated/Build Artifacts
 
-Generated directory containing:
-- `catalyst.wasm` - Compiled WASM module
-- `catalyst.js` - JavaScript runtime
-- `test.html` - Test interface
-- `package-info.json` - Build metadata
-- `.well-known/` - Cross-Origin-Isolation configuration
-- `.htaccess` - Web server configuration
-
-## Configuration
-
-### Kiro IDE (`.kiro/`)
-- `steering/` - AI assistant guidance documents
-  - `product.md` - Product overview
-  - `tech.md` - Technology stack and build system
-  - `structure.md` - This file
-
-### Web Configuration
-- `.htaccess` - Apache configuration for WASM serving
-- Cross-Origin-Isolation headers required for SharedArrayBuffer
-
-## File Naming Conventions
-
-- **WASM files**: `catalyst.wat` (source), `catalyst.wasm` (compiled)
-- **Documentation**: UPPERCASE.md for major docs, lowercase.md for technical specs
-- **Build outputs**: Mirror source names in `dist/` directory
-- **Configuration**: Hidden directories (`.kiro/`, `.git/`)
+- `catalyst.wasm`: Compiled from catalyst.wat during build
+- `catalyst.dump`: WASM module analysis output
+- `dist/`: Build output directory containing deployable files
 
 ## Development Workflow
 
-1. Edit `catalyst.wat` or `catalyst.js`
-2. Run `npm run build` to compile
-3. Test via `npm run serve` and browser
-4. Build outputs go to `dist/` directory
-5. Always rebuild after code changes
-
-## Key Directories to Ignore
-
-- `.git/` - Git version control
-- `dist/` - Generated build outputs
-- `.DS_Store` - macOS system files
+1. Edit `catalyst.wat` for VM changes or `catalyst.js` for JavaScript interface
+2. Run `npm run build` to compile WAT to WASM
+3. Test via `test.html` in browser using development server
+4. Use `catalyst.dump` for WASM module analysis and debugging
