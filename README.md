@@ -1,7 +1,6 @@
 # Catalyst Smalltalk Virtual Machine
 
-Catalyst is a self-hosted [Open Smalltalk]
-(https://github.com/OpenSmalltalk/opensmalltalk-vm) virtual machine
+Catalyst is a self-hosted [Open Smalltalk](https://github.com/OpenSmalltalk/opensmalltalk-vm) virtual machine
 and object memory, written in Smalltalk and decompiled to [WASM
 GC](https://github.com/WebAssembly) for operation in web browsers. It
 uses AI-assisted dynamic method translation to optimize high-frequency
