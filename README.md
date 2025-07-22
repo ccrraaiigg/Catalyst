@@ -8,7 +8,7 @@ uses AI-assisted dynamic method translation to optimize high-frequency
 code paths. Each Catalyst module can run multiple concurrent systems,
 and uses this ability to provide continuity of operation across class
 type changes. Catalyst leverages JavaScript for finalization and host
-device driver access, and uses SqueakJS as an environment for
+device driver access, and uses [SqueakJS](https://squeak.jd.org) as an environment for
 simulation, debugging, and deployment.
 
 ## 🚀 Key Features
@@ -116,7 +116,7 @@ compilation framework
 - Sista instruction set support
 - Enhanced adaptive optimization
 - Naiad module system support
-- Compatibility with Squeak, Pharo, and Cuis object memories
+- Compatibility with [Squeak](https://squeak.org), [Pharo](https://pharo.org), and [Cuis](https://cuis.st) object memories
 
 ## 🧪 Testing
 
@@ -138,4 +138,12 @@ See [LICENSE](LICENSE) file for details.
 ## 🤝 Contributing
 
 This is a research project exploring WebAssembly-based virtual machine implementation with AI-assisted optimization. Contributions and discussions about the architecture and implementation approaches are welcome.
+
+## 🙏 Acknowledgements
+
+Special thanks to...
+- [Dan Ingalls](https://en.wikipedia.org/wiki/Dan_Ingalls) for Smalltalk
+- [Vanessa Freudenberg](https://github.com/codefrau) for SqueakJS
+- [Eliot Miranda](http://www.mirandabanda.org/cogblog/) for Cog
+- the WebAssembly community
 
