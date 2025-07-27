@@ -66,7 +66,7 @@ class SqueakVM {
 	    .then(wasmModule => {
 		this.coreWASMModule = wasmModule
 		this.coreWASMExports = this.coreWASMModule.instance.exports
-		this.vm = this.coreWASMExports.initialize()
+		this.vm = this.coreWASMExports.newVirtualMachine()
 		this.coreWASMExports.createMinimalObjectMemory(this.vm)
 
 		if (!this.vm) throw new Error('WASM VM initialization failed')

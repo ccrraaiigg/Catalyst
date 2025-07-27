@@ -16,6 +16,11 @@ need to proceed, do not ask "should I proceed?"... just do the work.
 
 When you've changed code, always rebuild.
 
+## Roadmap and Task List
+
+The "summary" file was written by a human and should never be modified
+by a non-human. All tasks should be organized by project phase.
+
 ## Testing
 
 After a rebuild, the user will test, via test.html in a web
