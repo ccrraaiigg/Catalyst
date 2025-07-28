@@ -109,7 +109,7 @@ function copyFile(src, dest) {
 }
 
 function main() {
-    console.log('🚀 Building Catalyst Phase 3 with Method Translation...\n');
+    console.log('🚀 Building Catalyst...\n');
 
     const outputDir = './dist';
     ensureDir(outputDir);
@@ -153,7 +153,6 @@ function main() {
         }
     }
 
-    // Copy test.html file instead of generating it
     const testHtmlSrc = 'test.html';
     const testHtmlDest = path.join(outputDir, 'test.html');
     
@@ -191,17 +190,7 @@ function main() {
         version: '3.0.0',
         description: 'Catalyst Smalltalk virtual machine',
         phase: 3,
-        features: [
-            'Real bytecode-to-WASM method translation',
-            'Hot method detection and compilation',
-            'method translation statistics',
-            'Performance monitoring',
-            'Debug mode support',
-            'Enhanced 3 workload example with translated methods',
-            'Proper UTF-8 character encoding for emoji and symbols',
-            'Runtime translation enable/disable controls',
-            'Cross-origin isolation for 5μs timer resolution'
-        ],
+        features: [],
         buildDate: new Date().toISOString(),
         files: {
             wasm: watFiles.map(f => f.replace('.wat', '.wasm')),
@@ -223,16 +212,8 @@ function main() {
         console.log('\nTo test the method translation:');
         console.log('1. Start a web server: python -m http.server 8000');
         console.log('2. Open: http://localhost:8000/dist/test.html');
-        console.log('3. Click "Run (3 workload) with translation" to execute the basic example');
+        console.log('3. Click "Run (3 benchmark) with translation" to execute the basic example');
         console.log('4. Use "Run Multiple Times" to trigger method translation (threshold: 1000 invocations)');
-        console.log('\nPhase 3 Features:');
-        console.log('• ⚡ Bytecode-to-WASM translation during execution');
-        console.log('• 📊 method translation statistics and monitoring');
-        console.log('• 🔧 Runtime translation enable/disable toggle');
-        console.log('• 🐛 Debug mode for detailed compilation logs');
-        console.log('• 🚀 Performance improvements for hot methods');
-        console.log('• 🎨 Proper UTF-8 character display for all emoji and symbols');
-        console.log('• ⏱️ Cross-origin isolation for 5μs timer resolution');
     } else {
         console.log('\n❌ Build completed with errors');
         process.exit(1);

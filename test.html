@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>🚀 Phase 3 Method Translation Test Interface</title>
+    <title>🚀 Catalyst</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
@@ -186,11 +186,7 @@
     <script type="module" src="./catalyst.js"></script>
 
     <div class="container">
-        <h1>🚀 Phase 3 Method Translation Test Interface</h1>
-        <p class="subtitle">SqueakWASM Virtual Machine with Runtime Bytecode Translation</p>
-
-
-
+        <h1>🚀 Catalyst</h1>
         <div class="stats">
             <div class="stat-card">
                 <div class="stat-value" id="execTime">0.00</div>
@@ -209,7 +205,7 @@
         <div class="controls">
             <div class="control-group">
                 <h3>🎮 Execution Controls</h3>
-                <button id="runExample">Run (3 workload) with Method Translation</button>
+                <button id="runExample">Run (3 benchmark) with Method Translation</button>
                 <button id="runMultiple" class="run-multiple">Trigger Method Translation</button>
                 <button id="runIntensive" class="run-intensive">🔥 Run Intensive Computation</button>
             </div>
@@ -298,7 +294,7 @@
                     vm.setDebugMode(debugMode);
                     // Single warmup run to eliminate cold start
                     return vm.run().then(() => {
-                        addOutput('<strong>🚀 Running 3 workload with Method Translation...</strong>');
+                        addOutput('<strong>🚀 Running 3 benchmark with Method Translation...</strong>');
                         const startTime = performance.now();
                         return vm.run().then(result => {
                             const endTime = performance.now();
@@ -456,7 +452,7 @@
             }
         });
 
-        // Intensive computation test - Create a more complex workload
+        // Intensive computation test - Create a more complex benchmark
         document.getElementById('runIntensive').addEventListener('click', async () => {
             try {
                 await initVM();

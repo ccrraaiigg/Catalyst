@@ -1,4 +1,4 @@
-// catalyst.js - JavaScript interface to SqueakWASM VM
+// catalyst.js - JavaScript interface to Catalyst VM
 
 class SqueakVM {
     constructor() {
@@ -70,7 +70,7 @@ class SqueakVM {
 		this.coreWASMExports.createMinimalObjectMemory(this.vm)
 
 		if (!this.vm) throw new Error('WASM VM initialization failed')
-		console.log('✅ SqueakWASM VM initialized successfully')
+		console.log('✅ Catalyst VM initialized successfully')
 
 		this.functionTable = this.coreWASMExports.functionTable
 		
@@ -109,7 +109,7 @@ class SqueakVM {
                     this.llmConfig.model = 'gpt-4o'}
 		else if (primaryProvider === 'anthropic') {
                     this.llmConfig.endpoint = 'http://localhost:8001/api/anthropic'
-                    this.llmConfig.model = 'claude-3-5-sonnet-20241022'}
+                    this.llmConfig.model = 'claude-opus-4-20250514'}
                 
                 if (this.debugMode) {
                     const providerDisplayName = primaryProvider === 'openai' ? 'OpenAI' : 
@@ -1014,12 +1014,12 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	let processedCode = watCode
 	
 	// Step 1: Ensure function has context parameter if not already present
-	if (!processedCode.includes('(param $context eqref)')) {
+	if (!processedCode.includes('(param $context (ref eq))')) {
 	    const funcMatch = processedCode.match(/(\(func\s+\$\w+)(\s*\([^)]*\))?/)
 	    if (funcMatch) {
 		const funcStart = funcMatch[1]
 		const existingParams = funcMatch[2] || ''
-		const newSignature = `${funcStart} (param $context eqref)${existingParams}`
+		const newSignature = `${funcStart} (param $context (ref eq))${existingParams}`
 		processedCode = processedCode.replace(funcMatch[0], newSignature)}}
 	
 	// Step 2: Add (result i32) to the function signature if not already present
@@ -1027,7 +1027,7 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	    const funcMatch = processedCode.match(/(\(func\s+\$\w+\s*\([^)]*\))/)
 	    if (funcMatch) {
 		const originalSignature = funcMatch[1]
-		const newSignature = originalSignature + ' (result i32)'
+		const newSignature = originalSignature + ') (result i32'
 		processedCode = processedCode.replace(originalSignature, newSignature)}}
 	
 	// Step 3: Insert i32.const 1 before the final closing parenthesis
@@ -1049,12 +1049,12 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	const functionName = preparedWatCode.match(/\(func\s+\$([a-zA-Z0-9_]+)/)[1]
 	
 	return `(module
-  (import "env" "onContextPush" (func $onContextPush (param eqref) (param eqref)))
-  (import "env" "popFromContext" (func $popFromContext (param eqref) (result eqref)))
-  (import "env" "valueOfSmallInteger" (func $valueOfSmallInteger (param eqref) (result i32)))
-  (import "env" "smallIntegerForValue" (func $smallIntegerForValue (param i32) (result eqref)))
-  (import "env" "contextReceiver" (func $contextReceiver (param eqref) (result eqref)))
-  (import "env" "contextLiteralAt" (func $contextLiteralAt (param eqref) (param i32) (result eqref)))
+  (import "env" "onContextPush" (func $onContextPush (param (ref eq)) (param (ref eq))))
+  (import "env" "popFromContext" (func $popFromContext (param (ref eq)) (result (ref eq))))
+  (import "env" "valueOfSmallInteger" (func $valueOfSmallInteger (param (ref eq)) (result i32)))
+  (import "env" "smallIntegerForValue" (func $smallIntegerForValue (param i32) (result (ref eq))))
+  (import "env" "contextReceiver" (func $contextReceiver (param (ref eq)) (result (ref eq))))
+  (import "env" "contextLiteralAt" (func $contextLiteralAt (param (ref eq)) (param i32) (result (ref eq))))
   (import "env" "debugLog" (func $debugLog (param i32)))
   
   ${preparedWatCode}
@@ -1116,7 +1116,7 @@ Please fix the errors above and generate ONLY the corrected function definition.
 		const isGCError = errorString.includes('invalid value type') || 
 		      errorString.includes('heap types not supported without the gc feature') ||
 		      errorString.includes('gc feature') ||
-		      errorString.includes('eqref') ||
+		      errorString.includes('(ref eq)') ||
 		      errorString.includes('funcref') ||
 		      errorString.includes('externref') ||
 		      errorString.includes('reference type')
@@ -1522,7 +1522,7 @@ Please fix the errors above and generate ONLY the corrected function definition.
 		const isGCError = errorString.includes('invalid value type') || 
 		      errorString.includes('heap types not supported without the gc feature') ||
 		      errorString.includes('gc feature') ||
-		      errorString.includes('eqref') ||
+		      errorString.includes('(ref eq)') ||
 		      errorString.includes('funcref') ||
 		      errorString.includes('externref') ||
 		      errorString.includes('reference type')
@@ -1565,7 +1565,7 @@ Please fix the errors above and generate ONLY the corrected function definition.
 		throw new Error(`method translation export not found. Available: ${exportNames.join(', ')}`)
 
 	    if (this.debugMode)
-		console.log(`✅ method translation function compiled and validated with explicit signature (param eqref) (result i32)`)
+		console.log(`✅ method translation function compiled and validated with explicit signature (param (ref eq)) (result i32)`)
 	    
 	    return compiledFunction}
 	catch (error) {
@@ -1620,17 +1620,17 @@ Please fix the errors above and generate ONLY the corrected function definition.
 	    let jsValidatorSupportsGC = false
 
 	    try {
-		const testWat = `(module (import "env" "test" (func $test (param eqref))))`
+		const testWat = `(module (import "env" "test" (func $test (param (ref eq)))))`
 		const testBytes = mainModule.parseWat(testWat)
 		const isValid = mainModule.validate(testBytes)
 		
 		if (this.debugMode)
-		    console.log('✅ JavaScript validator supports WebAssembly GC features (eqref)')
+		    console.log('✅ JavaScript validator supports WebAssembly GC features ((ref eq))')
 		
 		jsValidatorSupportsGC = true}
 	    catch (error) {
 		if (this.debugMode) {
-		    console.log('⚠️ JavaScript validator does not support WebAssembly GC features (eqref)')
+		    console.log('⚠️ JavaScript validator does not support WebAssembly GC features ((ref eq))')
 		    console.log('✅ However, the actual WebAssembly runtime DOES support GC features')
 		    console.log('🔄 GC errors from JS validator will be ignored since runtime supports GC')}
 		
@@ -2286,33 +2286,33 @@ producing a function that must work.
 
 YOU MAY ASSUME:
 
-- All Smalltalk objects are of type eqref. You can get the integer
+- All Smalltalk objects are of type (ref eq). You can get the integer
   value of a SmallInteger with a function having signature (func
-  $valueOfSmallInteger (param eqref) (result i32)). You can create the
+  $valueOfSmallInteger (param (ref eq)) (result i32)). You can create the
   SmallInteger corresponding to an i32 integer with a function having
   signature (func $smallIntegerForValue (param i32).
 
 - The active Smalltalk method context is available as your function's
   parameter. The function you write will have the signature (func
-  $${functionName} (param $context eqref)).
+  $${functionName} (param $context (ref eq))).
 
 - You can get the context receiver with a function having signature
-  (func $contextReceiver (param eqref) (result eqref)). The first
+  (func $contextReceiver (param (ref eq)) (result (ref eq))). The first
   argument is $context, the result is a Smalltalk object.
 
 - You can get context literals with a imported function having
-  signature (func $contextLiteralAt (param eqref) (param i32) (result
-  eqref)). The first argument is $context, the second is the index of
-  the literal you want.
+  signature (func $contextLiteralAt (param (ref eq)) (param i32)
+  (result (ref eq))). The first argument is $context, the second is
+  the index of the literal you want.
 
 - You can push a Smalltalk object onto the Smalltalk context's stack
-  with a function having signature (func $onContextPush (param eqref)
-  (param eqref)). The first argument is $context, the second is the
+  with a function having signature (func $onContextPush (param (ref eq))
+  (param (ref eq))). The first argument is $context, the second is the
   Smalltalk object you want to push.
 
 - You can pop a Smalltalk object from the Smalltalk context's stack
-  with a function having signature (func $popFromContext (param eqref)
-  (result eqref)). The argument is $context, the result is a Smalltalk
+  with a function having signature (func $popFromContext (param (ref eq))
+  (result (ref eq))). The argument is $context, the result is a Smalltalk
   object.
 
 
@@ -2380,7 +2380,7 @@ ANALYSIS FRAMEWORK:
 
 TYPE INVARIANTS:
 
-- NEVER USE type externref. Use type eqref instead. $receiver is of always of type eqref.
+- NEVER USE type externref. Use type (ref eq) instead. $receiver is of always of type (ref eq).
 
 
 WEBASSEMBLY STACK MANAGEMENT:
@@ -2440,7 +2440,7 @@ Generate ONLY the function definition.`
 	// Subsequent attempts: Include error feedback in the prompt
 	// Single comprehensive prompt with all error details
 
-	let prompt = `Please try again with a corrected WAT function. If you only have a validation error (no parsing error), then you're on the right track with the algorithm you just need to fix your WAT. The most common error is an unbalanced stack, from not consuming all of a function's output, or pushing the wrong number of arguments for a function. Check a function's signature before calling it! Your function should not leave anything on the WASM stack. Do not use a return type in the function signature. NEVER USE the 'drop' instruction. Instead, make sure the stack is balanced. NEVER USE type externref. Use type eqref instead. $receiver is of type eqref. Here's what went wrong with the previous attempt:
+	let prompt = `Please try again with a corrected WAT function. If you only have a validation error (no parsing error), then you're on the right track with the algorithm you just need to fix your WAT. The most common error is an unbalanced stack, from not consuming all of a function's output, or pushing the wrong number of arguments for a function. Check a function's signature before calling it! Your function should not leave anything on the WASM stack. Do not use a return type in the function signature. NEVER USE the 'drop' instruction. Instead, make sure the stack is balanced. NEVER USE type externref. Use type (ref eq) instead. $receiver is of type (ref eq). Here's what went wrong with the previous attempt:
 
 `
 	
@@ -2535,7 +2535,7 @@ Current attempt: ${attempt}/5`
 // ONLY export reportResult() function as required
 function reportResult(value) {
     // Only log results in debug mode to avoid spam
-    if (window.squeakVM && window.squeakVM.debugMode) console.log(`📢 SqueakWASM Result: ${value}`)
+    if (window.squeakVM && window.squeakVM.debugMode) console.log(`📢 Catalyst Result: ${value}`)
     
     // Dispatch to any active VM instance
     if (window.squeakVM && window.squeakVM.onResult) window.squeakVM.onResult(value)

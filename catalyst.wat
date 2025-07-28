@@ -1,8 +1,8 @@
 ;; catalyst.wat: multiple simultaneous Catalyst Smalltalk virtual
 ;; machines, with method translation
 ;;
-;; This source code was generated from a decompilation of the
-;; Smalltalk implementation.
+;; This source code is a decompilation of the Smalltalk
+;; implementation.
 ;;
 ;; Craig Latta, July 2025
 
@@ -10,19 +10,25 @@
 
  ;; imported JS functions
 
+ ;; function 0
+ 
  (import "env" "reportResult"
 	 (func $reportResult
-	       (param i32)))        ;; result
+	       (param i32))) ;; result
 
  ;; JS translates method and installs translation function
+ ;; function 1
+
  (import "env" "translateMethod"
 	 (func $translateMethod
-	       (param (ref eq))        ;; method
-	       (param i32)))        ;; receiver identity hash
+	       (param (ref eq)) ;; method
+	       (param i32)))    ;; receiver identity hash
+
+ ;; function 2
  
  (import "env" "debugLog"
 	 (func $debugLog
-	       (param i32)))          ;; level
+	       (param i32))) ;; level
 
  ;; linear memory for efficient byte transfer between WASM and JS
  (export "bytes" (memory $0))
@@ -106,7 +112,7 @@
 		  (field $identityHash (mut i32))
 		  (field $nextObject (mut (ref null eq))))))
 
-  (type $UndefinedObject (sub
+  (type $UndefinedObject (sub $Object
 			  (struct
 			   ;; $Class or $Metaclass
 			   (field $class (mut (ref eq)))
@@ -274,11 +280,7 @@
 	(struct 
 	 (field $selector (mut (ref eq))) 
 	 (field $receiverClass (mut (ref eq))) 
-
-	 ;; the nullable type is used by method lookup,
-	 ;; which can return the null method
-	 (field $method (mut (ref null $CompiledMethod)))
-
+	 (field $method (mut (ref $CompiledMethod)))
 	 (field $hitCount (mut i32)))) 
 
   (type $VirtualMachine 
@@ -319,17 +321,20 @@
  ;; exception types
 
  (type $messageNotUnderstoodType (func
-			      (param (ref $Symbol)))) ;; selector
+				  (param (ref $Symbol)))) ;; selector
 
  (type $emptyStackType (func))
  (type $valuesLeftOnStackType (func))
+ (type $outOfBoundsType (func
+       (param i32)))
  
  ;; exception tags
 
  (tag $messageNotUnderstood (type $messageNotUnderstoodType))
  (tag $emptyStack (type $emptyStackType))
  (tag $valuesLeftOnStack (type $valuesLeftOnStackType))
-      
+ (tag $outOfBounds (type $outOfBoundsType))
+ 
  ;; Reference-type globals are nullable due to current WASM
  ;; limitations, but are enforced to be non-null after object memory
  ;; creation.
@@ -345,7 +350,7 @@
  ;; translated methods function table (the only table in this module)
  (table $functionTable 100 funcref)
 
- ;; Return whether two $byteArrays are equivalent.
+ ;; function 3: Return whether two $byteArrays are equivalent.
  
  (func $byteArrayIsEquivalentTo
        (param $firstObject (ref $ByteArray))
@@ -399,7 +404,9 @@
 				(i32.eq
 				 (local.get $index)
 				 (local.get $length))
-				(then (return (i32.const 1)))  ;; All elements equal
+				(then
+				 ;; All elements equal
+				 (return (i32.const 1)))  
 				(else
 				 ;; Compare current elements
 				 (if (result i32)
@@ -410,7 +417,9 @@
 				      (array.get_u $byteArray
 						   (local.get $secondArray)
 						   (local.get $index)))
-				     (then (return (i32.const 0)))  ;; Elements different
+				     (then
+				      ;; Elements different
+				      (return (i32.const 0)))  
 				     (else
 				      (local.set $index
 						 (i32.add
@@ -418,6 +427,8 @@
 						  (i32.const 1)))
 				      (br $loop)))))))))))))
 
+ ;; function 4
+ 
  (func $symbolIsEquivalentTo
        (param $firstSymbol (ref $Symbol))
        (param $secondSymbol (ref $Symbol))
@@ -438,7 +449,9 @@
 		  (ref.cast (ref $ByteArray)
 			    (struct.get $Symbol $slots
 					(local.get $secondSymbol)))))))
- 
+
+ ;; function 5
+
  (func $newArray
        (param $vm (ref $VirtualMachine)) 
        (param $array (ref $objectArray)) 
@@ -446,14 +459,25 @@
        
        (struct.new $Array
 		   ;; $class
-		   (ref.cast (ref eq)
-			     (struct.get $VirtualMachine $classArray 
-					 (local.get $vm)))
+		   (if (result (ref eq))
+		       (ref.is_null
+			(struct.get $VirtualMachine $classArray 
+				    (local.get $vm)))
+		       (then
+			(ref.cast (ref eq)
+				  (ref.i31
+				   (i32.const -1337))))
+		       (else
+			(ref.cast (ref eq)
+				  (struct.get $VirtualMachine $classArray 
+					      (local.get $vm)))))
 		   
 		   (call $nextIdentityHash ;; $identityHash
 			 (local.get $vm))
 		   (ref.null none)         ;; $nextObject to be set later
 		   (local.get $array)))    ;; $array
+
+ ;; function 6
  
  (func $newByteArray
        (param $vm (ref $VirtualMachine)) 
@@ -461,15 +485,26 @@
        (result (ref $ByteArray))
        
        (struct.new $ByteArray
-		   ;; $class
-		   (ref.cast (ref eq)
-			     (struct.get $VirtualMachine $classByteArray 
-					 (local.get $vm)))
+		   (if (result (ref eq))
+		       ;; class
+		       (ref.is_null
+			(struct.get $VirtualMachine $classByteArray 
+				    (local.get $vm)))
+		       (then
+			(ref.cast (ref eq)
+				  (ref.i31
+				   (i32.const -1337))))
+		       (else
+			(ref.cast (ref eq)
+				  (struct.get $VirtualMachine $classByteArray 
+					      (local.get $vm)))))
 		   
 		   (call $nextIdentityHash ;; $identityHash
 			 (local.get $vm))
 		   (ref.null none)         ;; $nextObject to be set later
 		   (local.get $array)))    ;; $array
+
+ ;; function 7
  
  (func $newWordArray
        (param $vm (ref $VirtualMachine)) 
@@ -477,24 +512,46 @@
        (result (ref $WordArray))
        
        (struct.new $WordArray
-		   ;; $class
-		   (ref.cast (ref eq)
-			     (struct.get $VirtualMachine $classWordArray 
-					 (local.get $vm)))
+		   ;; class
+		   (if (result (ref eq))
+		       (ref.is_null
+			(struct.get $VirtualMachine $classWordArray 
+				    (local.get $vm)))
+		       (then
+			(ref.cast (ref eq)
+				  (ref.i31
+				   (i32.const -1337))))
+		       (else
+			(ref.cast (ref eq)
+				  (struct.get $VirtualMachine $classWordArray 
+					      (local.get $vm)))))
 
 		   (call $nextIdentityHash ;; $identityHash
 			 (local.get $vm))
 		   (ref.null none)         ;; $nextObject to be set later
 		   (local.get $array)))    ;; $array
+
+ ;; function 8
  
  (func $newDictionary
        (param $vm (ref $VirtualMachine)) 
        (result (ref $Dictionary))
        
        (struct.new $Dictionary
-		   (ref.cast (ref eq)      ;; $class to be set later, to class Dictionary
-			     (struct.get $VirtualMachine $classObject
-					 (local.get $vm)))
+		   ;; $class to be set later, to class Dictionary
+		   (if (result (ref eq))
+		       (ref.is_null
+			(struct.get $VirtualMachine $classObject
+				    (local.get $vm)))
+		       (then
+			(ref.cast (ref eq)
+				  (ref.i31
+				   (i32.const -1337))))
+		       (else
+			(ref.cast (ref eq)      
+				  (struct.get $VirtualMachine $classObject
+					      (local.get $vm)))))
+		   
 		   (call $nextIdentityHash ;; $identityHash
 			 (local.get $vm))
 		   (ref.null none)         ;; $nextObject to be set later
@@ -510,6 +567,8 @@
 				    (i32.const 10))) ;; initial capacity 10         
 		   (i32.const 0)))         ;; $count
 
+ ;; function 9
+ 
  (func $dictionaryAdd
        (param $vm (ref $VirtualMachine))
        (param $dictionary (ref $Dictionary))
@@ -674,7 +733,7 @@
 		    (local.get $count)
 		    (i32.const 1))))
 
- ;; Link $objects via their $nextObject fields.
+ ;; function 10: Link $objects via their $nextObject fields.
  
  (func $linkObjects
        (param $vm (ref $VirtualMachine)) 
@@ -700,6 +759,7 @@
 	       (local.get $limit))
 	      (then
 	       (return)))
+
 	     (local.tee $nextObject
 			(array.get $objectArray
 				   (local.get $objects)
@@ -733,6 +793,8 @@
 	       
 	       (br $link)))))
 
+ ;; function 11
+ 
  (func $newEmptyArray
        (param $vm (ref $VirtualMachine)) 
        (result (ref $Array))
@@ -743,8 +805,9 @@
 			(ref.null none)  ;; default array element type (irrelevant here)
 			(i32.const 0)))) ;; empty
 
- ;; Add an element to the end of an $Array's elements, by replacing
- ;; the elements array.
+ ;; function 12: Add an element to the end of an $Array's elements, by
+ ;; replacing the elements array.
+
  (func $arrayAdd
        (param $array (ref $Array))
        (param $element (ref eq))
@@ -772,23 +835,28 @@
 			     (i32.add
 			      (local.get $limit)
 			      (i32.const 1))))
-       
-       ;; Copy the contents of the old array into the new one.
-       (loop $loop
-	     (array.set $objectArray
-			(local.get $newObjectArray)
-			(local.get $index)
-			(array.get $objectArray
-				   (local.get $oldObjectArray)
-				   (local.get $index)))
 
-	     (br_if $loop
-		    (i32.eq
-		     (local.tee $index
-				(i32.add
-				 (local.get $index)
-				 (i32.const 1)))
-		     (local.get $limit))))
+       (if
+	(i32.gt_u
+	 (local.get $limit)
+	 (i32.const 0))
+	(then
+	 ;; Copy the contents of the old array into the new one.
+	 (loop $loop
+	       (array.set $objectArray
+			  (local.get $newObjectArray)
+			  (local.get $index)
+			  (array.get $objectArray
+				     (local.get $oldObjectArray)
+				     (local.get $index)))
+
+	       (br_if $loop
+		      (i32.lt_s
+		       (local.tee $index
+				  (i32.add
+				   (local.get $index)
+				   (i32.const 1)))
+		       (local.get $limit))))))
        
        ;; Put the new element in the last slot of the new array.
        (array.set $objectArray
@@ -800,6 +868,8 @@
        (struct.set $Array $array
 		   (local.get $array)
 		   (local.get $newObjectArray)))
+
+ ;; function 13
  
  (func $newSubclassOfWithName
        (param $vm (ref $VirtualMachine))
@@ -809,13 +879,27 @@
 
        (local $class (ref $Class))
        (local $metaclass (ref $Metaclass))
+       (local $bootstrapping i32)
+
+       (local.set $bootstrapping (i32.const 0))
        
        (local.set $class
 		  (struct.new $Class
 			      ;; $class to be set later, to an appropriate Metaclass.
-			      (ref.cast (ref eq)
-					(struct.get $VirtualMachine $classObject
-						    (local.get $vm)))
+			      (if (result (ref eq))
+				  (ref.is_null
+				   (struct.get $VirtualMachine $classObject
+					       (local.get $vm)))
+				  (then
+				   (local.set $bootstrapping (i32.const 1))
+
+				   (ref.cast (ref eq)
+					     (ref.i31
+					      (i32.const -1337))))
+				  (else
+				   (ref.cast (ref eq)
+					     (struct.get $VirtualMachine $classObject
+							 (local.get $vm)))))
 
 			      (call $nextIdentityHash           ;; $identityHash
 				    (local.get $vm))
@@ -851,9 +935,22 @@
        
        (local.set $metaclass
 		  (struct.new $Metaclass
-			      (ref.cast (ref eq)      ;; $class
-					(struct.get $VirtualMachine $classMetaclass 
-						    (local.get $vm)))
+			      ;; $class
+			      (if (result (ref eq))
+				  (ref.is_null
+				   (struct.get $VirtualMachine $classMetaclass 
+					       (local.get $vm)))
+				  (then
+				   (local.set $bootstrapping (i32.const 1))
+
+				   (ref.cast (ref eq)
+					     (ref.i31
+					      (i32.const -1337))))
+				  (else
+				   (ref.cast (ref eq)      
+					     (struct.get $VirtualMachine $classMetaclass 
+							 (local.get $vm)))))
+			      
 			      (call $nextIdentityHash ;; $identityHash
 				    (local.get $vm))
 
@@ -874,7 +971,7 @@
 			      (call $newDictionary                               
 				    (local.get $vm))
 
-			      (i32.const 152)                             ;; $format
+			      (i32.const 152)         ;; $format
 
 			      ;; $instanceVariableNames
 			      (call $newEmptyArray                               
@@ -887,51 +984,57 @@
 					       (i32.const 0)
 					       (i32.const 16)))                                    
 
-			      (local.get $class)))                        ;; $thisClass
+			      (local.get $class)))    ;; $thisClass
 
        (struct.set $Class $class
 		   (local.get $class)
 		   (local.get $metaclass))
-       
-       (call $linkObjects
-	     (local.get $vm)
-	     (array.new_fixed $objectArray 6
-			      (struct.get $Metaclass $class
-					  (local.get $metaclass))
-			      (struct.get $Metaclass $superclass
-					  (local.get $metaclass))
-			      (struct.get $Metaclass $methodDictionary
-					  (local.get $metaclass))
-			      (struct.get $Metaclass $instanceVariableNames
-					  (local.get $metaclass))
-			      (struct.get $Metaclass $baseID
-					  (local.get $metaclass))
-			      (struct.get $Metaclass $thisClass
-					  (local.get $metaclass))))
 
-       (call $linkObjects
-	     (local.get $vm)
-	     (array.new_fixed $objectArray 9
-			      (struct.get $Class $class
-					  (local.get $class))
-			      (struct.get $Class $superclass
-					  (local.get $class))
-			      (struct.get $Class $methodDictionary
-					  (local.get $class))
-			      (struct.get $Class $instanceVariableNames
-					  (local.get $class))
-			      (struct.get $Class $baseID
-					  (local.get $class))
-			      (struct.get $Class $subclasses
-					  (local.get $class))
-			      (struct.get $Class $name
-					  (local.get $class))
-			      (struct.get $Class $classPool
-					  (local.get $class))
-			      (struct.get $Class $sharedPools
-					  (local.get $class))))
+       (if
+	(i32.eqz
+	 (local.get $bootstrapping))
+	(then
+	 (call $linkObjects
+	       (local.get $vm)
+	       (array.new_fixed $objectArray 6
+				(struct.get $Metaclass $class
+					    (local.get $metaclass))
+				(struct.get $Metaclass $superclass
+					    (local.get $metaclass))
+				(struct.get $Metaclass $methodDictionary
+					    (local.get $metaclass))
+				(struct.get $Metaclass $instanceVariableNames
+					    (local.get $metaclass))
+				(struct.get $Metaclass $baseID
+					    (local.get $metaclass))
+				(struct.get $Metaclass $thisClass
+					    (local.get $metaclass))))
+
+	 (call $linkObjects
+	       (local.get $vm)
+	       (array.new_fixed $objectArray 9
+				(struct.get $Class $class
+					    (local.get $class))
+				(struct.get $Class $superclass
+					    (local.get $class))
+				(struct.get $Class $methodDictionary
+					    (local.get $class))
+				(struct.get $Class $instanceVariableNames
+					    (local.get $class))
+				(struct.get $Class $baseID
+					    (local.get $class))
+				(struct.get $Class $subclasses
+					    (local.get $class))
+				(struct.get $Class $name
+					    (local.get $class))
+				(struct.get $Class $classPool
+					    (local.get $class))
+				(struct.get $Class $sharedPools
+					    (local.get $class))))))
 
        (local.get $class))
+
+ ;; function 14
  
  (func $newSymbolFromBytes
        (param $vm (ref $VirtualMachine)) 
@@ -939,14 +1042,26 @@
        (result (ref $Symbol))
        
        (struct.new $Symbol
-		   (ref.cast (ref eq)
-			     (struct.get $VirtualMachine $classSymbol ;; $class
-					 (local.get $vm)))
-		   (call $nextIdentityHash                  ;; $identityHash
+		   ;; $class
+		   (if (result (ref eq))                                    
+		       (ref.is_null
+			(struct.get $VirtualMachine $classSymbol 
+				    (local.get $vm)))
+		       (then
+			(ref.cast (ref eq)
+				  (ref.i31
+				   (i32.const -1337))))
+		       (else
+			(ref.cast (ref eq)
+				  (struct.get $VirtualMachine $classSymbol 
+					      (local.get $vm)))))
+		   (call $nextIdentityHash ;; $identityHash
 			 (local.get $vm))
-		   (ref.null none)                          ;; $nextObject to be set later
-		   (local.get $bytes)))                     ;; $slots
+		   (ref.null none)         ;; $nextObject to be set later
+		   (local.get $bytes)))    ;; $slots
 
+ ;; function 15
+ 
  (func $do
        (param $vm (ref $VirtualMachine))
        (param $array (ref $objectArray))
@@ -981,6 +1096,8 @@
 			 (i32.const 1)))
 	     (br $enumerate)))
 
+ ;; function 16
+ 
  (func $fixMetalevelFields
        (param $vm (ref $VirtualMachine))
        (param $class (ref null eq))
@@ -1017,6 +1134,8 @@
 				     (ref.cast (ref $Class)
 					       (local.get $class))))
 	     (ref.func $fixMetalevelFields)))
+
+ ;; function 17
  
  (func $newVirtualMachine
        (result (ref $VirtualMachine))
@@ -1059,50 +1178,17 @@
 			      (ref.null none))) ;; $classSmallInteger to be set later
 
        ;; The simplest virtual machine runs (3 benchmark). Create
-       ;; class SmallInteger.
-       ;; 
-       ;; First create a Metaclass to be the class of class
-       ;; SmallInteger.
-       ;; 
-       ;; But first create class Class to be a superclass of
-       ;; (SmallInteger class).
-       ;;
-       ;; But first create (Class class) to be the class of class
-       ;; Class.
-       ;; 
-       ;; But first create class Class to be a superclass of (Class
-       ;; class). We've been here before.
-       ;; 
-       ;; So first create class Class with a null class, to be set
-       ;; later.
-       ;; 
-       ;; But first create class Object to be a superclass of class
-       ;; Class.
-       ;; 
-       ;; But first create (Object class) to be the class of class
-       ;; Object. We've been here before.
-       ;; 
-       ;; So first create class Class with a null class and
-       ;; superclass, to be set later.
-       ;; 
-       ;; But first create the superclasses of class Class, with null
-       ;; classes and superclasses.
-       ;; 
-       ;; This is why $class and $superclass of $Class are nullable
-       ;; ($class is also nullable because the class of class
-       ;; Metaclass is also an instance of class Metaclass, and
-       ;; $superclass is also nullable because the superclass of class
-       ;; Object is nil).
+       ;; class SmallInteger and as much of the metalevel as we need.
        
        ;; The $vm needed to exist before we could create any classes
        ;; (in particular, before we could create any metaclasses,
-       ;; because it involves getting a field of the $vm). The
-       ;; $superclass of class Object is nil after this, though; fix
-       ;; it later. Until we create class Metaclass, the $class of
-       ;; every $Metaclass we create will be nil; fix them
-       ;; later. Until we create class Array, the $class of the
-       ;; $subclasses and $sharedPools of every $Class we create will
-       ;; be nil; fix them later.
+       ;; because it involves getting a field of the $vm). The $class
+       ;; of class Object is null after this, though; fix it
+       ;; later. Until we create class Metaclass and class Symbol, the
+       ;; $class of every $Metaclass and $Symbol we create will be
+       ;; null; fix them later. Until we create class Array, the
+       ;; $class of the $subclasses and $sharedPools of every $Class
+       ;; we create will be null; fix them later.
 
        (struct.set $VirtualMachine $classObject
 		   (local.get $vm)
@@ -1125,34 +1211,35 @@
        (struct.set $VirtualMachine $firstObject
 		   (local.get $vm)
 		   (struct.new $UndefinedObject
-			       (call $newSubclassOfWithName                     ;; $class
+			       ;; $class
+			       (call $newSubclassOfWithName 
 				     (local.get $vm)
-				     (struct.get $VirtualMachine $classObject   ;; $superclass
+				     (struct.get $VirtualMachine $classObject ;; $superclass
 						 (local.get $vm))
 
 				     ;; $name
 				     (call $newSymbolFromBytes                  
 					   (local.get $vm)
 					   (array.new_fixed $byteArray 15
-							    (i32.const 85)      ;; 'U'
-							    (i32.const 110)     ;; 'n'
-							    (i32.const 100)     ;; 'd'
-							    (i32.const 101)     ;; 'e'
-							    (i32.const 102)     ;; 'f'
-							    (i32.const 105)     ;; 'i'
-							    (i32.const 110)     ;; 'n'
-							    (i32.const 101)     ;; 'e'
-							    (i32.const 100)     ;; 'd'
-							    (i32.const 79)      ;; 'O'
-							    (i32.const 98)      ;; 'b'
-							    (i32.const 106)     ;; 'j'
-							    (i32.const 101)     ;; 'e'
-							    (i32.const 99)      ;; 'c'
+							    (i32.const 85)     ;; 'U'
+							    (i32.const 110)    ;; 'n'
+							    (i32.const 100)    ;; 'd'
+							    (i32.const 101)    ;; 'e'
+							    (i32.const 102)    ;; 'f'
+							    (i32.const 105)    ;; 'i'
+							    (i32.const 110)    ;; 'n'
+							    (i32.const 101)    ;; 'e'
+							    (i32.const 100)    ;; 'd'
+							    (i32.const 79)     ;; 'O'
+							    (i32.const 98)     ;; 'b'
+							    (i32.const 106)    ;; 'j'
+							    (i32.const 101)    ;; 'e'
+							    (i32.const 99)     ;; 'c'
 							    (i32.const 116)))) ;; 't'
 
-			       (call $nextIdentityHash           ;; $identityHash
+			       (call $nextIdentityHash ;; $identityHash
 				     (local.get $vm))
-			       (ref.null none)))                 ;; $nextObject to be set later
+			       (ref.null none)))       ;; $nextObject to be set later
 
        (struct.set $VirtualMachine $lastObject
 		   (local.get $vm)
@@ -1164,7 +1251,7 @@
 			(local.get $vm)
 			(struct.get $VirtualMachine $classObject ;; $superclass
 				    (local.get $vm))
-			(call $newSymbolFromBytes    ;; $name
+			(call $newSymbolFromBytes                ;; $name
 			      (local.get $vm)
 			      (array.new_fixed $byteArray 8
 					       (i32.const 66)      ;; 'B'
@@ -1205,8 +1292,8 @@
 		   (local.get $vm)
 		   (call $newSubclassOfWithName
 			 (local.get $vm)
-			 (local.get $classClassDescription)         ;; $superclass
-			 (call $newSymbolFromBytes                  ;; $name
+			 (local.get $classClassDescription) ;; $superclass
+			 (call $newSymbolFromBytes          ;; $name
 			       (local.get $vm)
 			       (array.new_fixed $byteArray 5
 						(i32.const 67)      ;; 'C'
@@ -1216,9 +1303,11 @@
 						(i32.const 115))))) ;; 's'
 
        ;; Now that class Class exists, set the $superclass of (Object class).
-       (struct.set $Class $superclass
-		   (struct.get $VirtualMachine $classObject
-			       (local.get $vm))
+       (struct.set $Metaclass $superclass
+		   (ref.cast (ref $Metaclass)
+			     (struct.get $Class $class
+					 (struct.get $VirtualMachine $classObject
+						     (local.get $vm))))
 		   (ref.cast (ref eq)
 			     (struct.get $VirtualMachine $classClass
 					 (local.get $vm))))
@@ -1228,8 +1317,8 @@
 		   (local.get $vm)
 		   (call $newSubclassOfWithName
 			 (local.get $vm)
-			 (local.get $classClassDescription)         ;; $superclass
-			 (call $newSymbolFromBytes                  ;; $name
+			 (local.get $classClassDescription) ;; $superclass
+			 (call $newSymbolFromBytes          ;; $name
 			       (local.get $vm)
 			       (array.new_fixed $byteArray 9
 						(i32.const 77)      ;; 'M'
@@ -1250,9 +1339,9 @@
 			      (local.get $vm)
 			      (call $newSubclassOfWithName ;; Collection
 				    (local.get $vm)
-				    (struct.get $VirtualMachine $classObject
+				    (struct.get $VirtualMachine $classObject ;; superclass
 						(local.get $vm))
-				    (call $newSymbolFromBytes                  ;; $name
+				    (call $newSymbolFromBytes                ;; $name
 					  (local.get $vm)
 					  (array.new_fixed $byteArray 10
 							   (i32.const 67)     ;; 'C'
@@ -1265,7 +1354,7 @@
 							   (i32.const 105)    ;; 'i'
 							   (i32.const 111)    ;; 'o'
 							   (i32.const 110)))) ;; 'n'
-			      (call $newSymbolFromBytes                  ;; $name
+			      (call $newSymbolFromBytes   ;; $name
 				    (local.get $vm)
 				    (array.new_fixed $byteArray 22
 						     (i32.const 83)     ;; 'S'
@@ -1290,7 +1379,7 @@
 						     (i32.const 105)    ;; 'i'
 						     (i32.const 111)    ;; 'o'
 						     (i32.const 110)))) ;; 'n'
-			(call $newSymbolFromBytes                  ;; $name
+			(call $newSymbolFromBytes    ;; $name
 			      (local.get $vm)
 			      (array.new_fixed $byteArray 17
 					       (i32.const 65)      ;; 'A'
@@ -1315,8 +1404,8 @@
 		   (local.get $vm)
 		   (call $newSubclassOfWithName
 			 (local.get $vm)
-			 (local.get $classArrayedCollection)
-			 (call $newSymbolFromBytes                  ;; $name
+			 (local.get $classArrayedCollection) ;; $superclass
+			 (call $newSymbolFromBytes           ;; $name
 			       (local.get $vm)
 			       (array.new_fixed $byteArray 5
 						(i32.const 65)      ;; 'A'
@@ -1329,8 +1418,8 @@
 		   (local.get $vm)
 		   (call $newSubclassOfWithName
 			 (local.get $vm)
-			 (local.get $classArrayedCollection)
-			 (call $newSymbolFromBytes                  ;; $name
+			 (local.get $classArrayedCollection) ;; superclass
+			 (call $newSymbolFromBytes           ;; $name
 			       (local.get $vm)
 			       (array.new_fixed $byteArray  9
 						(i32.const 66)      ;; 'B'
@@ -1347,8 +1436,8 @@
 		   (local.get $vm)
 		   (call $newSubclassOfWithName
 			 (local.get $vm)
-			 (local.get $classArrayedCollection)
-			 (call $newSymbolFromBytes                  ;; $name
+			 (local.get $classArrayedCollection) ;; superclass
+			 (call $newSymbolFromBytes           ;; $name
 			       (local.get $vm)
 			       (array.new_fixed $byteArray 9
 						(i32.const 87)      ;; 'W'
@@ -1361,30 +1450,14 @@
 						(i32.const 97)      ;; 'a'
 						(i32.const 121))))) ;; 'y'
 
-       ;; Set the $class of the $subclasses, $sharedPools, and $class
-       ;; of every $Class created so far.
-
-       (call $do
-	     (local.get $vm)
-	     (array.new_fixed $objectArray 2
-			      (struct.get $VirtualMachine $classObject
-					  (local.get $vm))
-
-			      ;; class UndefinedObject
-			      (struct.get $Object $class
-					  (ref.cast (ref $Object)
-						    (struct.get $VirtualMachine $firstObject
-								(local.get $vm)))))
-	     (ref.func $fixMetalevelFields))
-       
        ;; Create class Symbol.
        (struct.set $VirtualMachine $classSymbol
 		   (local.get $vm)
 		   (call $newSubclassOfWithName
 			 (local.get $vm)
-			 (struct.get $VirtualMachine $classObject   ;; $superclass
+			 (struct.get $VirtualMachine $classObject ;; $superclass
 				     (local.get $vm))
-			 (call $newSymbolFromBytes                  ;; $name
+			 (call $newSymbolFromBytes                ;; $name
 			       (local.get $vm)
 			       (array.new_fixed $byteArray 6
 						(i32.const 83)      ;; 'S'
@@ -1393,14 +1466,65 @@
 						(i32.const 98)      ;; 'b'
 						(i32.const 111)     ;; 'o'
 						(i32.const 108))))) ;; 'l'
+
+       ;; Set the $class of the $subclasses, $sharedPools, and $class
+       ;; of every $Class created so far, and the $class of every
+       ;; $Symbol and $Dictionary created so far.
+
+       (call $fixMetalevelFields
+	     (local.get $vm)
+	     (ref.cast (ref eq)
+		       (struct.get $VirtualMachine $classObject
+				   (local.get $vm))))
+	     
+       (struct.set $VirtualMachine $classCompiledMethod
+		   (local.get $vm)
+		   (call $newSubclassOfWithName
+			 (local.get $vm)
+			 (struct.get $VirtualMachine $classByteArray ;; $superclass
+				     (local.get $vm))
+			 (call $newSymbolFromBytes                   ;; $name
+			       (local.get $vm)
+			       (array.new_fixed $byteArray 14
+						(i32.const 67)      ;; 'C'
+						(i32.const 111)     ;; 'o'
+						(i32.const 109)     ;; 'm'
+						(i32.const 112)     ;; 'p'
+						(i32.const 105)     ;; 'i'
+						(i32.const 108)     ;; 'l'
+						(i32.const 101)     ;; 'e'
+						(i32.const 100)     ;; 'd'
+						(i32.const 77)      ;; 'M'
+						(i32.const 101)     ;; 'e'
+						(i32.const 116)     ;; 't'
+						(i32.const 104)     ;; 'h'
+						(i32.const 111)     ;; 'o'
+						(i32.const 100))))) ;; 'd'
+
+       (struct.set $VirtualMachine $classContext
+		   (local.get $vm)
+		   (call $newSubclassOfWithName
+			 (local.get $vm)
+			 (struct.get $VirtualMachine $classObject ;; $superclass
+				     (local.get $vm))
+			 (call $newSymbolFromBytes                ;; $name
+			       (local.get $vm)
+			       (array.new_fixed $byteArray 7
+						(i32.const 67)      ;; 'C'
+						(i32.const 111)     ;; 'o'
+						(i32.const 110)     ;; 'n'
+						(i32.const 116)     ;; 't'
+						(i32.const 101)     ;; 'e'
+						(i32.const 120)     ;; 'x'
+						(i32.const 116))))) ;; 't'
        
        (struct.set $VirtualMachine $classSmallInteger
 		   (local.get $vm)
 		   (call $newSubclassOfWithName
 			 (local.get $vm)
-			 (struct.get $VirtualMachine $classObject   ;; $superclass
+			 (struct.get $VirtualMachine $classObject ;; $superclass
 				     (local.get $vm))
-			 (call $newSymbolFromBytes                  ;; $name
+			 (call $newSymbolFromBytes                ;; $name
 			       (local.get $vm)
 			       (array.new_fixed $byteArray 12
 						(i32.const 83)      ;; 'S'
@@ -1419,6 +1543,8 @@
        (local.get $vm))
 
  ;; utilities for method translation in JS
+
+ ;; function 18
  
  (func $methodBytecodes
        (param $method (ref eq)) 
@@ -1430,6 +1556,8 @@
 					 (ref.cast (ref $CompiledMethod)
 						   (local.get $method))))))
 
+ ;; function 19
+ 
  (func $getMethodFunctionIndex
        (param $method (ref eq)) 
        (result i32)
@@ -1437,6 +1565,8 @@
        (struct.get $CompiledMethod $functionIndex
 		   (ref.cast (ref $CompiledMethod)
 			     (local.get $method))))
+
+ ;; function 20
  
  (func $setMethodFunctionIndex
        (param $method (ref eq)) 
@@ -1446,6 +1576,8 @@
 		   (ref.cast (ref $CompiledMethod)
 			     (local.get $method))
 		   (local.get $index)))
+
+ ;; function 21
  
  (func $onContextPush
        (param $context (ref eq)) 
@@ -1455,6 +1587,8 @@
 	     (ref.cast (ref $Context)
 		       (local.get $context))
 	     (local.get $pushedObject)))
+
+ ;; function 22
  
  (func $popFromContext
        (param $context (ref eq)) 
@@ -1463,6 +1597,8 @@
        (call $popFromStack
 	     (ref.cast (ref $Context)
 		       (local.get $context))))
+
+ ;; function 23
  
  (func $contextReceiver
        (param $context (ref eq)) 
@@ -1471,6 +1607,8 @@
        (struct.get $Context $receiver
 		   (ref.cast (ref $Context)
 			     (local.get $context))))
+
+ ;; function 24
  
  (func $methodLiterals
        (param $method (ref eq)) 
@@ -1479,18 +1617,23 @@
        (struct.get $CompiledMethod $literals
 		   (ref.cast (ref $CompiledMethod)
 			     (local.get $method))))
+
+ ;; function 25
  
  (func $contextLiteralAt
        (param $context (ref eq)) 
        (param $index i32) 
-       (result (ref null eq))
+       (result (ref eq))
 
-       (call $arrayAt
-	     (struct.get $CompiledMethod $literals
-			 (struct.get $Context $method
-				     (ref.cast (ref $Context)
-					       (local.get $context))))
-	     (local.get $index)))
+       (ref.as_non_null
+	(call $arrayAt
+	      (struct.get $CompiledMethod $literals
+			  (struct.get $Context $method
+				      (ref.cast (ref $Context)
+						(local.get $context))))
+	      (local.get $index))))
+
+ ;; function 26
  
  (func $contextMethod
        (param $context (ref eq)) 
@@ -1499,6 +1642,8 @@
        (struct.get $Context $method
 		   (ref.cast (ref $Context)
 			     (local.get $context))))
+
+ ;; function 27
  
  (func $arrayOkayAt
        (param $array (ref eq)) 
@@ -1530,6 +1675,8 @@
 	   (i32.const 0))))
        
        (i32.const 1))
+
+ ;; function 28
  
  (func $arrayAt
        (param $array (ref $Array)) 
@@ -1542,22 +1689,23 @@
 		  (struct.get $Array $array
 			      (local.get $array)))
 
-       (if
+       (if (result (ref null eq))
 	(i32.eqz
 	 (call $arrayOkayAt
 	       (ref.cast (ref $objectArray)
 			 (local.get $objectArray))
 	       (local.get $index)))
 	(then
-	 (return
-	   (ref.i31
-	    (i32.const -1)))))
+	 (local.get $index)
+	 (throw $outOfBounds))
+	(else
+	 ;; Safe to access array.
+	 (array.get $objectArray
+		    (local.get $objectArray)
+		    (local.get $index)))))
 
-       ;; Safe to access array.
-       (array.get $objectArray
-		  (local.get $objectArray)
-		  (local.get $index)))
-
+ ;; function 29
+ 
  (func $byteArrayAt
        (param $array (ref $byteArray)) 
        (param $index i32) 
@@ -1576,6 +1724,8 @@
        (array.get_s $byteArray
 		    (local.get $array)
 		    (local.get $index)))
+
+ ;; function 30
  
  (func $byteArrayLength
        (param $array (ref eq)) 
@@ -1584,6 +1734,8 @@
        (array.len
 	(ref.cast (ref $byteArray)
 		  (local.get $array))))
+
+ ;; function 31
  
  (func $copyByteArrayToMemory
        (param $bytes (ref $byteArray)) 
@@ -1624,6 +1776,8 @@
 	     (br $copy))
 
        (unreachable))
+
+ ;; function 32
  
  (func $nextIdentityHash
        (param $vm (ref $VirtualMachine)) 
@@ -1638,6 +1792,8 @@
        
        (struct.get $VirtualMachine $nextIdentityHash
 		   (local.get $vm)))
+
+ ;; function 33
  
  (func $pushOnStack
        (param $context (ref $Context)) 
@@ -1674,6 +1830,8 @@
 		   (i32.add
 		    (local.get $sp)
 		    (i32.const 1))))
+
+ ;; function 34
  
  (func $popFromStack
        (param $context (ref null $Context)) 
@@ -1714,6 +1872,8 @@
 		     (i32.sub
 		      (local.get $sp)
 		      (i32.const 1))))))
+
+ ;; function 35
  
  (func $topOfStack
        (param $context (ref null $Context)) 
@@ -1747,6 +1907,8 @@
 		     (i32.sub
 		      (local.get $sp)
 		      (i32.const 1))))))
+
+ ;; function 36
  
  (func $classOfObject
        (param $vm (ref $VirtualMachine)) 
@@ -1765,6 +1927,8 @@
 	    (struct.get $Object $class
 			(ref.cast (ref $Object)
 				  (local.get $obj))))))
+
+ ;; function 37
  
  (func $lookupMethod
        (param $vm (ref $VirtualMachine)) 
@@ -1869,6 +2033,8 @@
 		   (br $search_loop)))
 
        (unreachable))
+
+ ;; function 38
  
  (func $lookupInMethodCache
        (param $vm (ref $VirtualMachine)) 
@@ -1978,12 +2144,14 @@
 	     (br $probe_loop))
 
        (unreachable))
+
+ ;; function 39
  
  (func $storeInMethodCache
        (param $vm (ref $VirtualMachine)) 
        (param $selector (ref $Symbol)) 
        (param $receiverClass (ref eq)) 
-       (param $method (ref null $CompiledMethod)) ;; Nullable: there might be a cache miss.
+       (param $method (ref $CompiledMethod))
        
        (local $cache (ref $objectArray))
        (local $index i32)
@@ -2012,13 +2180,15 @@
 			      (local.get $selector)
 			      (local.get $receiverClass)
 			      (local.get $method)
-			      (i32.const 1)))            ;; initial hit count
+			      (i32.const 1))) ;; initial hit count
 
        ;; Store in cache.
        (array.set $objectArray
 		  (local.get $cache)
 		  (local.get $index)
 		  (local.get $entry)))
+
+ ;; function 40
  
  (func $newContext
        (param $vm (ref $VirtualMachine)) 
@@ -2057,6 +2227,8 @@
 			 (array.new $objectArray
 				    (ref.null none)
 				    (i32.const 20)))))
+
+ ;; function 41
  
  (func $smallIntegerForValue
        (param $value i32) 
@@ -2065,6 +2237,8 @@
        (ref.i31
 	(local.get $value)))
 
+ ;; function 42
+ 
  (func $isSmallInteger
        (param $obj (ref eq))
        (result i32)
@@ -2078,6 +2252,8 @@
 	   (else
 	    (return
 	      (i32.const 0)))))
+
+ ;; function 43
  
  (func $valueOfSmallInteger
        (param $obj (ref eq)) 
@@ -2093,6 +2269,8 @@
 	   (else
 	    ;; Not a SmallInteger; return 0 for safety.
 	    (i32.const 0))))
+
+ ;; function 44
  
  (func $isTranslated
        (param $method (ref null $CompiledMethod)) 
@@ -2102,6 +2280,8 @@
 	(struct.get $CompiledMethod $functionIndex
 		    (local.get $method))
 	(i32.const 0)))
+
+ ;; function 45
  
  (func $executeTranslatedMethod
        (param $context (ref $Context)) 
@@ -2112,6 +2292,8 @@
        (call_indirect $functionTable (param (ref eq)) (result i32)
 		      (local.get $context)
 		      (local.get $functionIndex)))
+
+ ;; function 46
  
  (func $handleMethodReturn
        (param $vm (ref $VirtualMachine)) 
@@ -2153,7 +2335,8 @@
        
        (local.get $result))
 
- ;; Create minimal object memory for running (100 benchmark).
+ ;; function 47: Create minimal object memory for running (100
+ ;; benchmark).
  
  (func $createMinimalObjectMemory
        (param $vm (ref $VirtualMachine)) 
@@ -2239,94 +2422,97 @@
        
        (local.set $benchmarkMethod
 		  (struct.new $CompiledMethod
+			      ;; $class
 			      (ref.cast (ref eq)
-					(struct.get $VirtualMachine $classCompiledMethod ;; $class
+					(struct.get $VirtualMachine $classCompiledMethod 
 						    (local.get $vm)))
-			      (call $nextIdentityHash                  ;; $identityHash
+			      (call $nextIdentityHash ;; $identityHash
 				    (local.get $vm))
-			      (ref.null none)                          ;; $nextObject
-			      (call $newByteArray                      ;; $slots
+			      (ref.null none)         ;; $nextObject
+			      (call $newByteArray     ;; $slots
 				    (local.get $vm)                    
 				    (array.new_fixed $byteArray 62           
-						     (i32.const 0x70)  ;; push receiver
+						     (i32.const 0x70)   ;; push receiver
 
-						     (i32.const 0x21)  ;; push literal 1 (0-based)
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB8)  ;; multiply
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x23)  ;; push literal 3
-						     (i32.const 0xB8)  ;; multiply
-						     (i32.const 0x23)  ;; push literal 3
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x21)   ;; push literal 1 (0-based)
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB8)   ;; multiply
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x23)   ;; push literal 3
+						     (i32.const 0xB8)   ;; multiply
+						     (i32.const 0x23)   ;; push literal 3
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB8)   ;; multiply
 
 						     ;; sequence repeats five times in total
-						     (i32.const 0x21)  ;; push literal 1
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB8)  ;; multiply
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x23)  ;; push literal 3
-						     (i32.const 0xB8)  ;; multiply
-						     (i32.const 0x23)  ;; push literal 3
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x21)   ;; push literal 1
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB8)   ;; multiply
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x23)   ;; push literal 3
+						     (i32.const 0xB8)   ;; multiply
+						     (i32.const 0x23)   ;; push literal 3
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB8)   ;; multiply
 						     
-						     (i32.const 0x21)  ;; push literal 1
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB8)  ;; multiply
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x23)  ;; push literal 3
-						     (i32.const 0xB8)  ;; multiply
-						     (i32.const 0x23)  ;; push literal 3
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x21)   ;; push literal 1
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB8)   ;; multiply
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x23)   ;; push literal 3
+						     (i32.const 0xB8)   ;; multiply
+						     (i32.const 0x23)   ;; push literal 3
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB8)   ;; multiply
 						     
-						     (i32.const 0x21)  ;; push literal 1
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB8)  ;; multiply
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x23)  ;; push literal 3
-						     (i32.const 0xB8)  ;; multiply
-						     (i32.const 0x23)  ;; push literal 3
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x21)   ;; push literal 1
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB8)   ;; multiply
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x23)   ;; push literal 3
+						     (i32.const 0xB8)   ;; multiply
+						     (i32.const 0x23)   ;; push literal 3
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB8)   ;; multiply
 						     
-						     (i32.const 0x21)  ;; push literal 1
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB8)  ;; multiply
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x23)  ;; push literal 3
-						     (i32.const 0xB8)  ;; multiply
-						     (i32.const 0x23)  ;; push literal 3
-						     (i32.const 0xB0)  ;; add
-						     (i32.const 0x22)  ;; push literal 2
-						     (i32.const 0xB8)  ;; multiply
+						     (i32.const 0x21)   ;; push literal 1
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB8)   ;; multiply
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x23)   ;; push literal 3
+						     (i32.const 0xB8)   ;; multiply
+						     (i32.const 0x23)   ;; push literal 3
+						     (i32.const 0xB0)   ;; add
+						     (i32.const 0x22)   ;; push literal 2
+						     (i32.const 0xB8)   ;; multiply
 
 						     (i32.const 0x7C))) ;; return top of stack
-			      (call $newArray                       ;; $literals
+			      (call $newArray         ;; $literals
 				    (local.get $vm)
 				    (local.get $benchmarkLiterals))
-			      (i32.const 0)                         ;; $header
-			      (i32.const 0)                         ;; $invocationCount
-			      (i32.const 0)                         ;; $functionIndex
+			      (i32.const 0)           ;; $header
+			      (i32.const 0)           ;; $invocationCount
+			      (i32.const 0)           ;; $functionIndex
+
 			      ;; $translationThreshold
 			      (struct.get $VirtualMachine $translationThreshold
 					  (local.get $vm))
-			      (i32.const 0)))                       ;; $isInstalled
+
+			      (i32.const 0)))         ;; $isInstalled
 
        ;; Add the key/value pair of ($benchmarkSelector ->
        ;; $benchmarkMethod) to $vm$classSmallInteger$methodDictionary.
@@ -2353,6 +2539,8 @@
        ;; success
        (i32.const 1))
 
+ ;; function 48
+ 
  (func $resetMinimalMemory
        (param $vm (ref $VirtualMachine))
        
@@ -2360,19 +2548,19 @@
        (struct.set $VirtualMachine $activeContext
 		   (local.get $vm)
 		   (call $newContext
-			 (local.get $vm)                  ;; $vm
-			 (ref.i31                         ;; $receiver
+			 (local.get $vm)                               ;; $vm
+			 (ref.i31                                      ;; $receiver
 			  (i32.const 100))           
-			 (struct.new $CompiledMethod      ;; $method
+			 (struct.new $CompiledMethod                   ;; $method
 				     ;; $class
 				     (ref.cast (ref eq)
 					       (struct.get $VirtualMachine $classCompiledMethod
 							   (local.get $vm)))
 
-				     (call $nextIdentityHash                  ;; $identityHash
+				     (call $nextIdentityHash ;; $identityHash
 					   (local.get $vm))
-				     (ref.null none)                          ;; $nextObject
-				     (call $newByteArray                      ;; $slots
+				     (ref.null none)         ;; $nextObject
+				     (call $newByteArray     ;; $slots
 					   (local.get $vm)
 					   (array.new_fixed $byteArray 3            
 							    (i32.const 0x70)   ;; push receiver
@@ -2386,17 +2574,21 @@
 					   (local.get $vm)
 					   (array.new_fixed $objectArray 1
 							    (global.get $benchmarkSelector)))
-				     (i32.const 0)                            ;; $header
-				     (i32.const 0)                            ;; $invocationCount
-				     (i32.const 0)                            ;; $functionIndex
+
+				     (i32.const 0)           ;; $header
+				     (i32.const 0)           ;; $invocationCount
+				     (i32.const 0)           ;; $functionIndex
+
                                      ;; $translationThreshold
 				     (struct.get $VirtualMachine $translationThreshold
 						 (local.get $vm))
-				     (i32.const 0))                           ;; $isInstalled
-			 (ref.cast (ref eq)
-				   (global.get $benchmarkSelector))))) ;; $selector
 
- ;; Interpret single bytecode; return 1 if method should return, 0 to continue.
+				     (i32.const 0))          ;; $isInstalled
+			 (ref.cast (ref eq)                            ;; $selector
+				   (global.get $benchmarkSelector))))) 
+
+ ;; function 49: Interpret single bytecode; return 1 if method should
+ ;; return, 0 to continue.
  (func $interpretBytecode
        (param $vm (ref $VirtualMachine)) 
        (param $context (ref $Context)) 
@@ -2557,7 +2749,8 @@
 		 (local.get $vm)
 		 (local.get $selector)
 		 (local.get $receiverClass)
-		 (local.get $method))))
+		 (ref.cast (ref $CompiledMethod)
+			   (local.get $method)))))
 
 	 (struct.set $VirtualMachine $activeContext
 		     (local.get $vm)
@@ -2573,6 +2766,8 @@
 
        ;; unimplemented bytecode
        (unreachable))
+
+ ;; function 50
  
  (func $interpret
        (param $vm (ref $VirtualMachine)) 
@@ -2588,11 +2783,13 @@
        (local $bytecodes (ref $byteArray))
        (local $functionIndex i32)
 
-       ;; To satisfy the validator...
+       ;; There are no paths through this function that don't set
+       ;; $resultValue, but the validator is too cheap to calculate
+       ;; this.
        (local.set $resultValue
 		  (ref.i31
-		   (i32.const 42)))
-		  
+		   (i32.const -1337)))
+       
        (block $finished
 	 (loop $execution_loop
 	       (if
@@ -2691,7 +2888,8 @@
 	       (loop $interpreter_loop
 		     (br_if $execution_loop
 			    (ref.is_null
-			     ;; We've returned to a nil context sender; execution is finished.
+			     ;; We've returned to a nil context
+			     ;; sender; execution is finished.
 			     (local.tee $context
 					(struct.get $VirtualMachine $activeContext
 						    (local.get $vm)))))
@@ -2701,7 +2899,8 @@
 					    (ref.as_non_null
 					     (local.get $context))))
 
-		     ;; Check if we've reached the end of the current $method's bytecodes.
+		     ;; Check if we've reached the end of the current
+		     ;; $method's bytecodes.
 		     (if
 		      (i32.le_u
 		       (array.len
