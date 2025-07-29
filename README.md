@@ -115,14 +115,14 @@ Handwritten interpreter supporting single method evaluation `(3 + 4)`
 Message sending support with `(3 benchmark)` - actual message dispatch
 instead of just bytecode execution
 
-### Phase 3 ✅ (Current)
+### Phase 3 ✅
 **Method Translation Foundation Complete**
 - Runtime bytecode-to-WASM translation
 - Hot method detection and polymorphic inline caching
 - Performance comparison between interpretation, naïve translation,
   and LLM translation
 
-### Phase 4
+### Phase 4 (Current)
 Generate interpreter by decompiling equivalent Smalltalk
 implementation using
 [Epigram](https://thiscontext.com/2022/06/28/epigram-reifying-grammar-production-rules-for-clearer-parsing-compiling-and-searching/)
