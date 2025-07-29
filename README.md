@@ -139,7 +139,7 @@ compilation framework
 
 ## 🧪 Testing
 
-- Manual testing via `test.html` in browser
+- Manual testing via `test.html` in browser, via SqueakJS in the future.
 - Performance benchmarks compare interpretation vs. translated methods
 
 ## 🌐 Cross-Origin Isolation
