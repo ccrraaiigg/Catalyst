@@ -36,8 +36,20 @@ with the performance of compiled code.
 
 Read more at [the thisContext blog](https://thiscontext.com).
 
+## Workflow
+
+I've been experimenting with AI coding assistance to accelerate
+Catalyst's development, and found it very productive. I'm currently
+using [Kiro](https://kiro.dev), and prefer it to alternatives such as
+Cursor, Windsurf, Claude Code, Claude Projects, and CHatGPT projects,
+primarily because of its approach to specification-driven
+development. This repo has several documents that make AI-assisted
+development more productive, including AGENTS.md and the steering
+documents in .kiro/.
+
 ## 📋 Prerequisites
 
+- **Kiro**: AI-assisted IDE (optional)
 - **Node.js 16+**: Build system and development server, to be replaced
   by SqueakJS in the future
 - **wasm-tools**: WASM toolchain for analysis (optional)
