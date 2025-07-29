@@ -109,7 +109,7 @@
 		  ;; $Class or $Metaclass
 		  (field $class (mut (ref eq)))
 		  
-		  (field $identityHash (mut i32))
+		  (field $identityHash (i32)
 		  (field $nextObject (mut (ref null eq))))))
 
   (type $UndefinedObject (sub $Object
@@ -176,8 +176,8 @@
 			  
 			  (field $identityHash (mut i32)) 
 			  (field $nextObject (mut (ref null eq))) 
-			  (field $keys (mut (ref $Array))) 
-			  (field $values (mut (ref $Array))) 
+			  (field $keys (ref $Array))
+			  (field $values (ref $Array))
 			  (field $count (mut i32)))))
 
   (type $Behavior (sub $Object 
@@ -190,7 +190,7 @@
 
 			;; a $Class or $Metaclass
 			(field $superclass (mut (ref null eq))) 
-			(field $methodDictionary (mut (ref $Dictionary))) 
+			(field $methodDictionary (ref $Dictionary))
 			(field $format (mut i32)))))
 
   (type $ClassDescription (sub $Behavior 
@@ -203,10 +203,10 @@
 
 				;; a $Class or $Metaclass
 				(field $superclass (mut (ref null eq))) 
-				(field $methodDictionary (mut (ref $Dictionary))) 
+				(field $methodDictionary (ref $Dictionary))
 				(field $format (mut i32)) 
-				(field $instanceVariableNames (mut (ref $Array))) 
-				(field $baseID (mut (ref $ByteArray))))))
+				(field $instanceVariableNames (ref $Array))
+				(field $baseID (ref $ByteArray)))))
 
   (type $Class (sub $ClassDescription 
 		    (struct
@@ -218,14 +218,14 @@
 
 		     ;; a $Class or $Metaclass
 		     (field $superclass (mut (ref null eq))) 
-		     (field $methodDictionary (mut (ref $Dictionary))) 
+		     (field $methodDictionary (ref $Dictionary))
 		     (field $format (mut i32)) 
-		     (field $instanceVariableNames (mut (ref $Array))) 
-		     (field $baseID (mut (ref $ByteArray))) 
-		     (field $subclasses (mut (ref $Array))) 
+		     (field $instanceVariableNames (ref $Array))
+		     (field $baseID (ref $ByteArray))
+		     (field $subclasses (ref $Array))
 		     (field $name (mut (ref $Symbol))) 
-		     (field $classPool (mut (ref $Dictionary))) 
-		     (field $sharedPools (mut (ref $Array))))))
+		     (field $classPool (ref $Dictionary))
+		     (field $sharedPools (ref $Array)))))
 
   (type $Metaclass (sub $ClassDescription 
 			(struct
@@ -237,10 +237,10 @@
 
 			 ;; a $Class or $Metaclass
 			 (field $superclass (mut (ref null eq))) 
-			 (field $methodDictionary (mut (ref $Dictionary))) 
+			 (field $methodDictionary (ref $Dictionary))
 			 (field $format (mut i32)) 
-			 (field $instanceVariableNames (mut (ref $Array))) 
-			 (field $baseID (mut (ref $ByteArray))) 
+			 (field $instanceVariableNames (ref $Array))
+			 (field $baseID (ref $ByteArray))
 			 (field $thisClass (mut (ref $Class))))))
 
   (type $CompiledMethod (sub $VariableObject 
@@ -270,17 +270,17 @@
 		       (field $sender (mut (ref null $Context))) 
 		       (field $pc (mut i32)) 
 		       (field $sp (mut i32))
-		       (field $method (mut (ref $CompiledMethod)))		       
-		       (field $receiver (mut (ref eq))) 
-		       (field $args (mut (ref $Array))) 
-		       (field $temps (mut (ref $Array))) 
-		       (field $stack (mut (ref $Array))))))
+		       (field $method (ref $CompiledMethod))
+		       (field $receiver (ref eq))
+		       (field $args (ref $Array))
+		       (field $temps (ref $Array))
+		       (field $stack (ref $Array)))))
 
   (type $PICEntry 
 	(struct 
-	 (field $selector (mut (ref eq))) 
-	 (field $receiverClass (mut (ref eq))) 
-	 (field $method (mut (ref $CompiledMethod)))
+	 (field $selector (ref eq))
+	 (field $receiverClass (ref eq))
+	 (field $method (ref $CompiledMethod))
 	 (field $hitCount (mut i32)))) 
 
   (type $VirtualMachine 
@@ -1182,12 +1182,14 @@
        
        ;; The $vm needed to exist before we could create any classes
        ;; (in particular, before we could create any metaclasses,
-       ;; because it involves getting a field of the $vm). The $class
-       ;; of class Object is null after this, though; fix it
-       ;; later. Until we create class Metaclass and class Symbol, the
-       ;; $class of every $Metaclass and $Symbol we create will be
-       ;; null; fix them later. Until we create class Array, the
-       ;; $class of the $subclasses and $sharedPools of every $Class
+       ;; because that involves getting a field of the $vm). Create
+       ;; class Object. The $class of class Object is null after this,
+       ;; though; fix it later. Until we create class Metaclass and
+       ;; class Symbol, the $class of every $Metaclass and $Symbol we
+       ;; create will be null; fix them later. Until we create class
+       ;; Array, the $class of the $subclasses and $sharedPools of
+       ;; every $Class we create will be null; fix them later. Until
+       ;; we create class Dictionary, the $class of every $Dictionary
        ;; we create will be null; fix them later.
 
        (struct.set $VirtualMachine $classObject
