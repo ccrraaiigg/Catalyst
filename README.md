@@ -7,18 +7,25 @@ uses AI-assisted dynamic method translation to optimize high-frequency
 code paths. Each Catalyst module can run multiple concurrent systems,
 and uses this ability to provide continuity of operation across class
 type changes. Catalyst leverages JavaScript for finalization and host
-device driver access, and uses [SqueakJS](https://squeak.jd.org) as an environment for
+device driver access, and uses [SqueakJS](https://squeak.js.org) as an environment for
 simulation, debugging, and deployment.
 
 ## 🚀 Key Features
 
-- **Runtime Bytecode-to-WASM Translation**: Translates Smalltalk bytecodes to WebAssembly Text (WAT) format at runtime
-- **Hot Method Detection**: Automatically identifies frequently-executed methods for translation
-- **AI-Assisted Optimization**: Uses LLM integration for intelligent method translation
-- **Performance Monitoring**: Tracks method translation activity and performance metrics
-- **Debug Support**: Detailed logging and single-step debugging capabilities
-- **Open Smalltalk Compatibility**: Maintains compatibility with Open Smalltalk architecture
-- **Multi-System Support**: Each Catalyst module can run multiple concurrent systems
+- **Runtime Bytecode-to-WASM Translation**: Translates Smalltalk
+  bytecodes to WebAssembly Text (WAT) format at runtime
+- **Hot Method Detection**: Automatically identifies
+  frequently-executed methods for translation
+- **AI-Assisted Optimization**: Uses LLM integration for intelligent
+  method translation
+- **Performance Monitoring**: Tracks method translation activity and
+  performance metrics
+- **Debug Support**: Detailed logging and single-step debugging
+  capabilities
+- **Open Smalltalk Compatibility**: Maintains compatibility with Open
+  Smalltalk architecture
+- **Multi-System Support**: Each Catalyst module can run multiple
+  concurrent systems
 
 ## 🏗️ Architecture
 
@@ -27,10 +34,7 @@ bytecode and get translated to optimized WASM when they become "hot"
 (frequently executed). This provides the flexibility of interpretation
 with the performance of compiled code.
 
-The system is self-hosted - it's an Open Smalltalk virtual machine and
-object memory, written in Smalltalk and decompiled to WASM GC for
-operation in web browsers. JavaScript is leveraged for finalization
-and host device driver access.
+Read more at [the thisContext blog](https://thiscontext.com).
 
 ## 📋 Prerequisites
 
@@ -55,13 +59,13 @@ npm install
 
 ```bash
 # Build the project (compiles WAT to WASM)
-npm run build
+node build.js
 
 # Start with LLM integration
-npm run start-with-llm
+node start-with-llm.js
 ```
 
-Open your browser to `http://localhost:8000` and load `test.html` to interact with the VM.
+Open your browser to `http://localhost:8000/test.html` to benchmark the VM.
 
 ## 📁 Project Structure
 
@@ -86,9 +90,9 @@ The build system (`build.js`) performs:
 3. Generates WASM module analysis dump
 4. Updates package metadata with build timestamp
 
-Eventually, SqueakJS will do all of this; catalyst.js already does LLM
-prompting, WAT-to-WASM compilation, and caching of WASM functions in
-the Catalyst method cache.
+Eventually, SqueakJS will do all of this; catalyst.js currently does
+LLM prompting, WAT-to-WASM compilation, and caching of WASM functions
+in the Catalyst method cache.
 
 ## 🎯 Development Phases
 
@@ -96,15 +100,17 @@ the Catalyst method cache.
 Handwritten interpreter supporting single method evaluation `(3 + 4)`
 
 ### Phase 2 ✅
-Message sending support with `(3 squared)` - actual message dispatch instead of just bytecode execution
+Message sending support with `(3 benchmark)` - actual message dispatch
+instead of just bytecode execution
 
 ### Phase 3 ✅ (Current)
 **Method Translation Foundation Complete**
 - Runtime bytecode-to-WASM translation
 - Hot method detection and polymorphic inline caching
-- Performance comparison between interpretation, naïve translation, and LLM translation
+- Performance comparison between interpretation, naïve translation,
+  and LLM translation
 
-### Phase 4 (Planned)
+### Phase 4
 Generate interpreter by decompiling equivalent Smalltalk
 implementation using
 [Epigram](https://thiscontext.com/2022/06/28/epigram-reifying-grammar-production-rules-for-clearer-parsing-compiling-and-searching/)
@@ -115,7 +121,9 @@ compilation framework
 - Sista instruction set support
 - Enhanced adaptive optimization
 - Naiad module system support
-- Compatibility with [Squeak](https://squeak.org), [Pharo](https://pharo.org), and [Cuis](https://cuis.st) object memories
+- Compatibility with [Squeak](https://squeak.org),
+  [Pharo](https://pharo.org), and [Cuis](https://cuis.st) object
+  memories
 
 ## 🧪 Testing
 
@@ -124,7 +132,8 @@ compilation framework
 
 ## 🌐 Cross-Origin Isolation
 
-The project requires Cross-Origin-Isolation headers for WASM GC and SharedArrayBuffer support:
+The project requires Cross-Origin-Isolation headers for WASM GC and
+SharedArrayBuffer support:
 
 - Development server (`serve-coi.js`) automatically sets required headers
 - `.htaccess` configuration provided for Apache deployment
@@ -136,7 +145,10 @@ See [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 
-This is a research project exploring WebAssembly-based virtual machine implementation with AI-assisted optimization. Contributions and discussions about the architecture and implementation approaches are welcome.
+This is a research project exploring WebAssembly-based virtual machine
+implementation with AI-assisted optimization. Contributions and
+discussions about the architecture and implementation approaches are
+welcome.
 
 ## 🙏 Acknowledgements
 

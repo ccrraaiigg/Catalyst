@@ -113,12 +113,12 @@
 		  (field $nextObject (mut (ref null eq))))))
 
   (type $UndefinedObject (sub $Object
-			  (struct
-			   ;; $Class or $Metaclass
-			   (field $class (mut (ref eq)))
-			   
-			   (field $identityHash i32)
-			   (field $nextObject (mut (ref null eq))))))
+			      (struct
+			       ;; $Class or $Metaclass
+			       (field $class (mut (ref eq)))
+			       
+			       (field $identityHash i32)
+			       (field $nextObject (mut (ref null eq))))))
   
   (type $Array (sub $Object 
 		    (struct
@@ -326,7 +326,7 @@
  (type $emptyStackType (func))
  (type $valuesLeftOnStackType (func))
  (type $outOfBoundsType (func
-       (param i32)))
+			 (param i32)))
  
  ;; exception tags
 
@@ -1121,46 +1121,19 @@
 	     (ref.func $fixMetalevelFields)))
 
  ;; function 17
- 
- (func $newVirtualMachine
-       (result (ref $VirtualMachine))
-       
-       (local $vm (ref $VirtualMachine))
 
-       ;; Used in this function as the $superclass of class Metaclass and class Class.
+ (func $initializeVirtualMachine
+       (param $vm (ref $VirtualMachine))
+       (result (ref $VirtualMachine))
+
+       ;; Used in this function as the $superclass of class Metaclass
+       ;; and class Class.
        (local $classClassDescription (ref $Class))
 
        ;; Used to fix the $class of class Behavior.
        (local $classBehavior (ref $Class))
+       
        (local $classArrayedCollection (ref $Class))
-
-       ;; Create a $vm.
-       (local.set $vm
-		  (struct.new $VirtualMachine
-			      (ref.null none)   ;; $activeContext to be set later
-			      (i32.const 1)     ;; $translationEnabled
-
-			      ;; $methodCache
-			      (array.new $objectArray  
-					 (ref.null none)
-					 (i32.const 256))
-			      
-			      (i32.const 0)     ;; $functionTableBaseIndex
-			      (i32.const 1000)  ;; $translationThreshold
-			      (i32.const 1)     ;; $nextIdentityHash
-			      (ref.null none)   ;; $firstObject to be set later
-			      (ref.null none)   ;; $lastObject to be set later
-
-			      (ref.null none)   ;; $classObject to be set later
-			      (ref.null none)   ;; $classMetaclass to be set later
-			      (ref.null none)   ;; $classClass to be set later
-			      (ref.null none)   ;; $classArray to be set later
-			      (ref.null none)   ;; $classByteArray to be set later
-			      (ref.null none)   ;; $classWordArray to be set later
-			      (ref.null none)   ;; $classContext to be set later
-			      (ref.null none)   ;; $classCompiledMethod to be set later
-			      (ref.null none)   ;; $classSymbol to be set later
-			      (ref.null none))) ;; $classSmallInteger to be set later
 
        ;; The simplest virtual machine runs (3 benchmark). Create
        ;; class SmallInteger and as much of the metalevel as we need.
@@ -1463,7 +1436,7 @@
 	     (ref.cast (ref eq)
 		       (struct.get $VirtualMachine $classObject
 				   (local.get $vm))))
-	     
+       
        (struct.set $VirtualMachine $classCompiledMethod
 		   (local.get $vm)
 		   (call $newSubclassOfWithName
@@ -1529,9 +1502,41 @@
 
        (local.get $vm))
 
+ ;; function 18
+ 
+ (func $newVirtualMachine
+       (result (ref $VirtualMachine))
+       
+       (call $initializeVirtualMachine
+	     (struct.new $VirtualMachine
+			 (ref.null none)    ;; $activeContext to be set later
+			 (i32.const 1)      ;; $translationEnabled
+
+			 ;; $methodCache
+			 (array.new $objectArray  
+				    (ref.null none)
+				    (i32.const 256))
+			 
+			 (i32.const 0)      ;; $functionTableBaseIndex
+			 (i32.const 1000)   ;; $translationThreshold
+			 (i32.const 1)      ;; $nextIdentityHash
+			 (ref.null none)    ;; $firstObject to be set later
+			 (ref.null none)    ;; $lastObject to be set later 
+
+			 (ref.null none)    ;; $classObject to be set later
+			 (ref.null none)    ;; $classMetaclass to be set later
+			 (ref.null none)    ;; $classClass to be set later
+			 (ref.null none)    ;; $classArray to be set later
+			 (ref.null none)    ;; $classByteArray to be set later
+			 (ref.null none)    ;; $classWordArray to be set later
+			 (ref.null none)    ;; $classContext to be set later
+			 (ref.null none)    ;; $classCompiledMethod to be set later
+			 (ref.null none)    ;; $classSymbol to be set later
+			 (ref.null none)))) ;; $classSmallInteger to be set later
+
  ;; utilities for method translation in JS
 
- ;; function 18
+ ;; function 19
  
  (func $methodBytecodes
        (param $method (ref eq)) 
@@ -1543,7 +1548,7 @@
 					 (ref.cast (ref $CompiledMethod)
 						   (local.get $method))))))
 
- ;; function 19
+ ;; function 20
  
  (func $getMethodFunctionIndex
        (param $method (ref eq)) 
@@ -1553,7 +1558,7 @@
 		   (ref.cast (ref $CompiledMethod)
 			     (local.get $method))))
 
- ;; function 20
+ ;; function 21
  
  (func $setMethodFunctionIndex
        (param $method (ref eq)) 
@@ -1564,7 +1569,7 @@
 			     (local.get $method))
 		   (local.get $index)))
 
- ;; function 21
+ ;; function 22
  
  (func $onContextPush
        (param $context (ref eq)) 
@@ -1575,7 +1580,7 @@
 		       (local.get $context))
 	     (local.get $pushedObject)))
 
- ;; function 22
+ ;; function 23
  
  (func $popFromContext
        (param $context (ref eq)) 
@@ -1585,7 +1590,7 @@
 	     (ref.cast (ref $Context)
 		       (local.get $context))))
 
- ;; function 23
+ ;; function 24
  
  (func $contextReceiver
        (param $context (ref eq)) 
@@ -1595,7 +1600,7 @@
 		   (ref.cast (ref $Context)
 			     (local.get $context))))
 
- ;; function 24
+ ;; function 25
  
  (func $methodLiterals
        (param $method (ref eq)) 
@@ -1605,7 +1610,7 @@
 		   (ref.cast (ref $CompiledMethod)
 			     (local.get $method))))
 
- ;; function 25
+ ;; function 26
  
  (func $contextLiteralAt
        (param $context (ref eq)) 
@@ -1620,7 +1625,7 @@
 						(local.get $context))))
 	      (local.get $index))))
 
- ;; function 26
+ ;; function 27
  
  (func $contextMethod
        (param $context (ref eq)) 
@@ -1630,7 +1635,7 @@
 		   (ref.cast (ref $Context)
 			     (local.get $context))))
 
- ;; function 27
+ ;; function 28
  
  (func $arrayOkayAt
        (param $array (ref eq)) 
@@ -1663,7 +1668,7 @@
        
        (i32.const 1))
 
- ;; function 28
+ ;; function 29
  
  (func $arrayAt
        (param $array (ref $Array)) 
@@ -1677,21 +1682,21 @@
 			      (local.get $array)))
 
        (if (result (ref null eq))
-	(i32.eqz
-	 (call $arrayOkayAt
-	       (ref.cast (ref $objectArray)
-			 (local.get $objectArray))
-	       (local.get $index)))
-	(then
-	 (local.get $index)
-	 (throw $outOfBounds))
-	(else
-	 ;; Safe to access array.
-	 (array.get $objectArray
-		    (local.get $objectArray)
-		    (local.get $index)))))
+	   (i32.eqz
+	    (call $arrayOkayAt
+		  (ref.cast (ref $objectArray)
+			    (local.get $objectArray))
+		  (local.get $index)))
+	   (then
+	    (local.get $index)
+	    (throw $outOfBounds))
+	   (else
+	    ;; Safe to access array.
+	    (array.get $objectArray
+		       (local.get $objectArray)
+		       (local.get $index)))))
 
- ;; function 29
+ ;; function 30
  
  (func $byteArrayAt
        (param $array (ref $byteArray)) 
@@ -1712,7 +1717,7 @@
 		    (local.get $array)
 		    (local.get $index)))
 
- ;; function 30
+ ;; function 31
  
  (func $byteArrayLength
        (param $array (ref eq)) 
@@ -1722,7 +1727,7 @@
 	(ref.cast (ref $byteArray)
 		  (local.get $array))))
 
- ;; function 31
+ ;; function 32
  
  (func $copyByteArrayToMemory
        (param $bytes (ref $byteArray)) 
@@ -1764,7 +1769,7 @@
 
        (unreachable))
 
- ;; function 32
+ ;; function 33
  
  (func $nextIdentityHash
        (param $vm (ref $VirtualMachine)) 
@@ -1780,7 +1785,7 @@
        (struct.get $VirtualMachine $nextIdentityHash
 		   (local.get $vm)))
 
- ;; function 33
+ ;; function 34
  
  (func $pushOnStack
        (param $context (ref $Context)) 
@@ -1818,7 +1823,7 @@
 		    (local.get $sp)
 		    (i32.const 1))))
 
- ;; function 34
+ ;; function 35
  
  (func $popFromStack
        (param $context (ref null $Context)) 
@@ -1860,7 +1865,7 @@
 		      (local.get $sp)
 		      (i32.const 1))))))
 
- ;; function 35
+ ;; function 36
  
  (func $topOfStack
        (param $context (ref null $Context)) 
@@ -1895,7 +1900,7 @@
 		      (local.get $sp)
 		      (i32.const 1))))))
 
- ;; function 36
+ ;; function 37
  
  (func $classOfObject
        (param $vm (ref $VirtualMachine)) 
@@ -1915,7 +1920,7 @@
 			(ref.cast (ref $Object)
 				  (local.get $obj))))))
 
- ;; function 37
+ ;; function 38
  
  (func $lookupMethod
        (param $vm (ref $VirtualMachine)) 
@@ -2021,7 +2026,7 @@
 
        (unreachable))
 
- ;; function 38
+ ;; function 39
  
  (func $lookupInMethodCache
        (param $vm (ref $VirtualMachine)) 
@@ -2132,7 +2137,7 @@
 
        (unreachable))
 
- ;; function 39
+ ;; function 40
  
  (func $storeInMethodCache
        (param $vm (ref $VirtualMachine)) 
@@ -2175,7 +2180,7 @@
 		  (local.get $index)
 		  (local.get $entry)))
 
- ;; function 40
+ ;; function 41
  
  (func $newContext
        (param $vm (ref $VirtualMachine)) 
@@ -2215,7 +2220,7 @@
 				    (ref.null none)
 				    (i32.const 20)))))
 
- ;; function 41
+ ;; function 42
  
  (func $smallIntegerForValue
        (param $value i32) 
@@ -2224,7 +2229,7 @@
        (ref.i31
 	(local.get $value)))
 
- ;; function 42
+ ;; function 43
  
  (func $isSmallInteger
        (param $obj (ref eq))
@@ -2240,7 +2245,7 @@
 	    (return
 	      (i32.const 0)))))
 
- ;; function 43
+ ;; function 44
  
  (func $valueOfSmallInteger
        (param $obj (ref eq)) 
@@ -2257,7 +2262,7 @@
 	    ;; Not a SmallInteger; return 0 for safety.
 	    (i32.const 0))))
 
- ;; function 44
+ ;; function 45
  
  (func $isTranslated
        (param $method (ref null $CompiledMethod)) 
@@ -2268,7 +2273,7 @@
 		    (local.get $method))
 	(i32.const 0)))
 
- ;; function 45
+ ;; function 46
  
  (func $executeTranslatedMethod
        (param $context (ref $Context)) 
@@ -2280,7 +2285,7 @@
 		      (local.get $context)
 		      (local.get $functionIndex)))
 
- ;; function 46
+ ;; function 47
  
  (func $handleMethodReturn
        (param $vm (ref $VirtualMachine)) 
@@ -2322,7 +2327,7 @@
        
        (local.get $result))
 
- ;; function 47: Create minimal object memory for running (100
+ ;; function 48: Create minimal object memory for running (100
  ;; benchmark).
  
  (func $createMinimalObjectMemory
@@ -2518,7 +2523,7 @@
        ;; success
        (i32.const 1))
 
- ;; function 48
+ ;; function 49
  
  (func $resetMinimalMemory
        (param $vm (ref $VirtualMachine))
@@ -2566,7 +2571,7 @@
 			 (ref.cast (ref eq)                            ;; $selector
 				   (global.get $benchmarkSelector))))) 
 
- ;; function 49: Interpret single bytecode; return 1 if method should
+ ;; function 50: Interpret single bytecode; return 1 if method should
  ;; return, 0 to continue.
  (func $interpretBytecode
        (param $vm (ref $VirtualMachine)) 
@@ -2746,7 +2751,7 @@
        ;; unimplemented bytecode
        (unreachable))
 
- ;; function 50
+ ;; function 51
  
  (func $interpret
        (param $vm (ref $VirtualMachine)) 
