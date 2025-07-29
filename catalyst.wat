@@ -109,7 +109,7 @@
 		  ;; $Class or $Metaclass
 		  (field $class (mut (ref eq)))
 		  
-		  (field $identityHash (i32)
+		  (field $identityHash i32)
 		  (field $nextObject (mut (ref null eq))))))
 
   (type $UndefinedObject (sub $Object
@@ -117,7 +117,7 @@
 			   ;; $Class or $Metaclass
 			   (field $class (mut (ref eq)))
 			   
-			   (field $identityHash (mut i32))
+			   (field $identityHash i32)
 			   (field $nextObject (mut (ref null eq))))))
   
   (type $Array (sub $Object 
@@ -125,7 +125,7 @@
 		     ;; $Class or $Metaclass
 		     (field $class (mut (ref eq)))
 		     
-		     (field $identityHash (mut i32)) 
+		     (field $identityHash i32) 
 		     (field $nextObject (mut (ref null eq))) 
 		     (field $array (mut (ref $objectArray))))))
 
@@ -134,7 +134,7 @@
 			 ;; $Class or $Metaclass
 			 (field $class (mut (ref eq)))
 			 
-			 (field $identityHash (mut i32)) 
+			 (field $identityHash i32) 
 			 (field $nextObject (mut (ref null eq))) 
 			 (field $array (ref $byteArray)))))
 
@@ -143,7 +143,7 @@
 			 ;; $Class or $Metaclass
 			 (field $class (mut (ref eq)))
 			 
-			 (field $identityHash (mut i32)) 
+			 (field $identityHash i32) 
 			 (field $nextObject (mut (ref null eq))) 
 			 (field $array (ref $wordArray)))))
 
@@ -152,7 +152,7 @@
 			      ;; $Class or $Metaclass
 			      (field $class (mut (ref eq)))
 			      
-			      (field $identityHash (mut i32)) 
+			      (field $identityHash i32) 
 			      (field $nextObject (mut (ref null eq)))
 
 			      ;; $Array, $ByteArray, or $WordArray
@@ -163,7 +163,7 @@
 		      ;; $Class or $Metaclass
 		      (field $class (mut (ref eq)))
 		      
-		      (field $identityHash (mut i32)) 
+		      (field $identityHash i32) 
 		      (field $nextObject (mut (ref null eq)))
 
 		      ;; $Array, $ByteArray, or $WordArray
@@ -174,7 +174,7 @@
 			  ;; $Class or $Metaclass
 			  (field $class (mut (ref eq)))
 			  
-			  (field $identityHash (mut i32)) 
+			  (field $identityHash i32) 
 			  (field $nextObject (mut (ref null eq))) 
 			  (field $keys (ref $Array))
 			  (field $values (ref $Array))
@@ -185,7 +185,7 @@
 			;; $Class or $Metaclass
 			(field $class (mut (ref eq)))
 			
-			(field $identityHash (mut i32)) 
+			(field $identityHash i32) 
 			(field $nextObject (mut (ref null eq)))
 
 			;; a $Class or $Metaclass
@@ -198,7 +198,7 @@
 				;; $Class or $Metaclass
 				(field $class (mut (ref eq)))
 				
-				(field $identityHash (mut i32)) 
+				(field $identityHash i32) 
 				(field $nextObject (mut (ref null eq)))
 
 				;; a $Class or $Metaclass
@@ -213,7 +213,7 @@
 		     ;; $Class or $Metaclass
 		     (field $class (mut (ref eq)))
 		     
-		     (field $identityHash (mut i32)) 
+		     (field $identityHash i32) 
 		     (field $nextObject (mut (ref null eq)))
 
 		     ;; a $Class or $Metaclass
@@ -232,7 +232,7 @@
 			 ;; $Class or $Metaclass
 			 (field $class (mut (ref eq)))
 			 
-			 (field $identityHash (mut i32)) 
+			 (field $identityHash i32) 
 			 (field $nextObject (mut (ref null eq)))
 
 			 ;; a $Class or $Metaclass
@@ -248,7 +248,7 @@
 			      ;; $Class or $Metaclass
 			      (field $class (mut (ref eq)))
 			      
-			      (field $identityHash (mut i32)) 
+			      (field $identityHash i32) 
 			      (field $nextObject (mut (ref null eq)))
 
 			      ;; $Array, $ByteArray, or $WordArray
@@ -265,7 +265,7 @@
 		       ;; $Class or $Metaclass
 		       (field $class (mut (ref eq))) 
 
-		       (field $identityHash (mut i32)) 
+		       (field $identityHash i32) 
 		       (field $nextObject (mut (ref null eq))) 
 		       (field $sender (mut (ref null $Context))) 
 		       (field $pc (mut i32)) 
@@ -579,8 +579,6 @@
        (local $values (ref $Array))
        (local $count i32)
        (local $capacity i32)
-       (local $newKeys (ref $Array))
-       (local $newValues (ref $Array))
        (local $newKeysArray (ref $objectArray))
        (local $newValuesArray (ref $objectArray))
        (local $index i32)
@@ -626,7 +624,7 @@
 			(i32.ge_u
 			 (local.get $index)
 			 (local.get $count)))
-		 
+
 		 (array.set $objectArray
 			    (local.get $newKeysArray)
 			    (local.get $index)
@@ -648,28 +646,15 @@
 			     (i32.const 1)))
 		 (br $copy_loop)))
 	 
-	 ;; Create new Array objects and update dictionary
-	 (local.set $newKeys
-		    (call $newArray
-			  (local.get $vm)
-			  (local.get $newKeysArray)))
-	 (local.set $newValues
-		    (call $newArray
-			  (local.get $vm)
-			  (local.get $newValuesArray)))
-	 
-	 (struct.set $Dictionary $keys
-		     (local.get $dictionary)
-		     (local.get $newKeys))
-	 (struct.set $Dictionary $values
-		     (local.get $dictionary)
-		     (local.get $newValues))
-	 
-	 (local.set $keys
-		    (local.get $newKeys))
-	 (local.set $values
-		    (local.get $newValues))))
-       
+	 ;; Update dictionary's underlying keys and values objectArrays.
+	 (struct.set $Array $array
+		     (local.get $keys)
+		     (local.get $newKeysArray))
+
+	 (struct.set $Array $array
+		     (local.get $values)
+		     (local.get $newValuesArray))))
+
        ;; Check if key is a Symbol and if an equivalent Symbol already exists
        (if
 	(ref.test
@@ -2345,7 +2330,6 @@
        (result i32)
        
        (local $benchmarkMethod (ref $CompiledMethod))
-       (local $methodDictionary (ref $Dictionary))
        (local $benchmarkLiterals (ref $objectArray))
        
        (global.set $benchmarkSelector
@@ -2518,18 +2502,11 @@
 
        ;; Add the key/value pair of ($benchmarkSelector ->
        ;; $benchmarkMethod) to $vm$classSmallInteger$methodDictionary.
-       (local.set $methodDictionary
-		  (call $newDictionary
-			(local.get $vm)))
-       
-       (struct.set $Class $methodDictionary
-		   (struct.get $VirtualMachine $classSmallInteger
-			       (local.get $vm))
-		   (local.get $methodDictionary))
-
        (call $dictionaryAdd
 	     (local.get $vm)
-	     (local.get $methodDictionary)
+	     (struct.get $Class $methodDictionary
+			 (struct.get $VirtualMachine $classSmallInteger
+				     (local.get $vm)))
 	     (ref.cast (ref eq)
 		       (global.get $benchmarkSelector))
 	     (local.get $benchmarkMethod))
