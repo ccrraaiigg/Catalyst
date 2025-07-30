@@ -241,8 +241,8 @@
         function initVM() {
             if (!vm) {
                 return import('./catalyst.js')
-                    .then(({ SqueakVM }) => {
-                        vm = new SqueakVM();
+                    .then(({ Catalyst }) => {
+                        vm = new Catalyst();
                         return vm.initialize();
                     })
                     .then(() => {
@@ -255,7 +255,7 @@
                         if (vm.llmConfig.apiKey && vm.llmConfig.apiKey !== 'mock-key') {
                             addOutput('<strong>🔑 API keys loaded - Real LLM optimization available!</strong>');
                         } else {
-                            addOutput('<strong>⚠️ No API keys found - LLM will use mock mode when enabled</strong>');
+                            addOutput('<strong>⚠️ No API keys found - LLM not available</strong>');
                             addOutput('<strong>💡 Create a "keys" file with: openai=sk-proj-... or anthropic=sk-ant-api03-...</strong>');
                         }
                     })

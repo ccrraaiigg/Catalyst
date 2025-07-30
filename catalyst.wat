@@ -56,7 +56,7 @@
  (export "methodLiterals" (func $methodLiterals))
  (export "contextLiteralAt" (func $contextLiteralAt))
 
- (elem declare func $fixMetalevelFields)
+ (elem declare func $fixMetalevelFieldsOf)
  
  ;; types defining Smalltalk classes
  ;;
@@ -80,9 +80,8 @@
  ;; For Smalltalk, we use the terms "slots" and "methods". For WASM,
  ;; we use "fields" and "functions". Smalltalk source is "compiled" to
  ;; a struct of type $CompiledMethod. A $CompiledMethod is
- ;; "translated" to a WASM function. In the case of this virtual
- ;; machine code, Smalltalk source can be compiled to a compiled
- ;; method and decompiled into this source.
+ ;; "translated" to a WASM function. The code in this file is
+ ;; decompiled from the methods of a working Smalltalk simulation.
  ;; 
  ;; The nullable fields are only nullable because their initial values
  ;; aren't always knowable at creation time.
@@ -91,6 +90,11 @@
  ;; fields of Smalltalk objects are given as the nil Smalltalk object
  ;; when anything at the Smalltalk level asks about them. This saves
  ;; us the effort of fixing up them up to be nil.
+ ;;
+ ;; When unavoidable, the special constant -1337, as a (ref i31), is
+ ;; used to indicate an invalid Smalltalk object (usually something
+ ;; related to a value which has yet to be initialized). Unfixable
+ ;; errors are indicated by throwing exceptions.
 
  (rec ;; recursive (mutually referential) type definitions
   (type $objectArray
@@ -299,7 +303,7 @@
 	 (field $firstObject (mut (ref null eq)))
 	 (field $lastObject (mut (ref null eq)))
 
-	 ;; frequently used for $superclass in $newSubclassOfWithName
+	 ;; frequently used for $superclass in $newSubclassOfNamed
 	 (field $classObject (mut (ref null $Class)))
 
 	 (field $classMetaclass (mut (ref null $Class)))
@@ -856,7 +860,7 @@
 
  ;; function 13
  
- (func $newSubclassOfWithName
+ (func $newSubclassOfNamed
        (param $vm (ref $VirtualMachine))
        (param $superclass (ref null $Class))
        (param $name (ref $Symbol)) 
@@ -1083,7 +1087,7 @@
 
  ;; function 16
  
- (func $fixMetalevelFields
+ (func $fixMetalevelFieldsOf
        (param $vm (ref $VirtualMachine))
        (param $class (ref null eq))
        
@@ -1118,7 +1122,7 @@
 			 (struct.get $Class $subclasses
 				     (ref.cast (ref $Class)
 					       (local.get $class))))
-	     (ref.func $fixMetalevelFields)))
+	     (ref.func $fixMetalevelFieldsOf)))
 
  ;; function 17
 
@@ -1152,7 +1156,7 @@
 
        (struct.set $VirtualMachine $classObject
 		   (local.get $vm)
-		   (call $newSubclassOfWithName
+		   (call $newSubclassOfNamed
 			 (local.get $vm)           ;; $vm     
 			 (ref.null $Class)         ;; $superclass
 			 (call $newSymbolFromBytes ;; $name
@@ -1172,7 +1176,7 @@
 		   (local.get $vm)
 		   (struct.new $UndefinedObject
 			       ;; $class
-			       (call $newSubclassOfWithName 
+			       (call $newSubclassOfNamed 
 				     (local.get $vm)
 				     (struct.get $VirtualMachine $classObject ;; $superclass
 						 (local.get $vm))
@@ -1207,7 +1211,7 @@
 			       (local.get $vm)))
 
        (local.set $classBehavior
-		  (call $newSubclassOfWithName
+		  (call $newSubclassOfNamed
 			(local.get $vm)
 			(struct.get $VirtualMachine $classObject ;; $superclass
 				    (local.get $vm))
@@ -1224,7 +1228,7 @@
 					       (i32.const 114))))) ;; 'r'
 
        (local.set $classClassDescription
-		  (call $newSubclassOfWithName
+		  (call $newSubclassOfNamed
 			(local.get $vm)
 			(local.get $classBehavior) ;; $superclass
 			(call $newSymbolFromBytes  ;; $name
@@ -1250,7 +1254,7 @@
        ;; Create class Class.
        (struct.set $VirtualMachine $classClass
 		   (local.get $vm)
-		   (call $newSubclassOfWithName
+		   (call $newSubclassOfNamed
 			 (local.get $vm)
 			 (local.get $classClassDescription) ;; $superclass
 			 (call $newSymbolFromBytes          ;; $name
@@ -1275,7 +1279,7 @@
        ;; Create class Metaclass.
        (struct.set $VirtualMachine $classMetaclass
 		   (local.get $vm)
-		   (call $newSubclassOfWithName
+		   (call $newSubclassOfNamed
 			 (local.get $vm)
 			 (local.get $classClassDescription) ;; $superclass
 			 (call $newSymbolFromBytes          ;; $name
@@ -1293,11 +1297,11 @@
 
        ;; Create what we need of the Collection hierarchy.
        (local.set $classArrayedCollection
-		  (call $newSubclassOfWithName ;; ArrayedCollection
+		  (call $newSubclassOfNamed ;; ArrayedCollection
 			(local.get $vm)
-			(call $newSubclassOfWithName ;; SequenceableCollection
+			(call $newSubclassOfNamed ;; SequenceableCollection
 			      (local.get $vm)
-			      (call $newSubclassOfWithName ;; Collection
+			      (call $newSubclassOfNamed ;; Collection
 				    (local.get $vm)
 				    (struct.get $VirtualMachine $classObject ;; superclass
 						(local.get $vm))
@@ -1362,7 +1366,7 @@
        
        (struct.set $VirtualMachine $classArray
 		   (local.get $vm)
-		   (call $newSubclassOfWithName
+		   (call $newSubclassOfNamed
 			 (local.get $vm)
 			 (local.get $classArrayedCollection) ;; $superclass
 			 (call $newSymbolFromBytes           ;; $name
@@ -1376,7 +1380,7 @@
 
        (struct.set $VirtualMachine $classByteArray
 		   (local.get $vm)
-		   (call $newSubclassOfWithName
+		   (call $newSubclassOfNamed
 			 (local.get $vm)
 			 (local.get $classArrayedCollection) ;; superclass
 			 (call $newSymbolFromBytes           ;; $name
@@ -1394,7 +1398,7 @@
 
        (struct.set $VirtualMachine $classWordArray
 		   (local.get $vm)
-		   (call $newSubclassOfWithName
+		   (call $newSubclassOfNamed
 			 (local.get $vm)
 			 (local.get $classArrayedCollection) ;; superclass
 			 (call $newSymbolFromBytes           ;; $name
@@ -1413,7 +1417,7 @@
        ;; Create class Symbol.
        (struct.set $VirtualMachine $classSymbol
 		   (local.get $vm)
-		   (call $newSubclassOfWithName
+		   (call $newSubclassOfNamed
 			 (local.get $vm)
 			 (struct.get $VirtualMachine $classObject ;; $superclass
 				     (local.get $vm))
@@ -1431,7 +1435,7 @@
        ;; of every $Class created so far, and the $class of every
        ;; $Symbol and $Dictionary created so far.
 
-       (call $fixMetalevelFields
+       (call $fixMetalevelFieldsOf
 	     (local.get $vm)
 	     (ref.cast (ref eq)
 		       (struct.get $VirtualMachine $classObject
@@ -1439,7 +1443,7 @@
        
        (struct.set $VirtualMachine $classCompiledMethod
 		   (local.get $vm)
-		   (call $newSubclassOfWithName
+		   (call $newSubclassOfNamed
 			 (local.get $vm)
 			 (struct.get $VirtualMachine $classByteArray ;; $superclass
 				     (local.get $vm))
@@ -1463,7 +1467,7 @@
 
        (struct.set $VirtualMachine $classContext
 		   (local.get $vm)
-		   (call $newSubclassOfWithName
+		   (call $newSubclassOfNamed
 			 (local.get $vm)
 			 (struct.get $VirtualMachine $classObject ;; $superclass
 				     (local.get $vm))
@@ -1480,7 +1484,7 @@
        
        (struct.set $VirtualMachine $classSmallInteger
 		   (local.get $vm)
-		   (call $newSubclassOfWithName
+		   (call $newSubclassOfNamed
 			 (local.get $vm)
 			 (struct.get $VirtualMachine $classObject ;; $superclass
 				     (local.get $vm))

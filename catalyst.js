@@ -1,6 +1,6 @@
 // catalyst.js - JavaScript interface to Catalyst VM
 
-class SqueakVM {
+class Catalyst {
     constructor() {
         this.translationEnabled = true
         this.debugMode = true
@@ -2547,11 +2547,11 @@ function reportResult(value) {
 
 // Export for use in HTML
 if (typeof window !== 'undefined') {
-    window.SqueakVM = SqueakVM
+    window.Catalyst = Catalyst
     window.reportResult = reportResult}
 
 // Export for Node.js
 if (typeof module !== 'undefined' && module.exports) module.exports = {reportResult}
 
-export {SqueakVM, reportResult}
+export {Catalyst, reportResult}
 
