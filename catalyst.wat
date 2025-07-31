@@ -19,8 +19,8 @@
  ;; JS translates method and installs translation function
  ;; function 1
 
- (import "env" "translateMethod"
-	 (func $translateMethod
+ (import "env" "translateMethodForReceiverWithIdentityHash"
+	 (func $translateMethodForReceiverWithIdentityHash
 	       (param (ref eq)) ;; method
 	       (param i32)))    ;; receiver identity hash
 
@@ -33,8 +33,8 @@
  ;; linear memory for efficient byte transfer between WASM and JS
  (export "bytes" (memory $0))
 
- (export "functionTable" (table $functionTable))
-
+ (export "translatedMethods" (table $translatedMethods))
+ 
  ;; functions exported to JS (in roughly the order JS uses them).
 
  (export "newVirtualMachine" (func $newVirtualMachine))
@@ -351,8 +351,11 @@
  ;; linear memory for staging byte arrays visible to JS. See $copyByteArrayToMemory.
  (memory $0 1)
 
- ;; translated methods function table (the only table in this module)
- (table $functionTable 100 funcref)
+ ;; translated methods function table
+ (table $translatedMethods 100 funcref)
+
+ ;; bytecode handlers function table
+ (table $bytecodeHandlers 256 funcref)
 
  ;; function 3: Return whether two $byteArrays are equivalent.
  
@@ -573,8 +576,7 @@
 
  ;; function 9
  
- (func $dictionaryAdd
-       (param $vm (ref $VirtualMachine))
+ (func $dictionaryAtPut
        (param $dictionary (ref $Dictionary))
        (param $key (ref eq))
        (param $value (ref eq))
@@ -722,7 +724,21 @@
 		    (local.get $count)
 		    (i32.const 1))))
 
- ;; function 10: Link $objects via their $nextObject fields.
+ ;; function 10
+
+ (func $behaviorAtPut
+       (param $behavior (ref eq))
+       (param $key (ref eq))
+       (param $value (ref eq))
+
+       (call $dictionaryAtPut
+	     (struct.get $Behavior $methodDictionary
+			 (ref.cast (ref $Behavior)
+				   (local.get $behavior)))
+	     (local.get $key)
+	     (local.get $value)))
+ 
+ ;; function 11: Link $objects via their $nextObject fields.
  
  (func $linkObjects
        (param $vm (ref $VirtualMachine)) 
@@ -782,7 +798,7 @@
 	       
 	       (br $link)))))
 
- ;; function 11
+ ;; function 12
  
  (func $newEmptyArray
        (param $vm (ref $VirtualMachine)) 
@@ -794,7 +810,7 @@
 			(ref.null none)  ;; default array element type (irrelevant here)
 			(i32.const 0)))) ;; empty
 
- ;; function 12: Add an element to the end of an $Array's elements, by
+ ;; function 13: Add an element to the end of an $Array's elements, by
  ;; replacing the elements array.
 
  (func $arrayAdd
@@ -858,7 +874,7 @@
 		   (local.get $array)
 		   (local.get $newObjectArray)))
 
- ;; function 13
+ ;; function 14
  
  (func $newSubclassOfNamed
        (param $vm (ref $VirtualMachine))
@@ -1023,7 +1039,7 @@
 
        (local.get $class))
 
- ;; function 14
+ ;; function 15
  
  (func $newSymbolFromBytes
        (param $vm (ref $VirtualMachine)) 
@@ -1049,7 +1065,7 @@
 		   (ref.null none)         ;; $nextObject to be set later
 		   (local.get $bytes)))    ;; $slots
 
- ;; function 15
+ ;; function 16
  
  (func $do
        (param $vm (ref $VirtualMachine))
@@ -1085,7 +1101,7 @@
 			 (i32.const 1)))
 	     (br $enumerate)))
 
- ;; function 16
+ ;; function 17
  
  (func $fixMetalevelFieldsOf
        (param $vm (ref $VirtualMachine))
@@ -1124,7 +1140,7 @@
 					       (local.get $class))))
 	     (ref.func $fixMetalevelFieldsOf)))
 
- ;; function 17
+ ;; function 18
 
  (func $initializeVirtualMachine
        (param $vm (ref $VirtualMachine))
@@ -1506,7 +1522,7 @@
 
        (local.get $vm))
 
- ;; function 18
+ ;; function 19
  
  (func $newVirtualMachine
        (result (ref $VirtualMachine))
@@ -1540,7 +1556,7 @@
 
  ;; utilities for method translation in JS
 
- ;; function 19
+ ;; function 20
  
  (func $methodBytecodes
        (param $method (ref eq)) 
@@ -1552,7 +1568,7 @@
 					 (ref.cast (ref $CompiledMethod)
 						   (local.get $method))))))
 
- ;; function 20
+ ;; function 21
  
  (func $getMethodFunctionIndex
        (param $method (ref eq)) 
@@ -1562,7 +1578,7 @@
 		   (ref.cast (ref $CompiledMethod)
 			     (local.get $method))))
 
- ;; function 21
+ ;; function 22
  
  (func $setMethodFunctionIndex
        (param $method (ref eq)) 
@@ -1573,7 +1589,7 @@
 			     (local.get $method))
 		   (local.get $index)))
 
- ;; function 22
+ ;; function 23
  
  (func $onContextPush
        (param $context (ref eq)) 
@@ -1584,7 +1600,7 @@
 		       (local.get $context))
 	     (local.get $pushedObject)))
 
- ;; function 23
+ ;; function 24
  
  (func $popFromContext
        (param $context (ref eq)) 
@@ -1594,7 +1610,7 @@
 	     (ref.cast (ref $Context)
 		       (local.get $context))))
 
- ;; function 24
+ ;; function 25
  
  (func $contextReceiver
        (param $context (ref eq)) 
@@ -1604,7 +1620,7 @@
 		   (ref.cast (ref $Context)
 			     (local.get $context))))
 
- ;; function 25
+ ;; function 26
  
  (func $methodLiterals
        (param $method (ref eq)) 
@@ -1614,7 +1630,7 @@
 		   (ref.cast (ref $CompiledMethod)
 			     (local.get $method))))
 
- ;; function 26
+ ;; function 27
  
  (func $contextLiteralAt
        (param $context (ref eq)) 
@@ -1629,7 +1645,7 @@
 						(local.get $context))))
 	      (local.get $index))))
 
- ;; function 27
+ ;; function 28
  
  (func $contextMethod
        (param $context (ref eq)) 
@@ -1639,7 +1655,7 @@
 		   (ref.cast (ref $Context)
 			     (local.get $context))))
 
- ;; function 28
+ ;; function 29
  
  (func $arrayOkayAt
        (param $array (ref eq)) 
@@ -1672,7 +1688,7 @@
        
        (i32.const 1))
 
- ;; function 29
+ ;; function 30
  
  (func $arrayAt
        (param $array (ref $Array)) 
@@ -1700,7 +1716,7 @@
 		       (local.get $objectArray)
 		       (local.get $index)))))
 
- ;; function 30
+ ;; function 31
  
  (func $byteArrayAt
        (param $array (ref $byteArray)) 
@@ -1721,7 +1737,7 @@
 		    (local.get $array)
 		    (local.get $index)))
 
- ;; function 31
+ ;; function 32
  
  (func $byteArrayLength
        (param $array (ref eq)) 
@@ -1731,7 +1747,7 @@
 	(ref.cast (ref $byteArray)
 		  (local.get $array))))
 
- ;; function 32
+ ;; function 33
  
  (func $copyByteArrayToMemory
        (param $bytes (ref $byteArray)) 
@@ -1773,7 +1789,7 @@
 
        (unreachable))
 
- ;; function 33
+ ;; function 34
  
  (func $nextIdentityHash
        (param $vm (ref $VirtualMachine)) 
@@ -1789,7 +1805,7 @@
        (struct.get $VirtualMachine $nextIdentityHash
 		   (local.get $vm)))
 
- ;; function 34
+ ;; function 35
  
  (func $pushOnStack
        (param $context (ref $Context)) 
@@ -1827,7 +1843,7 @@
 		    (local.get $sp)
 		    (i32.const 1))))
 
- ;; function 35
+ ;; function 36
  
  (func $popFromStack
        (param $context (ref null $Context)) 
@@ -1869,7 +1885,7 @@
 		      (local.get $sp)
 		      (i32.const 1))))))
 
- ;; function 36
+ ;; function 37
  
  (func $topOfStack
        (param $context (ref null $Context)) 
@@ -1904,7 +1920,7 @@
 		      (local.get $sp)
 		      (i32.const 1))))))
 
- ;; function 37
+ ;; function 38
  
  (func $classOfObject
        (param $vm (ref $VirtualMachine)) 
@@ -1924,12 +1940,12 @@
 			(ref.cast (ref $Object)
 				  (local.get $obj))))))
 
- ;; function 38
+ ;; function 39
  
- (func $lookupMethod
+ (func $lookupMethodAtSelectorForReceiver
        (param $vm (ref $VirtualMachine)) 
-       (param $receiver (ref eq)) 
        (param $selector (ref eq)) 
+       (param $receiver (ref eq)) 
        (result (ref null $CompiledMethod))
        
        (local $class (ref eq))
@@ -2030,9 +2046,9 @@
 
        (unreachable))
 
- ;; function 39
+ ;; function 40
  
- (func $lookupInMethodCache
+ (func $lookupInMethodCacheAtSelectorInClass
        (param $vm (ref $VirtualMachine)) 
        (param $selector (ref eq)) 
        (param $receiverClass (ref $Class)) 
@@ -2141,7 +2157,7 @@
 
        (unreachable))
 
- ;; function 40
+ ;; function 41
  
  (func $storeInMethodCache
        (param $vm (ref $VirtualMachine)) 
@@ -2184,9 +2200,9 @@
 		  (local.get $index)
 		  (local.get $entry)))
 
- ;; function 41
+ ;; function 42
  
- (func $newContext
+ (func $newContextWithReceiverMethodAndSelector
        (param $vm (ref $VirtualMachine)) 
        (param $receiver (ref eq)) 
        (param $method (ref $CompiledMethod))
@@ -2224,7 +2240,7 @@
 				    (ref.null none)
 				    (i32.const 20)))))
 
- ;; function 42
+ ;; function 43
  
  (func $smallIntegerForValue
        (param $value i32) 
@@ -2233,7 +2249,7 @@
        (ref.i31
 	(local.get $value)))
 
- ;; function 43
+ ;; function 44
  
  (func $isSmallInteger
        (param $obj (ref eq))
@@ -2249,7 +2265,7 @@
 	    (return
 	      (i32.const 0)))))
 
- ;; function 44
+ ;; function 45
  
  (func $valueOfSmallInteger
        (param $obj (ref eq)) 
@@ -2266,7 +2282,24 @@
 	    ;; Not a SmallInteger; return 0 for safety.
 	    (i32.const 0))))
 
- ;; function 45
+ ;; function 46
+
+ (func $identityHash
+       (param $receiver (ref eq))
+       (result i32)
+       
+       (if (result i32)
+	   (call $isSmallInteger
+		 (local.get $receiver))
+	   (then
+	    (call $valueOfSmallInteger
+		  (local.get $receiver)))
+	   (else
+	    (struct.get $Object $identityHash
+			(ref.cast (ref $Object)
+				  (local.get $receiver))))))
+ 
+ ;; function 47
  
  (func $isTranslated
        (param $method (ref null $CompiledMethod)) 
@@ -2277,19 +2310,19 @@
 		    (local.get $method))
 	(i32.const 0)))
 
- ;; function 46
+ ;; function 48
  
- (func $executeTranslatedMethod
+ (func $executeTranslatedMethodAt
        (param $context (ref $Context)) 
        (param $functionIndex i32)
        ;; Translation function returns 0 for success.
        (result i32)
 
-       (call_indirect $functionTable (param (ref eq)) (result i32)
+       (call_indirect $translatedMethods (param (ref eq)) (result i32)
 		      (local.get $context)
 		      (local.get $functionIndex)))
 
- ;; function 47
+ ;; function 49
  
  (func $handleMethodReturn
        (param $vm (ref $VirtualMachine)) 
@@ -2331,7 +2364,7 @@
        
        (local.get $result))
 
- ;; function 48: Create minimal object memory for running (100
+ ;; function 50: Create minimal object memory for running (100
  ;; benchmark).
  
  (func $createMinimalObjectMemory
@@ -2388,12 +2421,13 @@
 			(i32.const 3)))
 
        ;; Create a simple repetitive benchmark computation: iterative
-       ;; arithmetic progression (~100μs runtime)
+       ;; arithmetic progression (~100us runtime).
        ;;
        ;; This benchmark method performs a simple iterative arithmetic
-       ;; progression that's easy for LLMs to understand and optimize.
+       ;; progression that''s easy for LLMs to understand and optimize.
        ;; 
        ;; Pattern (repeated 5 times):
+       ;; 
        ;; 1. result = (receiver + 1) * 2
        ;; 2. result = (result + 2) * 3  
        ;; 3. result = (result + 3) * 2
@@ -2405,15 +2439,13 @@
        ;; - has clear optimization opportunities (can be reduced to a
        ;;   mathematical formula).
        ;; 
-       ;; - takes sufficient time when interpreted (~45 operations ×
-       ;;   15 iterations = ~100μs).
+       ;; - takes sufficient time when interpreted (~45 operations *
+       ;;   15 iterations = ~100us).
        ;; 
        ;; - has predictable, testable results.
        ;;
        ;; This performs 45 arithmetic operations in a simple pattern
        ;; that an LLM can easily translate to optimized WAT code.
-       ;;
-       ;; Simple repetitive pattern (15 iterations of 3-operation sequence).
        
        (local.set $benchmarkMethod
 		  (struct.new $CompiledMethod
@@ -2511,11 +2543,10 @@
 
        ;; Add the key/value pair of ($benchmarkSelector ->
        ;; $benchmarkMethod) to $vm$classSmallInteger$methodDictionary.
-       (call $dictionaryAdd
-	     (local.get $vm)
-	     (struct.get $Class $methodDictionary
-			 (struct.get $VirtualMachine $classSmallInteger
-				     (local.get $vm)))
+       (call $behaviorAtPut
+	     (ref.cast (ref eq)
+		       (struct.get $VirtualMachine $classSmallInteger
+				   (local.get $vm)))
 	     (ref.cast (ref eq)
 		       (global.get $benchmarkSelector))
 	     (local.get $benchmarkMethod))
@@ -2527,7 +2558,7 @@
        ;; success
        (i32.const 1))
 
- ;; function 49
+ ;; function 51
  
  (func $resetMinimalMemory
        (param $vm (ref $VirtualMachine))
@@ -2535,7 +2566,7 @@
        ;; Set $vm's $activeContext to run an unbound method which runs (100 benchmark).
        (struct.set $VirtualMachine $activeContext
 		   (local.get $vm)
-		   (call $newContext
+		   (call $newContextWithReceiverMethodAndSelector
 			 (local.get $vm)                               ;; $vm
 			 (ref.i31                                      ;; $receiver
 			  (i32.const 100))           
@@ -2575,12 +2606,12 @@
 			 (ref.cast (ref eq)                            ;; $selector
 				   (global.get $benchmarkSelector))))) 
 
- ;; function 50: Interpret single bytecode; return 1 if method should
+ ;; function 52: Interpret single bytecode; return 1 if method should
  ;; return, 0 to continue.
- (func $interpretBytecode
+ (func $interpretBytecodeIn
        (param $vm (ref $VirtualMachine)) 
-       (param $context (ref $Context)) 
        (param $bytecode i32) 
+       (param $context (ref $Context)) 
        (result i32)
        
        (local $receiver (ref eq))
@@ -2589,7 +2620,6 @@
        (local $int1 i32)
        (local $int2 i32)
        (local $result i32)
-       (local $newContext (ref $Context))
        (local $selector (ref $Symbol))
        (local $method (ref null $CompiledMethod))
        (local $receiverClass (ref $Class))
@@ -2688,7 +2718,7 @@
 	 (return
 	   (i32.const 1))))
        
-       (if
+       (if ;; check for send message
 	(i32.eq
 	 (local.get $bytecode)
 	 (i32.const 0xD0))
@@ -2716,7 +2746,7 @@
 	 (if
 	  (ref.is_null
 	   (local.tee $method
-		      (call $lookupInMethodCache
+		      (call $lookupInMethodCacheAtSelectorInClass
 			    (local.get $vm)
 			    (local.get $selector)
 			    (local.get $receiverClass))))
@@ -2725,71 +2755,71 @@
 	   (if
 	    (ref.is_null
              (local.tee $method
-			(call $lookupMethod
+			(call $lookupMethodAtSelectorForReceiver
 			      (local.get $vm)
-			      (local.get $receiver)
-			      (local.get $selector))))
+			      (local.get $selector)
+			      (local.get $receiver))))
 	    (then
 	     ;; message not understood
 	     (local.get $selector)
-	     (throw $messageNotUnderstood)))
-	   (call $storeInMethodCache
-		 (local.get $vm)
-		 (local.get $selector)
-		 (local.get $receiverClass)
-		 (ref.cast (ref $CompiledMethod)
-			   (local.get $method)))))
+	     (throw $messageNotUnderstood))
+	    (else
+	     (call $storeInMethodCache
+		   (local.get $vm)
+		   (local.get $selector)
+		   (local.get $receiverClass)
+		   (ref.cast (ref $CompiledMethod)
+			     (local.get $method)))
 
-	 (struct.set $VirtualMachine $activeContext
-		     (local.get $vm)
-		     (call $newContext
-			   (local.get $vm)
-			   (local.get $receiver)
-			   (ref.as_non_null
-			    (local.get $method))
-			   (local.get $selector)))
+	     (struct.set $VirtualMachine $activeContext
+			 (local.get $vm)
+			 (call $newContextWithReceiverMethodAndSelector
+			       (local.get $vm)
+			       (local.get $receiver)
+			       (ref.as_non_null
+				(local.get $method))
+			       (local.get $selector)))
 
-	 (return
-	   (i32.const 0))))
+	     (return
+	       (i32.const 0))))))))
 
        ;; unimplemented bytecode
        (unreachable))
 
- ;; function 51
+ ;; function 53
  
  (func $interpret
        (param $vm (ref $VirtualMachine)) 
        (result i32)
 
        (local $context (ref null $Context))
-       (local $method (ref null $CompiledMethod))
+       (local $method (ref $CompiledMethod))
        (local $bytecode i32)
        (local $pc i32)
        (local $receiver (ref eq))
-       (local $resultValue (ref eq))
+       (local $result (ref eq))
        (local $invocationCount i32)
        (local $bytecodes (ref $byteArray))
        (local $functionIndex i32)
 
        ;; There are no paths through this function that don't set
-       ;; $resultValue, but the validator is too cheap to calculate
+       ;; $result, but the validator is too cheap to calculate
        ;; this.
-       (local.set $resultValue
+       (local.set $result
 		  (ref.i31
 		   (i32.const -1337)))
        
        (block $finished
 	 (loop $execution_loop
-	       (if
-		(ref.is_null
-		 (local.tee $context
-			    (struct.get $VirtualMachine $activeContext
-					(local.get $vm))))
-		(then
-		 ;; We were running an object memory with an initial
-		 ;; $activeContext with an unbound method. Return
-		 ;; result to JS.
-		 (br $finished)))
+	       (br_if $finished
+		      ;; We were running an object memory with an initial
+		      ;; $activeContext with an unbound method. Return
+		      ;; result to JS.
+		      (ref.is_null
+		       (local.tee $context
+				  (struct.get $VirtualMachine $activeContext
+					      (local.get $vm)))))
+
 	       (local.set $receiver
 			  (struct.get $Context $receiver
 				      (ref.as_non_null
@@ -2818,155 +2848,137 @@
 			     (local.get $vm)))
 		(then
 		 (if
-		  (struct.get $CompiledMethod $isInstalled
-			      (local.get $method))
+		  (i32.and
+		   (struct.get $CompiledMethod $isInstalled
+			       (local.get $method))
+		   (i32.eqz
+		    (call $isTranslated
+			  (local.get $method))))
 		  (then
-		   (if
-		    (i32.eqz
-		     (call $isTranslated
-			   (local.get $method)))
-		    (then
-		     (call $translateMethod
-			   (ref.as_non_null
-			    (local.get $method))
-			   (if (result i32)
-			       (call $isSmallInteger
-				     (local.get $receiver))
-			       (then
-				(call $valueOfSmallInteger
-				      (local.get $receiver)))
-			       (else
-				(struct.get $Object $identityHash
-					    (ref.cast (ref $Object)
-						      (local.get $receiver))))))))))))
-	       (if
-		(call $isTranslated
-		      (ref.as_non_null
+		   (call $translateMethodForReceiverWithIdentityHash
+			 (local.get $method)
+			 (if (result i32)
+			     (call $isSmallInteger
+				   (local.get $receiver))
+			     (then
+			      (call $valueOfSmallInteger
+				    (local.get $receiver)))
+			     (else
+			      (struct.get $Object $identityHash
+					  (ref.cast (ref $Object)
+						    (local.get $receiver))))))))))
+
+	       (if ;; See if there's translated code to run for this
+		;; method.
+		(i32.and
+		 (i32.eq
+		  ;; Only check when the context is new (PC =
+		  ;; 0). Ignoring the closures case for now.
+		  (local.tee $pc
+			     (struct.get $Context $pc
+					 (ref.as_non_null
+					  (local.get $context)))
+			     (i32.const 0)))
+		 (call $isTranslated
 		       (local.get $method)))
-		(then
+		
+		(then ;; There's a method translation.
 		 (local.set $functionIndex
 			    (struct.get $CompiledMethod $functionIndex
 					(local.get $method)))
-		 (if
-		  (call $executeTranslatedMethod
+		 (if ;; See if translated method succeeds.
+		  (call $executeTranslatedMethodAt
 			(ref.as_non_null
 			 (local.get $context))
 			(local.get $functionIndex))
-		  (then
-		   ;; Translated method failed; deoptimize.
+		  (then ;; Translated method failed; deoptimize.
 		   (struct.set $CompiledMethod $functionIndex
 			       (local.get $method)
-			       (i32.const 0))
-		   (br $execution_loop))
-		  (else
-		   (local.set $resultValue
+			       (i32.const 0)))
+		  (else ;; Translated method succeeded; return from method.
+		   (local.set $result
 			      (call $handleMethodReturn
 				    (local.get $vm)
 				    (ref.as_non_null
-				     (local.get $context))))))
-		 (br $execution_loop)))
+				     (local.get $context)))))))
+		(else ;; $method has no translation; interpret its bytecodes.
+		 (local.set $bytecodes
+			    (struct.get $ByteArray $array
+					(ref.cast (ref $ByteArray)
+						  (struct.get $CompiledMethod $slots
+							      (local.get $method)))))
 
-	       ;; $method has no translation; interpret its bytecodes.
-	       (local.set $bytecodes
-			  (struct.get $ByteArray $array
-				      (ref.cast (ref $ByteArray)
-						(struct.get $CompiledMethod $slots
-							    (local.get $method)))))
+		 (loop $interpreter_loop
+		       (br_if $execution_loop
+			      ;; Done interpreting that $method, we're in a different $context now.
+			      (i32.eqz
+			       (ref.eq
+				(local.get $context)
+				(struct.get $VirtualMachine $activeContext
+					    (local.get $vm)))))
 
-	       (loop $interpreter_loop
-		     (br_if $execution_loop
-			    (ref.is_null
-			     ;; We've returned to a nil context
-			     ;; sender; execution is finished.
-			     (local.tee $context
-					(struct.get $VirtualMachine $activeContext
-						    (local.get $vm)))))
-
-		     (local.set $pc
-				(struct.get $Context $pc
-					    (ref.as_non_null
-					     (local.get $context))))
-
-		     ;; Check if we've reached the end of the current
-		     ;; $method's bytecodes.
-		     (if
-		      (i32.le_u
-		       (array.len
-			(local.tee $bytecodes
-				   (struct.get $ByteArray $array
-					       (ref.cast (ref $ByteArray)
-							 (struct.get $CompiledMethod $slots
-								     (local.tee $method
-										(struct.get $Context $method
-											    (ref.as_non_null
-											     (local.get $context)))))))))
-		       (local.get $pc))
-		      (then
-		       ;; We've reached the end of the current
-		       ;; $method's bytecodes; return from the method.
-		       (local.set $resultValue
-				  (call $handleMethodReturn
-					(local.get $vm)
-					(ref.as_non_null
-					 (local.get $context))))
-		       (br $interpreter_loop)))
-
-		     ;; Interpret the next $bytecode.
-		     (local.set $bytecode
-				(array.get_u $byteArray
-					     (local.get $bytecodes)
-					     (local.get $pc)))
-
-		     (if
-		      (call $interpretBytecode
-			    (local.get $vm)
-			    (ref.as_non_null
-			     (local.get $context))
-			    (local.get $bytecode))
-		      (then
-		       ;; That $bytecode makes $method return.
-		       (local.set $resultValue
-				  (call $handleMethodReturn
-					(local.get $vm)
-					(ref.as_non_null
-					 (local.get $context))))
-		       (br $interpreter_loop)))
-		     ;; Check if $context switched via message-send.
-		     (if
-		      (ref.eq
-		       (struct.get $VirtualMachine $activeContext
-				   (local.get $vm))
-		       (local.get $context))
-		      (then
-		       ;; Same $context; increment the $pc and continue.
-		       (struct.set $Context $pc
-				   (ref.as_non_null
-				    (local.get $context))
-				   (i32.add
-				    (local.get $pc)
-				    (i32.const 1))))
-		      (else
-		       ;; We have either entered a new $context via
-		       ;; message-send, or returned to a sending
-		       ;; $context.
+		       (local.set $pc
+				  (struct.get $Context $pc
+					      (ref.as_non_null
+					       (local.get $context))))
+		       
+		       ;; Check if we've reached the end of the current
+		       ;; $method's bytecodes.
 		       (if
-			(i32.eqz
-			 (struct.get $Context $pc
-				     (ref.as_non_null
-				      (struct.get $VirtualMachine $activeContext
-						  (local.get $vm)))))
+			(i32.le_u
+			 (array.len
+			  (local.get $bytecodes))
+			 (local.get $pc))
 			(then
-			 ;; $pc is zero, meaning we have a new
-			 ;; $method, rather than returning to a
-			 ;; sending $context.
-			 (br $execution_loop)))))
+			 ;; We've reached the end of the current
+			 ;; $method's bytecodes; return from the method.
+			 (local.set $result
+				    (call $handleMethodReturn
+					  (local.get $vm)
+					  (ref.as_non_null
+					   (local.get $context)))))
+			(else ;; Interpret the next $bytecode.
+			 (local.set $bytecode
+				    (array.get_u $byteArray
+						 (local.get $bytecodes)
+						 (local.get $pc)))
 
-		     ;; Continue interpretation.
-		     (br $interpreter_loop))))
+			 (if
+			  (call $interpretBytecodeIn
+				(local.get $vm)
+				(local.get $bytecode)
+				(ref.as_non_null
+				 (local.get $context)))
+			  (then
+			   ;; That $bytecode makes $method return.
+			   (local.set $result
+				      (call $handleMethodReturn
+					    (local.get $vm)
+					    (ref.as_non_null
+					     (local.get $context)))))
+			  (else ;; Check if $context switched via message-send.
+			   (if
+			    (ref.eq
+			     (struct.get $VirtualMachine $activeContext
+					 (local.get $vm))
+			     (local.get $context))
+			    (then
+			     ;; Same $context; increment the $pc and continue.
+			     (struct.set $Context $pc
+					 (ref.as_non_null
+					  (local.get $context))
+					 (i32.add
+					  (local.get $pc)
+					  (i32.const 1)))))))))
 
+		       ;; Continue interpretation in this $context.
+		       (br $interpreter_loop))
+		 ;; Continue execution in a different $context.
+		 (br $execution_loop)))))
+       
        (call $reportResult                    ;; Report result to JS.
 	     (call $valueOfSmallInteger
-		   (local.get $resultValue)))
+		   (local.get $result)))
 
        (i32.const 1)))                        ;; function is successful
 

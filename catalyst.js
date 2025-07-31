@@ -51,7 +51,7 @@ class Catalyst {
 			// Only log results in debug mode, to avoid console spam.
 			if (this.debugMode) console.log(`🎯 VM Result: ${value}`)},
                     
-                    translateMethod: (method, receiverIdentityHash) => {
+                    translateMethodForReceiverWithIdentityHash: (method, receiverIdentityHash) => {
 			// No return value needed, just trigger async translation if desired.
 			if (!this.translationEnabled) return
 
